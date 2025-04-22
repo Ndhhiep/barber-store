@@ -1,0 +1,168 @@
+/* Styles specific to HomePage */
+
+.home-hero-section {
+  background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8));
+  background-size: cover;
+  padding: 6rem 0;
+  min-height: 90vh;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.home-hero-section h1 {
+  font-family: 'Playfair Display', serif;
+}
+
+.home-hero-section .btn-book {
+  background-color: #8B775C;
+  color: #fff;
+  font-family: 'Playfair Display', serif;
+  border-radius: 0;
+}
+
+.btn-book:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(139, 119, 92, 0.3);
+}
+
+.home-about-snippet .about-image-container {
+  position: relative;
+}
+
+.home-about-snippet .about-image {
+  max-height: 400px;
+  object-fit: cover;
+}
+
+.home-about-snippet .image-border-decoration {
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  border: 2px solid #8B775C;
+  width: 60%;
+  height: 60%;
+  z-index: -1;
+}
+
+.home-about-snippet h2 {
+  font-family: 'Playfair Display', serif;
+  color: #2B2A2A;
+}
+
+.home-about-snippet .btn-learn-more {
+  font-family: 'Lato', sans-serif;
+  border-radius: 0;
+}
+
+.home-services-overview {
+  background-color: #F5F2EE;
+}
+
+.home-services-overview h2 {
+  font-family: 'Playfair Display', serif;
+  color: #2B2A2A;
+}
+
+.home-services-overview .service-card {
+  border: 2px solid #e0dcd7; /* Lighter border */
+  border-radius: 4px; /* Slightly rounded corners */
+  transition: all 0.3s ease-in-out;
+  background-color: #fff;
+}
+
+.home-services-overview .service-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(43, 42, 42, 0.1);
+  border-color: #8B775C;
+}
+
+.home-services-overview .service-icon-wrapper {
+  display: flex; /* Change from inline-flex to flex for better centering */
+  align-items: center;
+  justify-content: center;
+  background-color: #fff; /* Changed background to white */
+  border: 3px solid #2B2A2A; /* Added black border */
+  border-radius: 50%;
+  width: 100px; /* Increased size */
+  height: 100px; /* Increased size */
+  padding: 0; /* Remove padding, size controlled by icon div */
+  margin: 0 auto 1.5rem; /* Center horizontally with auto margins */
+  transition: all 0.3s ease; /* Transition all properties */
+}
+
+.home-services-overview .service-card:hover .service-icon-wrapper {
+  background-color: #fff; /* Keep background white on hover */
+  border-color: #8B775C; /* Change border color on hover */
+}
+
+.home-services-overview .service-icon {
+  width: 50px; /* Control icon size */
+  height: 50px; /* Control icon size */
+  background-color: #2B2A2A; /* Initial icon color (black) */
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  transition: background-color 0.3s ease; /* Transition background color */
+}
+
+.home-services-overview .service-card:hover .service-icon {
+  background-color: #8B775C; /* Change icon color on hover */
+}
+
+.home-services-overview .service-card h3 {
+  font-family: 'Playfair Display', serif;
+  color: #2B2A2A;
+}
+
+.home-services-overview .service-card .card-text {
+  color: #555;
+  min-height: 60px; /* Ensure consistent height */
+}
+
+.home-services-overview .service-price {
+  color: #2B2A2A;
+  font-size: 1.3rem; /* Slightly larger price */
+  font-weight: 600;
+}
+
+/* Remove or comment out this rule:
+.home-services-overview .service-icon {
+  height: 60px;
+}
+*/
+
+.home-services-overview .service-card h3 {
+  font-family: 'Playfair Display', serif;
+}
+
+
+
+.home-services-overview .btn-view-all {
+  font-family: 'Lato', sans-serif;
+  border-radius: 0;
+}
+
+/* Style for Book Now button in service cards */
+.service-book-btn {
+  padding: 0.75rem 1rem; /* Taller button */
+  font-size: 1.1rem; /* Larger font */
+  font-weight: 500; /* Medium weight */
+  width: auto; /* Not full width */
+  min-width: 140px; /* Minimum width */
+  margin: 0 auto; /* Center horizontally */
+  border-radius: 10px;
+  background-color: #2B2A2A;
+  color: #fff; /* White text */
+  transition: all 0.3s ease;
+}
+
+.service-book-btn:hover {
+  background-color: #8B775C; /* Change background color on hover */
+  border-color: #8B775C; /* Change border color on hover */
+  color: #fff; /* Change text color on hover */
+  transform: translateY(-2px);
+}

@@ -1,0 +1,178 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Lato:wght@300;400;700&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css');
+
+:root {
+  /* Classic Barbershop Color Palette */
+  --primary-dark: #2B2A2A;     /* Dark Charcoal */
+  --primary-light: #D9D0C7;    /* Cream */
+  --accent: #8B775C;           /* Gold/Bronze */
+  --text-dark: #2B2A2A;        /* For body text on light backgrounds */
+  --text-muted: #504B40;       /* For secondary text */
+  --bg-light: #F5F2EE;         /* Light background color */
+  --bg-secondary: #EFEBE5;     /* Slightly darker background for cards */
+}
+
+body {
+  margin: 0;
+  font-family: 'Lato', sans-serif;
+  color: var(--text-dark);
+  background-color: var(--bg-light);
+}
+
+h1, h2, h3, h4, h5, h6, .display-1, .display-2, .display-3, .display-4, .display-5, .display-6 {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Button Styling */
+.btn {
+  border-radius: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: #7A6A53;
+  border-color: #7A6A53;
+}
+
+.btn-outline-primary {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn-outline-primary:hover, .btn-outline-primary:focus {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn-add-to-cart{
+  background-color: var(--primary-dark);
+  color: white;
+  border-radius: 0;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.btn-add-to-cart:hover {
+  background-color: var(--accent);
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Card styling */
+.card {
+  border-radius: 0;
+  transition: all 0.3s ease;
+}
+
+.service-card {
+  transition: all 0.3s ease;
+}
+
+.service-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Form controls */
+.form-control, .form-select {
+  border-radius: 0;
+  border-color: var(--primary-light);
+  padding: 0.75rem;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.25rem rgba(139, 119, 92, 0.25);
+}
+
+/* Custom divider */
+.custom-divider {
+  width: 80px;
+  height: 2px;
+  background-color: var(--accent);
+  margin: 1.5rem auto;
+}
+
+/* Hero section overlay */
+.hero-overlay {
+  background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8));
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Utility Classes */
+.text-accent {
+  color: var(--accent);
+}
+
+.bg-dark-custom {
+  background-color: var(--primary-dark);
+  color: var(--primary-light);
+}
+
+.bg-light-custom {
+  background-color: var(--bg-light);
+}
+
+/* For images with decorative border */
+.image-decorative {
+  position: relative;
+}
+
+.image-decorative::after {
+  content: "";
+  position: absolute;
+  bottom: -15px;
+  right: -15px;
+  width: 70%;
+  height: 70%;
+  border: 2px solid var(--accent);
+  z-index: -1;
+}
+
+/* Navbar hover effect */
+.navbar .nav-link {
+  position: relative;
+}
+
+.navbar .nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  background-color: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.navbar .nav-link:hover::after,
+.navbar .nav-link.active::after {
+  width: 100%;
+}
+
+/* Footer styling */
+footer {
+  background-color: var(--primary-dark);
+  color: var(--primary-light);
+}
+
+footer a {
+  color: var(--primary-light);
+  transition: color 0.3s ease;
+}
+
+footer a:hover {
+  color: var(--accent);
+}
