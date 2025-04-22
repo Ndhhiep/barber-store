@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import '../css/ProductCard.css'; 
 
 // Basic placeholder ProductCard component
 const ProductCard = ({ product }) => {
@@ -63,16 +64,7 @@ const ProductCard = ({ product }) => {
             <button 
               onClick={handleAddToCart}
               className="btn btn-add-to-cart"
-              style={{
-                transition: 'all 0.3s ease',
-                backgroundColor: isHovered ? '#8B775C' : '#2B2A2A',
-                color: 'white',
-                borderColor: isHovered ? '#8B775C' : '#2B2A2A',
-                padding: '0.5rem 1.2rem',
-                fontSize: '1.1rem'
-              }}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
+              
             >
               Add to Cart
             </button>

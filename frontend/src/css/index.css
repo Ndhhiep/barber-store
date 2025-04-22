@@ -51,20 +51,6 @@ h1, h2, h3, h4, h5, h6, .display-1, .display-2, .display-3, .display-4, .display
   border-color: var(--accent);
 }
 
-.btn-add-to-cart{
-  background-color: var(--primary-dark);
-  color: white;
-  border-radius: 0;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-}
-
-.btn-add-to-cart:hover {
-  background-color: var(--accent);
-  color: white;
-  transform: translateY(-2px);
-}
 
 /* Card styling */
 .card {

@@ -3,6 +3,7 @@
 .home-hero-section {
   background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8));
   background-size: cover;
+  background-position: center;
   padding: 6rem 0;
   min-height: 90vh;
   display: flex;
@@ -10,20 +11,56 @@
   position: relative;
 }
 
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  backdrop-filter: blur(2px);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-title {
+  font-size: 3.8rem;
+  letter-spacing: 1px;
+  font-family: 'Playfair Display', serif;
+}
+
+.hero-description {
+  font-size: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
 .home-hero-section h1 {
   font-family: 'Playfair Display', serif;
 }
 
 .home-hero-section .btn-book {
-  background-color: #8B775C;
-  color: #fff;
-  font-family: 'Playfair Display', serif;
-  border-radius: 0;
+  background-color: transparent;
+  border: 2px solid #8B775C;
+  color: #FFFFFF;
+  font-family: 'Playfair Display, serif';
+  transition: all 0.3s ease;
+  font-size: 1.4rem;
+  padding: 15px 40px;
 }
 
 .btn-book:hover {
+  background-color: #8B775C;
+  color: #FFFFFF;
   transform: translateY(-3px);
   box-shadow: 0 5px 15px rgba(139, 119, 92, 0.3);
+}
+
+.home-about-snippet {
+  background-color: #F5F2EE;
 }
 
 .home-about-snippet .about-image-container {
@@ -138,8 +175,6 @@
 .home-services-overview .service-card h3 {
   font-family: 'Playfair Display', serif;
 }
-
-
 
 .home-services-overview .btn-view-all {
   font-family: 'Lato', sans-serif;

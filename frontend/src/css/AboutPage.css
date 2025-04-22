@@ -1,1 +1,82 @@
 /* Styles specific to AboutPage */
+
+/* Typography */
+.about-title {
+  font-family: 'Playfair Display, serif';
+  color: #2B2A2A;
+}
+
+.hero-title {
+  font-family: 'Playfair Display, serif';
+}
+
+/* Layout and sections */
+.hero-section {
+  background-color: #2B2A2A;
+  color: white;
+  padding: 3rem 0;
+  text-align: center;
+}
+
+.hero-description {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.values-section {
+  background-color: #F5F2EE;
+}
+
+/* Image decorations */
+.image-container {
+  position: relative;
+}
+
+.image-decoration-right {
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  border: 2px solid #8B775C;
+  width: 60%;
+  height: 70%;
+  z-index: -1;
+}
+
+.image-decoration-left {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  border: 2px solid #8B775C;
+  width: 60%;
+  height: 70%;
+  z-index: -1;
+}
+
+/* Card styles */
+.value-card {
+  border: none;
+  border-radius: 0;
+  height: 100%;
+  box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+}
+
+.value-icon {
+  font-size: 2.5rem;
+  color: #8B775C;
+}
+
+/* List styles */
+.check-icon {
+  color: #8B775C;
+  font-size: 1.2rem;
+}
+
+/* CTA button */
+.cta-button {
+  background-color: #8B775C;
+  color: #fff;
+  font-family: 'Playfair Display, serif';
+  border-radius: 0;
+  padding-left: 3rem;
+  padding-right: 3rem;
+}

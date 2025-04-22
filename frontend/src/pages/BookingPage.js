@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import '../css/BookingPage.css';
 
 const BookingPage = () => {
   const [bookingData, setBookingData] = useState({
@@ -60,25 +61,25 @@ const BookingPage = () => {
   };
 
   return (
-    <div className="py-5" style={{ backgroundColor: '#F5F2EE' }}>
+    <div className="py-5 booking-page-bg">
       <div className="container">
         <div className="text-center mb-5">
-          <h1 className="display-4 mb-3" style={{ fontFamily: 'Playfair Display, serif', color: '#2B2A2A' }}>Book Your Appointment</h1>
-          <p className="lead mx-auto" style={{ maxWidth: '800px', color: '#504B40' }}>
+          <h1 className="display-4 mb-3 booking-title">Book Your Appointment</h1>
+          <p className="lead mx-auto booking-lead-text">
             Schedule your visit to The Gentleman's Cut for a premium grooming experience.
           </p>
         </div>
 
         <div className="row justify-content-center">
           <div className="col-lg-10">
-            <div className="card border-0 shadow-sm" style={{ borderRadius: '0' }}>
+            <div className="card booking-card">
               <div className="card-body p-4 p-md-5">
                 {bookingStatus.submitted ? (
                   <div className="py-5 text-center">
-                    <div style={{ color: '#8B775C', fontSize: '3rem', marginBottom: '1rem' }}>
+                    <div className="confirmation-icon">
                       <i className="bi bi-check-circle"></i>
                     </div>
-                    <h2 className="h3 mb-3" style={{ fontFamily: 'Playfair Display, serif', color: '#2B2A2A' }}>
+                    <h2 className="h3 mb-3 confirmation-title">
                       Booking Confirmed!
                     </h2>
                     <p className="mb-4">
@@ -93,14 +94,8 @@ const BookingPage = () => {
                     </p>
                     <div>
                       <button 
-                        className="btn btn-outline-secondary px-4"
+                        className="btn btn-outline-secondary px-4 booking-outline-btn"
                         onClick={() => setBookingStatus({ submitted: false, error: false })}
-                        style={{ 
-                          borderColor: '#8B775C',
-                          color: '#8B775C',
-                          fontFamily: 'Lato, sans-serif',
-                          borderRadius: '0'
-                        }}
                       >
                         Book Another Appointment
                       </button>
@@ -111,8 +106,8 @@ const BookingPage = () => {
                     <div className="row g-3">
                       {/* Service Details Section */}
                       <div className="col-12 mb-4">
-                        <h3 className="h5 mb-3" style={{ fontFamily: 'Playfair Display, serif', color: '#2B2A2A' }}>Service Details</h3>
-                        <div className="card p-3" style={{ backgroundColor: '#EFEBE5', borderRadius: '0', border: 'none' }}>
+                        <h3 className="h5 mb-3 booking-section-title">Service Details</h3>
+                        <div className="card p-3 booking-section-card">
                           <div className="row g-3">
                             <div className="col-md-6 mb-3">
                               <label htmlFor="service" className="form-label">Select Service*</label>
@@ -122,12 +117,7 @@ const BookingPage = () => {
                                 value={bookingData.service}
                                 onChange={handleChange}
                                 required
-                                className="form-select"
-                                style={{ 
-                                  borderRadius: '0',
-                                  borderColor: '#D9D0C7',
-                                  padding: '0.75rem'
-                                }}
+                                className="form-select booking-form-control"
                               >
                                 <option value="">-- Select a service --</option>
                                 {services.map((service, index) => (
@@ -143,12 +133,7 @@ const BookingPage = () => {
                                 name="barber"
                                 value={bookingData.barber}
                                 onChange={handleChange}
-                                className="form-select"
-                                style={{ 
-                                  borderRadius: '0',
-                                  borderColor: '#D9D0C7',
-                                  padding: '0.75rem'
-                                }}
+                                className="form-select booking-form-control"
                               >
                                 <option value="">-- Select a barber --</option>
                                 {barbers.map((barber, index) => (
@@ -167,12 +152,7 @@ const BookingPage = () => {
                                 onChange={handleChange}
                                 required
                                 min={new Date().toISOString().split('T')[0]}
-                                className="form-control"
-                                style={{ 
-                                  borderRadius: '0',
-                                  borderColor: '#D9D0C7',
-                                  padding: '0.75rem'
-                                }}
+                                className="form-control booking-form-control"
                               />
                             </div>
                             
@@ -184,12 +164,7 @@ const BookingPage = () => {
                                 value={bookingData.time}
                                 onChange={handleChange}
                                 required
-                                className="form-select"
-                                style={{ 
-                                  borderRadius: '0',
-                                  borderColor: '#D9D0C7',
-                                  padding: '0.75rem'
-                                }}
+                                className="form-select booking-form-control"
                               >
                                 <option value="">-- Select a time --</option>
                                 {timeSlots.map((time, index) => (
@@ -203,8 +178,8 @@ const BookingPage = () => {
                       
                       {/* Personal Information Section */}
                       <div className="col-12 mb-4">
-                        <h3 className="h5 mb-3" style={{ fontFamily: 'Playfair Display, serif', color: '#2B2A2A' }}>Your Information</h3>
-                        <div className="card p-3" style={{ backgroundColor: '#EFEBE5', borderRadius: '0', border: 'none' }}>
+                        <h3 className="h5 mb-3 booking-section-title">Your Information</h3>
+                        <div className="card p-3 booking-section-card">
                           <div className="row g-3">
                             <div className="col-md-6 mb-3">
                               <label htmlFor="name" className="form-label">Full Name*</label>
@@ -216,12 +191,7 @@ const BookingPage = () => {
                                 onChange={handleChange}
                                 required
                                 placeholder="Your full name"
-                                className="form-control"
-                                style={{ 
-                                  borderRadius: '0',
-                                  borderColor: '#D9D0C7',
-                                  padding: '0.75rem'
-                                }}
+                                className="form-control booking-form-control"
                               />
                             </div>
                             
@@ -235,12 +205,7 @@ const BookingPage = () => {
                                 onChange={handleChange}
                                 required
                                 placeholder="(123) 456-7890"
-                                className="form-control"
-                                style={{ 
-                                  borderRadius: '0',
-                                  borderColor: '#D9D0C7',
-                                  padding: '0.75rem'
-                                }}
+                                className="form-control booking-form-control"
                               />
                             </div>
                             
@@ -254,12 +219,7 @@ const BookingPage = () => {
                                 onChange={handleChange}
                                 required
                                 placeholder="your@email.com"
-                                className="form-control"
-                                style={{ 
-                                  borderRadius: '0',
-                                  borderColor: '#D9D0C7',
-                                  padding: '0.75rem'
-                                }}
+                                className="form-control booking-form-control"
                               />
                             </div>
                             
@@ -271,13 +231,8 @@ const BookingPage = () => {
                                 value={bookingData.notes}
                                 onChange={handleChange}
                                 placeholder="Any specific requests or requirements"
-                                className="form-control"
+                                className="form-control booking-form-control"
                                 rows="1"
-                                style={{ 
-                                  borderRadius: '0',
-                                  borderColor: '#D9D0C7',
-                                  padding: '0.75rem'
-                                }}
                               />
                             </div>
                           </div>
@@ -287,13 +242,10 @@ const BookingPage = () => {
                       <div className="col-12 mb-3">
                         <div className="form-check">
                           <input 
-                            className="form-check-input" 
+                            className="form-check-input booking-checkbox" 
                             type="checkbox" 
                             id="policyCheck" 
                             required
-                            style={{ 
-                              borderColor: '#8B775C',
-                            }}
                           />
                           <label className="form-check-label" htmlFor="policyCheck">
                             I understand that a 24-hour cancellation notice is required to avoid a cancellation fee.
@@ -304,14 +256,7 @@ const BookingPage = () => {
                       <div className="col-12 mt-4">
                         <button
                           type="submit"
-                          className="btn btn-lg w-100"
-                          style={{ 
-                            backgroundColor: '#8B775C',
-                            color: '#fff',
-                            fontFamily: 'Playfair Display, serif',
-                            borderRadius: '0',
-                            padding: '0.75rem'
-                          }}
+                          className="btn btn-lg w-100 booking-btn"
                         >
                           Book Appointment
                         </button>
@@ -323,10 +268,10 @@ const BookingPage = () => {
             </div>
             
             {!bookingStatus.submitted && (
-              <div className="card border-0 shadow-sm mt-4" style={{ borderRadius: '0', backgroundColor: '#2B2A2A', color: '#D9D0C7' }}>
+              <div className="card mt-4 policy-card">
                 <div className="card-body p-4">
-                  <h3 className="h5 mb-3" style={{ fontFamily: 'Playfair Display, serif', color: '#D9D0C7' }}>Booking Policies</h3>
-                  <ul className="mb-0" style={{ paddingLeft: '1.2rem' }}>
+                  <h3 className="h5 mb-3 policy-title">Booking Policies</h3>
+                  <ul className="mb-0 policy-list">
                     <li className="mb-2">Please arrive 5-10 minutes before your appointment time.</li>
                     <li className="mb-2">24-hour notice is required for cancellations to avoid a fee.</li>
                     <li className="mb-2">If you're running late, please call us so we can adjust accordingly.</li>

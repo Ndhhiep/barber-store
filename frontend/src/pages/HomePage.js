@@ -10,52 +10,20 @@ const HomePage = () => {
       <section 
         className="py-5 text-center text-white home-hero-section" 
         style={{
-          backgroundImage: 'url(/assets/home01.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          position: 'relative',
+          backgroundImage: 'url(/assets/home01.jpg)'
         }}
       >
-        <div 
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(0,0,0,0.5)', /* Dark overlay for better text visibility */
-            backdropFilter: 'blur(2px)', /* Blur effect */
-          }}
-        ></div>
-        <div className="container px-4" style={{ position: 'relative', zIndex: 1 }}>
+        <div className="hero-overlay"></div>
+        <div className="container px-4 hero-content">
           <div className="row justify-content-center">
             <div className="col-lg-10">
-              <h1 className="display-2 fw-bold mb-4" style={{ fontSize: '3.8rem', letterSpacing: '1px' }}>
+              <h1 className="display-2 fw-bold mb-4 hero-title">
                 Timeless Style, Modern Craftsmanship
               </h1>
-              <p className="lead mb-5" style={{ fontSize: '1.5rem', maxWidth: '800px', margin: '0 auto' }}>
+              <p className="lead mb-5 hero-description">
                 Experience the art of traditional barbering in a classic environment where expertise meets exceptional service.
               </p>
-              <Link to="/booking" 
-                className="btn btn-lg px-5 py-3 mb-2 btn-book" 
-                style={{
-                  backgroundColor: 'transparent',
-                  border: '2px solid #8B775C',
-                  color: '#FFFFFF',
-                  fontFamily: 'Playfair Display, serif',
-                  transition: 'all 0.3s ease',
-                  fontSize: '1.4rem',
-                  padding: '15px 40px',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#8B775C';
-                  e.currentTarget.style.color = '#FFFFFF';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = '#FFFFFF';
-                }}
-              >
+              <Link to="/booking" className="btn btn-lg px-5 py-3 mb-2 btn-book">
                 Book Your Appointment
               </Link>
             </div>
@@ -73,12 +41,8 @@ const HomePage = () => {
                   src="/assets/home02.avif" 
                   alt="Traditional Barbershop" 
                   className="img-fluid shadow about-image"
-                  // Removed inline style
                 />
-                <div 
-                  className="image-border-decoration"
-                  // Removed inline style
-                ></div>
+                <div className="image-border-decoration"></div>
               </div>
             </div>
             <div className="col-lg-6 px-lg-5">

@@ -1,1 +1,96 @@
 /* Styles specific to ContactPage */
+
+/* Page background */
+.contact-page-bg {
+  background-color: #F5F2EE;
+}
+
+/* Typography */
+.contact-title {
+  font-family: 'Playfair Display, serif';
+  color: #2B2A2A;
+}
+
+.contact-lead-text {
+  max-width: 800px;
+  color: #504B40;
+}
+
+.contact-card-title {
+  font-family: 'Playfair Display, serif';
+  color: #2B2A2A;
+}
+
+.form-label-custom {
+  color: #504B40;
+}
+
+/* Card styling */
+.contact-card {
+  border: none;
+  border-radius: 0;
+  box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+}
+
+/* Form controls */
+.contact-form-control {
+  border-radius: 0;
+  border-color: #D9D0C7;
+  padding: 0.75rem;
+}
+
+/* Button */
+.contact-submit-btn {
+  background-color: #8B775C;
+  color: #fff;
+  font-family: 'Lato, sans-serif';
+  border-radius: 0;
+}
+
+/* Alert */
+.contact-alert {
+  border-radius: 0;
+}
+
+/* Map container */
+.map-container {
+  border-radius: 0;
+  overflow: hidden;
+}
+
+/* Info card styling */
+.contact-info-card {
+  border-radius: 0;
+  background-color: #2B2A2A;
+  color: #D9D0C7;
+  border: none;
+}
+
+.contact-info-card-title {
+  font-family: 'Playfair Display, serif';
+  color: #D9D0C7;
+}
+
+.contact-info-icon-container {
+  width: 40px;
+  color: #8B775C;
+}
+
+.contact-info-heading {
+  font-family: 'Playfair Display, serif';
+  color: #D9D0C7;
+}
+
+.contact-info-link {
+  color: #D9D0C7;
+  text-decoration: none;
+}
+
+.social-icon {
+  color: #D9D0C7;
+  text-decoration: none;
+}
+
+.social-icon:hover {
+  color: #8B775C;
+}
