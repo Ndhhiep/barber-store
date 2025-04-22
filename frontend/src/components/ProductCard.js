@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import '../css/ProductCard.css'; 
@@ -6,7 +6,7 @@ import '../css/ProductCard.css';
 // Basic placeholder ProductCard component
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
-  const [isHovered, setIsHovered] = useState(false);
+  
   
   if (!product) {
     return null; // Or some placeholder if product is undefined
@@ -64,7 +64,6 @@ const ProductCard = ({ product }) => {
             <button 
               onClick={handleAddToCart}
               className="btn btn-add-to-cart"
-              
             >
               Add to Cart
             </button>
