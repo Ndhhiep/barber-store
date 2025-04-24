@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import '../css/TeamPage.css';
 
 const TeamPage = () => {
   const barbers = [
@@ -40,9 +41,9 @@ const TeamPage = () => {
   return (
     <div>
       {/* Hero Section */}
-      <section className="py-5 bg-dark text-white text-center">
+      <section className="py-5 team-hero text-center">
         <div className="container py-4">
-          <h1 className="display-4 mb-3" style={{ fontFamily: 'Playfair Display, serif' }}>Meet Our Team</h1>
+          <h1 className="display-4 mb-3 team-hero-title">Meet Our Team</h1>
           <p className="lead mx-auto" style={{ maxWidth: '800px' }}>
             Skilled professionals with a passion for the art and craft of barbering.
           </p>
@@ -50,7 +51,7 @@ const TeamPage = () => {
       </section>
 
       {/* Team Members */}
-      <section className="py-5" style={{ backgroundColor: '#F5F2EE' }}>
+      <section className="py-5 team-section">
         <div className="container">
           <div className="mb-5 text-center">
             <p className="lead text-muted">
@@ -65,52 +66,35 @@ const TeamPage = () => {
                   <img 
                     src={barber.image} 
                     alt={barber.name} 
-                    className="img-fluid shadow"
-                    style={{ maxHeight: '500px', width: '100%', objectFit: 'cover' }}
+                    className="img-fluid shadow team-member-image"
                   />
                   <div 
-                    style={{ 
-                      position: 'absolute', 
-                      bottom: barber.id % 2 === 0 ? '20px' : '-20px',
-                      right: barber.id % 2 === 0 ? '-20px' : '20px',
-                      border: '2px solid #8B775C',
-                      width: '60%',
-                      height: '70%',
-                      zIndex: '-1'
-                    }}
+                    className={barber.id % 2 === 0 ? 'image-border-even' : 'image-border-odd'}
                   ></div>
                 </div>
               </div>
               <div className="col-lg-7 px-lg-5">
-                <h2 className="h1 mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#2B2A2A' }}>
+                <h2 className="h1 mb-2 team-member-name">
                   {barber.name}
                 </h2>
-                <p className="text-accent mb-4" style={{ color: '#8B775C', fontWeight: 500 }}>
+                <p className="text-accent mb-4 team-member-title">
                   {barber.title}
                 </p>
                 <p className="lead mb-4">
                   {barber.description}
                 </p>
-                <h3 className="h5 mb-3" style={{ fontFamily: 'Playfair Display, serif', color: '#2B2A2A' }}>
+                <h3 className="h5 mb-3 specialties-heading">
                   Specialties
                 </h3>
                 <ul className="list-unstyled mb-4">
                   {barber.expertise.map((skill, index) => (
                     <li key={index} className="mb-2 d-flex align-items-center">
-                      <i className="bi bi-check-circle me-2" style={{ color: '#8B775C' }}></i>
+                      <i className="bi bi-check-circle me-2 specialty-icon"></i>
                       <span>{skill}</span>
                     </li>
                   ))}
                 </ul>
-                <Link to="/booking" 
-                  className="btn" 
-                  style={{ 
-                    backgroundColor: '#2B2A2A',
-                    color: '#D9D0C7',
-                    fontFamily: 'Lato, sans-serif',
-                    borderRadius: '0',
-                    padding: '0.6rem 1.5rem'
-                  }}>
+                <Link to="/booking" className="btn book-with-barber">
                   Book with {barber.name.split(' ')[0]}
                 </Link>
               </div>
@@ -130,21 +114,11 @@ const TeamPage = () => {
                   alt="Barbershop Team" 
                   className="img-fluid shadow"
                 />
-                <div 
-                  style={{ 
-                    position: 'absolute', 
-                    top: '-20px',
-                    left: '-20px',
-                    border: '2px solid #8B775C',
-                    width: '50%',
-                    height: '60%',
-                    zIndex: '-1'
-                  }}
-                ></div>
+                <div className="join-team-image-border"></div>
               </div>
             </div>
             <div className="col-lg-6 px-lg-5">
-              <h2 className="h1 mb-4" style={{ fontFamily: 'Playfair Display, serif', color: '#2B2A2A' }}>
+              <h2 className="h1 mb-4 join-team-heading">
                 Join Our Team
               </h2>
               <p className="lead mb-4">
@@ -153,36 +127,28 @@ const TeamPage = () => {
               <p className="mb-4">
                 If you're dedicated to the craft of barbering, have a great attitude, and want to work in a professional yet friendly environment, we'd love to hear from you.
               </p>
-              <h3 className="h5 mb-3" style={{ fontFamily: 'Playfair Display, serif', color: '#2B2A2A' }}>
+              <h3 className="h5 mb-3 specialties-heading">
                 What We Offer
               </h3>
               <ul className="list-unstyled mb-4">
                 <li className="mb-2 d-flex align-items-center">
-                  <i className="bi bi-check-circle me-2" style={{ color: '#8B775C' }}></i>
+                  <i className="bi bi-check-circle me-2 specialty-icon"></i>
                   <span>Competitive commission structure</span>
                 </li>
                 <li className="mb-2 d-flex align-items-center">
-                  <i className="bi bi-check-circle me-2" style={{ color: '#8B775C' }}></i>
+                  <i className="bi bi-check-circle me-2 specialty-icon"></i>
                   <span>Professional development opportunities</span>
                 </li>
                 <li className="mb-2 d-flex align-items-center">
-                  <i className="bi bi-check-circle me-2" style={{ color: '#8B775C' }}></i>
+                  <i className="bi bi-check-circle me-2 specialty-icon"></i>
                   <span>A supportive, team-oriented environment</span>
                 </li>
                 <li className="d-flex align-items-center">
-                  <i className="bi bi-check-circle me-2" style={{ color: '#8B775C' }}></i>
+                  <i className="bi bi-check-circle me-2 specialty-icon"></i>
                   <span>Growing client base</span>
                 </li>
               </ul>
-              <Link to="/contact" 
-                className="btn" 
-                style={{ 
-                  backgroundColor: '#8B775C',
-                  color: '#fff',
-                  fontFamily: 'Lato, sans-serif',
-                  borderRadius: '0',
-                  padding: '0.6rem 1.5rem'
-                }}>
+              <Link to="/contact" className="btn contact-btn">
                 Contact Us About Opportunities
               </Link>
             </div>

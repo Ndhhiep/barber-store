@@ -1,1 +1,106 @@
 /* Styles specific to TeamPage */
+
+/* Hero section */
+.team-hero {
+  background-color: #2B2A2A;
+  color: white;
+}
+
+.team-hero-title {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Team section */
+.team-section {
+  background-color: #F5F2EE;
+}
+
+/* Team member cards */
+.team-member-image {
+  max-height: 500px;
+  width: 100%;
+  object-fit: cover;
+}
+
+.image-border-even {
+  position: absolute;
+  bottom: 20px;
+  right: -20px;
+  border: 2px solid #8B775C;
+  width: 60%;
+  height: 70%;
+  z-index: -1;
+}
+
+.image-border-odd {
+  position: absolute;
+  bottom: -20px;
+  right: 20px;
+  border: 2px solid #8B775C;
+  width: 60%;
+  height: 70%;
+  z-index: -1;
+}
+
+.team-member-name {
+  font-family: 'Playfair Display', serif;
+  color: #2B2A2A;
+}
+
+.team-member-title {
+  color: #8B775C;
+  font-weight: 500;
+}
+
+.specialties-heading {
+  font-family: 'Playfair Display', serif;
+  color: #2B2A2A;
+}
+
+.specialty-icon {
+  color: #8B775C;
+}
+
+.book-with-barber {
+  background-color: #2B2A2A;
+  color: #D9D0C7;
+  font-family: 'Lato', sans-serif;
+  border-radius: 0;
+  padding: 0.6rem 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.book-with-barber:hover {
+  background-color: #383736;
+  color: #D9D0C7;
+}
+
+/* Join team section */
+.join-team-image-border {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  border: 2px solid #8B775C;
+  width: 50%;
+  height: 60%;
+  z-index: -1;
+}
+
+.join-team-heading {
+  font-family: 'Playfair Display', serif;
+  color: #2B2A2A;
+}
+
+.contact-btn {
+  background-color: #8B775C;
+  color: #fff;
+  font-family: 'Lato', sans-serif;
+  border-radius: 0;
+  padding: 0.6rem 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.contact-btn:hover {
+  background-color: #9d8a6e;
+  color: #fff;
+}

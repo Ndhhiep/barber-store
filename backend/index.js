@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const productRoutes = require('./routes/productRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -12,16 +13,28 @@ connectDB();
 
 const app = express();
 
+// CORS configuration with specific options
+const corsOptions = {
+  origin: 'http://localhost:3000', // Allow frontend origin
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these methods
+  allowedHeaders: ['Content-Type', 'Accept', 'Authorization'], // Allow these headers
+  credentials: true, // Allow cookies
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
+};
+
+// Apply CORS middleware with options
+app.use(cors(corsOptions));
+
 // Middleware
 app.use(express.json());
-app.use(cors());
 
 // Routes
 app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
 
 // Home route
 app.get('/', (req, res) => {
-  res.send('API is running...');
+  res.json({ message: 'API is running...' });
 });
 
 // Error handling middleware

@@ -21,10 +21,10 @@ const ProductCard = ({ product }) => {
     <div className="card h-100 shadow-sm product-card" style={{ width: '24em', margin: '0.5rem' }}>
       <Link to={`/products/${product._id}`}> 
         <img 
-          src={product.imageUrl || '/assets/placeholder.png'} // Use placeholder if no image
+          src={product.imgURL || '/assets/placeholder.png'} // Use the correct field name imgURL
           className="card-img-top" 
           alt={product.name} 
-          style={{ height: '250px', objectFit: 'cover' }}
+          style={{ height: '250px', objectFit: 'contain'}}
         />
       </Link>
       <div className="card-body d-flex flex-column">

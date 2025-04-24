@@ -1,1 +1,91 @@
 /* Styles specific to ServicesPage */
+
+.services-page {
+  background-color: #F5F2EE;
+}
+
+/* Headings */
+.services-heading {
+  font-family: 'Playfair Display', serif;
+  color: #2B2A2A;
+}
+
+.services-lead {
+  color: #504B40;
+  max-width: 800px;
+}
+
+/* Service Card */
+.service-card {
+  border-radius: 0;
+  border: none;
+}
+
+.service-name {
+  font-family: 'Playfair Display', serif;
+  color: #2B2A2A;
+}
+
+.service-price {
+  color: #8B775C;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.service-duration {
+  font-size: 0.875rem;
+}
+
+.service-description {
+  color: #504B40;
+}
+
+.book-btn {
+  background-color: #2B2A2A;
+  color: #D9D0C7;
+  border-radius: 0;
+  font-family: 'Lato', sans-serif;
+  padding: 0.5rem 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.book-btn:hover {
+  background-color: #383736;
+  color: #D9D0C7;
+}
+
+/* What to Expect Section */
+.what-to-expect {
+  background-color: #2B2A2A;
+  color: #D9D0C7;
+  border-radius: 0;
+}
+
+.what-to-expect h3 {
+  color: #D9D0C7;
+  font-family: 'Playfair Display', serif;
+}
+
+/* Icon colors */
+.info-icon, .check-icon {
+  color: #8B775C;
+}
+
+/* Call to Action */
+.cta-btn {
+  background-color: #8B775C;
+  color: #fff;
+  font-family: 'Playfair Display', serif;
+  border-radius: 0;
+  padding: 0.6rem 2rem;
+  transition: all 0.2s ease;
+}
+
+.cta-btn:hover {
+  background-color: #9d8a6e;
+  color: #fff;
+}
+
+.cta-text {
+  color: #504B40;
+}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import '../css/ServicesPage.css';
 
 const ServicesPage = () => {
   const services = [
@@ -62,11 +63,11 @@ const ServicesPage = () => {
   ];
 
   return (
-    <div className="py-5" style={{ backgroundColor: '#F5F2EE' }}>
+    <div className="py-5 services-page">
       <div className="container">
         <div className="text-center mb-5">
-          <h1 className="display-4 mb-3" style={{ fontFamily: 'Playfair Display, serif', color: '#2B2A2A' }}>Our Services</h1>
-          <p className="lead mx-auto" style={{ maxWidth: '800px', color: '#504B40' }}>
+          <h1 className="display-4 mb-3 services-heading">Our Services</h1>
+          <p className="lead mx-auto services-lead">
             At The Gentleman's Cut, we offer a range of premium grooming services delivered with skill and attention to detail.
             Each service includes a consultation to understand your preferences and ensure your complete satisfaction.
           </p>
@@ -76,24 +77,17 @@ const ServicesPage = () => {
         <div className="row g-4">
           {services.map(service => (
             <div key={service.id} className="col-md-6">
-              <div className="card h-100 border-0 shadow-sm" style={{ borderRadius: '0' }}>
+              <div className="card h-100 shadow-sm service-card">
                 <div className="card-body p-4">
                   <div className="d-flex justify-content-between align-items-start mb-3">
-                    <h3 className="h4" style={{ fontFamily: 'Playfair Display, serif', color: '#2B2A2A' }}>{service.name}</h3>
+                    <h3 className="h4 service-name">{service.name}</h3>
                     <div className="d-flex flex-column align-items-end">
-                      <span className="fw-bold mb-1" style={{ color: '#8B775C', fontSize: '1.1rem' }}>{service.price}</span>
-                      <span className="text-muted small">{service.duration}</span>
+                      <span className="service-price mb-1">{service.price}</span>
+                      <span className="text-muted service-duration">{service.duration}</span>
                     </div>
                   </div>
-                  <p className="card-text mb-4" style={{ color: '#504B40' }}>{service.description}</p>
-                  <Link to="/booking" className="btn btn-sm" 
-                    style={{ 
-                      backgroundColor: '#2B2A2A',
-                      color: '#D9D0C7',
-                      borderRadius: '0',
-                      fontFamily: 'Lato, sans-serif',
-                      padding: '0.5rem 1.5rem'
-                    }}>
+                  <p className="card-text mb-4 service-description">{service.description}</p>
+                  <Link to="/booking" className="btn btn-sm book-btn">
                     Book Now
                   </Link>
                 </div>
@@ -105,28 +99,28 @@ const ServicesPage = () => {
         {/* Additional Information Section */}
         <div className="row mt-5 pt-4">
           <div className="col-lg-6 mb-4">
-            <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '0', backgroundColor: '#2B2A2A', color: '#D9D0C7' }}>
+            <div className="card border-0 shadow-sm h-100 what-to-expect">
               <div className="card-body p-4">
-                <h3 className="h4 mb-4" style={{ fontFamily: 'Playfair Display, serif', color: '#D9D0C7' }}>What to Expect</h3>
+                <h3 className="h4 mb-4">What to Expect</h3>
                 <ul className="list-unstyled mb-0">
                   <li className="mb-3 d-flex">
-                    <i className="bi bi-check2 me-2" style={{ color: '#8B775C' }}></i>
+                    <i className="bi bi-check2 me-2 check-icon"></i>
                     <span>Complimentary consultation before every service</span>
                   </li>
                   <li className="mb-3 d-flex">
-                    <i className="bi bi-check2 me-2" style={{ color: '#8B775C' }}></i>
+                    <i className="bi bi-check2 me-2 check-icon"></i>
                     <span>Relaxed atmosphere with complimentary beverages</span>
                   </li>
                   <li className="mb-3 d-flex">
-                    <i className="bi bi-check2 me-2" style={{ color: '#8B775C' }}></i>
+                    <i className="bi bi-check2 me-2 check-icon"></i>
                     <span>Premium grooming products used for every service</span>
                   </li>
                   <li className="mb-3 d-flex">
-                    <i className="bi bi-check2 me-2" style={{ color: '#8B775C' }}></i>
+                    <i className="bi bi-check2 me-2 check-icon"></i>
                     <span>Hot towel refreshment with each haircut</span>
                   </li>
                   <li className="d-flex">
-                    <i className="bi bi-check2 me-2" style={{ color: '#8B775C' }}></i>
+                    <i className="bi bi-check2 me-2 check-icon"></i>
                     <span>Style advice and product recommendations</span>
                   </li>
                 </ul>
@@ -135,28 +129,28 @@ const ServicesPage = () => {
           </div>
           
           <div className="col-lg-6">
-            <div className="card border-0 shadow-sm h-100" style={{ borderRadius: '0' }}>
+            <div className="card border-0 shadow-sm h-100 service-card">
               <div className="card-body p-4">
-                <h3 className="h4 mb-4" style={{ fontFamily: 'Playfair Display, serif', color: '#2B2A2A' }}>Grooming Policies</h3>
+                <h3 className="h4 mb-4 service-name">Grooming Policies</h3>
                 <ul className="list-unstyled mb-0">
                   <li className="mb-3 d-flex">
-                    <i className="bi bi-info-circle me-2" style={{ color: '#8B775C' }}></i>
+                    <i className="bi bi-info-circle me-2 info-icon"></i>
                     <span>Please arrive 5-10 minutes before your appointment time</span>
                   </li>
                   <li className="mb-3 d-flex">
-                    <i className="bi bi-info-circle me-2" style={{ color: '#8B775C' }}></i>
+                    <i className="bi bi-info-circle me-2 info-icon"></i>
                     <span>24-hour cancellation notice required to avoid charge</span>
                   </li>
                   <li className="mb-3 d-flex">
-                    <i className="bi bi-info-circle me-2" style={{ color: '#8B775C' }}></i>
+                    <i className="bi bi-info-circle me-2 info-icon"></i>
                     <span>We accept cash and all major credit/debit cards</span>
                   </li>
                   <li className="mb-3 d-flex">
-                    <i className="bi bi-info-circle me-2" style={{ color: '#8B775C' }}></i>
+                    <i className="bi bi-info-circle me-2 info-icon"></i>
                     <span>Tips are appreciated but not included in service price</span>
                   </li>
                   <li className="d-flex">
-                    <i className="bi bi-info-circle me-2" style={{ color: '#8B775C' }}></i>
+                    <i className="bi bi-info-circle me-2 info-icon"></i>
                     <span>Gift certificates available for all services</span>
                   </li>
                 </ul>
@@ -167,14 +161,8 @@ const ServicesPage = () => {
         
         {/* Call to Action */}
         <div className="text-center mt-5 pt-3">
-          <p className="lead mb-4" style={{ color: '#504B40' }}>Ready to experience the difference?</p>
-          <Link to="/booking" className="btn btn-lg px-5" 
-            style={{ 
-              backgroundColor: '#8B775C',
-              color: '#fff',
-              fontFamily: 'Playfair Display, serif',
-              borderRadius: '0'
-            }}>
+          <p className="lead mb-4 cta-text">Ready to experience the difference?</p>
+          <Link to="/booking" className="btn btn-lg px-5 cta-btn">
             Book Your Appointment
           </Link>
         </div>
