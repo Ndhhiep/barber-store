@@ -4,8 +4,8 @@ const orderSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: false, // If you're supporting guest checkout
+      ref: 'Users',
+      // Không đặt là required vì các đơn hàng cũ có thể không có trường này
     },
     customerInfo: {
       name: { type: String, required: true, trim: true },

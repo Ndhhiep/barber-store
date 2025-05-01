@@ -1,0 +1,141 @@
+/* Styles specific to BookingPage */
+
+/* Page Background */
+.booking-page-bg {
+  background-color: #F5F2EE;
+}
+
+/* Typography */
+.booking-title {
+  font-family: 'Playfair Display, serif';
+  color: #2B2A2A;
+}
+
+.booking-lead-text {
+  max-width: 800px;
+  color: #504B40;
+}
+
+/* Card Styling */
+.booking-card {
+  border: none;
+  border-radius: 0;
+  box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+}
+
+.booking-section-title {
+  font-family: 'Playfair Display, serif';
+  color: #2B2A2A;
+}
+
+.booking-section-card {
+  background-color: #EFEBE5;
+  border-radius: 0;
+  border: none;
+}
+
+/* Form Controls */
+.booking-form-control {
+  border-radius: 0;
+  border-color: #D9D0C7;
+  padding: 0.75rem;
+}
+
+/* Time Slot Styling */
+.time-slots-grid {
+  margin-top: 10px;
+}
+
+.time-slot-btn {
+  border-radius: 50px;
+  background-color: #fff;
+  color: #2B2A2A;
+  border: 1px solid #D9D0C7;
+  font-weight: 700; /* Make all button text bolder */
+  transition: all 0.2s ease;
+  padding: 8px 15px;
+  margin-bottom: 8px;
+}
+
+.time-slot-btn:hover:not(.disabled) {
+  background-color: #f8f8f8;
+  border-color: #2B2A2A;
+  color: #2B2A2A;
+}
+
+.time-slot-btn.active {
+  background-color: #2B2A2A;
+  color: #fff;
+  border-color: #2B2A2A;
+  font-weight: 700;
+}
+
+.time-slot-btn.disabled {
+  background-color: #fff; /* White background for disabled buttons */
+  color: #cccccc; /* Lighter text color */
+  border-color: #eeeeee;
+  cursor: not-allowed;
+  font-weight: 700;
+  opacity: 1;
+  pointer-events: none;
+  position: relative;
+}
+
+/* Add a subtle overlay to indicate passed time */
+.time-slot-btn.disabled::before {
+  content: none; /* Remove the diagonal pattern effect */
+}
+
+/* Success Message */
+.confirmation-icon {
+  color: #8B775C;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.confirmation-title {
+  font-family: 'Playfair Display, serif';
+  color: #2B2A2A;
+}
+
+/* Buttons */
+.booking-btn {
+  background-color: #2B2A2A;
+  color: #fff;
+  font-family: 'Playfair Display, serif';
+  border-radius: 0;
+  padding: 0.75rem;
+}
+
+.booking-btn:hover {
+  background-color: #8B775C;
+  color: #fff;
+}
+.booking-outline-btn {
+  border-color: #8B775C;
+  color: #8B775C;
+  font-family: 'Lato, sans-serif';
+  border-radius: 0;
+}
+
+/* Checkbox */
+.booking-checkbox {
+  border-color: #8B775C;
+}
+
+/* Policy Section */
+.policy-card {
+  border-radius: 0;
+  border: none;
+  background-color: #2B2A2A;
+  color: #D9D0C7;
+}
+
+.policy-title {
+  font-family: 'Playfair Display, serif';
+  color: #D9D0C7;
+}
+
+.policy-list {
+  padding-left: 1.2rem;
+}

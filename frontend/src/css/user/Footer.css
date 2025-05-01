@@ -1,0 +1,42 @@
+/* Styles for Footer component */
+
+.footer {
+  background-color: #2B2A2A;
+  color: #D9D0C7;
+}
+
+.footer-heading {
+  color: #D9D0C7;
+  font-family: 'Playfair Display', serif;
+}
+
+.footer-separator {
+  background-color: #504B40;
+  opacity: 0.2;
+}
+
+.footer-social-link {
+  color: #D9D0C7;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.footer-social-link:hover {
+  color: #8B775C;
+}
+
+.footer-text {
+  font-size: 0.875rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+  .footer-social-container {
+    text-align: center;
+    margin-top: 1rem;
+  }
+
+  .footer-copyright {
+    text-align: center;
+  }
+}

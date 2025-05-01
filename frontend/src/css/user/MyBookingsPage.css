@@ -1,0 +1,81 @@
+.booking-card {
+  transition: transform 0.2s ease;
+  height: 100%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: none;
+}
+
+.booking-card:hover {
+  transform: translateY(-5px);
+}
+
+.booking-card .card-header {
+  border-bottom: 1px solid #f0f0f0;
+  background-color: white;
+  padding: 1rem;
+}
+
+.booking-card .card-footer {
+  background-color: white;
+  border-top: 1px solid #f0f0f0;
+  padding: 1rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25em 0.6em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+}
+
+.badge-warning {
+  color: #212529;
+  background-color: #ffc107;
+}
+
+.badge-primary {
+  color: #fff;
+  background-color: #007bff;
+}
+
+.badge-success {
+  color: #fff;
+  background-color: #28a745;
+}
+
+.badge-danger {
+  color: #fff;
+  background-color: #dc3545;
+}
+
+.badge-secondary {
+  color: #fff;
+  background-color: #6c757d;
+}
+
+/* Container để đảm bảo đẩy footer xuống dưới */
+.my-bookings-container {
+  min-height: 70vh;
+  padding: 2rem 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Title styling */
+.my-bookings-title {
+  font-family: 'Playfair Display', serif;
+  color: #2B2A2A;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* Empty state message */
+.empty-bookings-message {
+  text-align: center;
+  padding: 3rem 0;
+}

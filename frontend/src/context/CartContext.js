@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import cartService from '../services/user_services/cartService';
 
 // Create the Cart Context
 const CartContext = createContext();
@@ -11,20 +12,13 @@ export const CartProvider = ({ children }) => {
   
   // Load cart items from localStorage on initial render
   useEffect(() => {
-    const storedCart = localStorage.getItem('cart');
-    if (storedCart) {
-      try {
-        setCartItems(JSON.parse(storedCart));
-      } catch (error) {
-        console.error('Error loading cart from localStorage:', error);
-        setCartItems([]);
-      }
-    }
+    const storedCart = cartService.getCart();
+    setCartItems(storedCart);
   }, []);
   
   // Save cart items to localStorage whenever cartItems changes
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
+    cartService.saveCart(cartItems);
   }, [cartItems]);
   
   // Add product to cart
@@ -68,6 +62,7 @@ export const CartProvider = ({ children }) => {
   // Clear cart
   const clearCart = () => {
     setCartItems([]);
+    cartService.clearCart();
   };
   
   // Calculate total items in cart

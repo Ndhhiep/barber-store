@@ -1,0 +1,152 @@
+/* StaffLayout.css */
+
+/* Global layout */
+.staff-page-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Top Header */
+.staff-top-header {
+  background-color: #343a40;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 1000;
+}
+
+.staff-top-header .header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.staff-top-header .navbar-brand {
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.staff-top-header .user-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.staff-top-header .staff-user-name {
+  font-size: 0.9rem;
+}
+
+.staff-top-header .logout-btn {
+  background-color: transparent;
+  border: 1px solid rgba(255,255,255,0.5);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.staff-top-header .logout-btn:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+
+/* Main Layout - Sidebar and Content */
+.staff-layout-container {
+  display: flex;
+  flex: 1;
+}
+
+/* Sidebar */
+.staff-sidebar {
+  width: 200px;
+  background-color: #2c3136;
+  color: #fff;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.staff-sidebar .sidebar-header {
+  padding: 20px 15px;
+  background-color: #23272b;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.staff-sidebar .sidebar-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.staff-sidebar .sidebar-nav {
+  flex: 1;
+}
+
+.staff-sidebar .sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.staff-sidebar .nav-item {
+  margin: 0;
+  padding: 0;
+}
+
+.staff-sidebar .nav-link {
+  display: block;
+  padding: 15px 20px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.staff-sidebar .nav-link:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+
+.staff-sidebar .nav-link.active {
+  background-color: rgba(255,255,255,0.1);
+  border-left: 4px solid #007bff;
+}
+
+.staff-sidebar .sidebar-footer {
+  padding: 20px 15px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  background-color: #23272b;
+  margin-top: auto;
+}
+
+.staff-sidebar .user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.staff-sidebar .user-info span {
+  color: #fff;
+  font-weight: 500;
+  text-align: center;
+}
+
+.staff-sidebar .logout-btn {
+  background-color: transparent;
+  border: 1px solid rgba(255,255,255,0.5);
+  color: #fff;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+/* Main Content */
+.staff-main-content {
+  flex: 1;
+  padding: 30px;
+  background-color: #f8f9fa;
+  overflow: auto;
+}

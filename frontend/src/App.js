@@ -1,53 +1,59 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Header from './components/header'; 
-import Footer from './components/Footer';
-import HomePage from './pages/HomePage';
-import ServicesPage from './pages/ServicesPage';
-import ContactPage from './pages/ContactPage';
-import BookingPage from './pages/BookingPage';
-import AboutPage from './pages/AboutPage';
-import TeamPage from './pages/TeamPage';
-import ProductsPage from './pages/ProductsPage';
-import ProductDetailPage from './pages/ProductDetailPage'; // New import for product detail page
-import CartPage from './pages/CartPage'; // Import the new CartPage
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import Header from './components/user/header'; 
+import Footer from './components/user/Footer';
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom'; // Import useLocation từ react-router-dom
-import { CartProvider } from './context/CartContext'; // Import CartProvider
+import { CartProvider } from './context/CartContext'; 
+import UserRoutes from './routes/UserRoutes';
+import StaffRoutes from './routes/StaffRoutes';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [pathname]); // Chỉ chạy lại effect khi pathname thay đổi
+  }, [pathname]); 
 
-  return null; // Component này không render ra UI
+  return null; 
+}
+
+// Component to manage content display
+function AppContent() {
+  const location = useLocation();
+  
+  // Check if we're in staff routes
+  const isStaffRoute = location.pathname.startsWith('/staff');
+  
+  // Paths where user header should be hidden
+  const hideHeaderPaths = ['/login', '/register'];
+  
+  // Check whether to show user header
+  const showUserHeader = !hideHeaderPaths.includes(location.pathname) && !isStaffRoute;
+  
+  return (
+    <CartProvider>
+      <div className="App">
+        {showUserHeader && <Header />}
+        <main>
+          <Routes>
+            {/* Staff routes */}
+            <Route path="/staff/*" element={<StaffRoutes />} />
+            
+            {/* User routes - all other paths */}
+            <Route path="/*" element={<UserRoutes />} />
+          </Routes>
+        </main>
+        {!isStaffRoute && <Footer />}
+      </div>
+    </CartProvider>
+  );
 }
 
 function App() {
   return (
     <Router>
-      <ScrollToTop /> 
-      <CartProvider>
-        <div className="App">
-          <Header />
-          <main>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/services" element={<ServicesPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/booking" element={<BookingPage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/team" element={<TeamPage />} />
-              <Route path="/products" element={<ProductsPage />} />
-              <Route path="/products/:id" element={<ProductDetailPage />} />
-              <Route path="/cart" element={<CartPage />} /> {/* Add new route for cart */}
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-      </CartProvider>
+      <ScrollToTop />
+      <AppContent />
     </Router>
   );
 }

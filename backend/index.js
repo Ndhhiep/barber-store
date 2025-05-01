@@ -4,6 +4,8 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
+const authRoutes = require('./routes/authRoutes'); // Import auth routes
 
 // Load environment variables
 dotenv.config();
@@ -31,6 +33,8 @@ app.use(express.json());
 // Routes
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/auth', authRoutes); // Add auth routes
 
 // Home route
 app.get('/', (req, res) => {
