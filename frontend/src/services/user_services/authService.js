@@ -146,13 +146,19 @@ export const isAuthenticated = () => {
 export const hasRoleAccess = (requiredRole) => {
   try {
     if (requiredRole === 'staff') {
-      // Check for staff access
+      // Check for staff access using staffToken instead of staffUser
+      const staffToken = localStorage.getItem('staffToken');
       const staffUserStr = localStorage.getItem('staffUser');
-      if (!staffUserStr) return false;
+      
+      if (!staffToken || !staffUserStr) return false;
       
       // Validate the staffUser data structure
-      const staffUser = JSON.parse(staffUserStr);
-      return staffUser && staffUser.token && staffUser.user && staffUser.user.role === 'staff';
+      try {
+        const staffUser = JSON.parse(staffUserStr);
+        return staffUser && staffUser.role === 'staff';
+      } catch (e) {
+        return false;
+      }
       
     } else if (requiredRole === 'user') {
       // Check for regular user access - both token and valid user data must exist

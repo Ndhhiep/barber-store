@@ -40,13 +40,26 @@ export const StaffProtectedRoute = () => {
  * (like login and register pages)
  */
 export const PublicOnlyRoute = () => {
-  const isUser = hasRoleAccess('user');
+  // Check only for regular user authentication, not staff
+  const token = localStorage.getItem('token');
+  const userStr = localStorage.getItem('user');
+  
+  let isUser = false;
+  
+  if (token && userStr) {
+    try {
+      const userData = JSON.parse(userStr);
+      isUser = userData && userData.role === 'user';
+    } catch (e) {
+      isUser = false;
+    }
+  }
 
   if (isUser) {
     // If user is regular user, redirect to home
     return <Navigate to="/" replace />;
   } else {
-    // If not authenticated, allow access
+    // If not authenticated as a regular user, allow access
     return <Outlet />;
   }
 };
