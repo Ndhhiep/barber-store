@@ -22,7 +22,7 @@ const productSchema = new mongoose.Schema(
       required: [true, 'Product price is required'],
       default: 0,
     },
-    image: {
+    imgURL: {
       type: String,
       required: false,
       default: '/assets/product-default.jpg',

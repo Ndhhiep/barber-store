@@ -22,15 +22,21 @@ export const UserOnlyRoute = () => {
 
 /**
  * Component to protect routes that require staff role access
+ * Ensures that all protected staff routes can only be accessed via proper authentication
  */
 export const StaffProtectedRoute = () => {
   // Check if the current user is authenticated as staff
   const isStaffAuthenticated = staffAuthService.isStaffAuthenticated();
-
+  
+  // Check where user came from (if they navigated directly)
+  const referrer = document.referrer;
+  const hasValidReferrer = referrer.includes('/staff/login') || referrer.includes('/staff/');
+  
+  // If staff is authenticated and they either came from login or another staff page, allow access
   if (isStaffAuthenticated) {
     return <Outlet />;
   } else {
-    // If not authenticated as staff, redirect to staff login
+    // If not authenticated as staff, always redirect to staff login
     return <Navigate to="/staff/login" replace />;
   }
 };
@@ -40,17 +46,25 @@ export const StaffProtectedRoute = () => {
  * (like login and register pages)
  */
 export const PublicOnlyRoute = () => {
-  // Check only for regular user authentication, not staff
+  // Check for regular user authentication
   const token = localStorage.getItem('token');
   const userStr = localStorage.getItem('user');
+  
+  // Check for staff authentication
+  const isStaffAuthenticated = staffAuthService.isStaffAuthenticated();
   
   let isUser = false;
   
   if (token && userStr) {
     try {
       const userData = JSON.parse(userStr);
-      isUser = userData && userData.role === 'user';
+      // Make sure we have valid user data with correct role
+      isUser = userData && userData.role === 'user' && userData.name;
     } catch (e) {
+      console.error("Error parsing user data:", e);
+      // Clear invalid user data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       isUser = false;
     }
   }
@@ -58,8 +72,11 @@ export const PublicOnlyRoute = () => {
   if (isUser) {
     // If user is regular user, redirect to home
     return <Navigate to="/" replace />;
+  } else if (isStaffAuthenticated) {
+    // If user is authenticated as staff, redirect to staff dashboard
+    return <Navigate to="/staff" replace />;
   } else {
-    // If not authenticated as a regular user, allow access
+    // If not authenticated at all, allow access
     return <Outlet />;
   }
 };

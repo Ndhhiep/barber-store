@@ -8,7 +8,8 @@ const {
   cancelBooking,
   updateBookingStatus
 } = require('../controllers/bookingController');
-const { protect, restrictTo } = require('../controllers/authController');
+const { protect } = require('../middleware/authMiddleware');
+const { restrictTo } = require('../controllers/authController');
 
 // Public route to create a new booking
 router.post('/', createBooking);

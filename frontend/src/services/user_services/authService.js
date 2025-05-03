@@ -17,26 +17,26 @@ export const login = async (email, password) => {
       // Kiểm tra vai trò người dùng
       if (result.data && result.data.user) {
         // Chỉ xử lý đăng nhập cho tài khoản user thông thường
-        // Staff sẽ được xử lý qua staffAuthService.staffLogin
         if (result.data.user.role === 'user') {
           // Lưu thông tin user trong localStorage
           // Không xóa thông tin staff nữa để có thể đăng nhập đồng thời
           localStorage.setItem('token', result.token);
           localStorage.setItem('user', JSON.stringify(result.data.user));
+          
+          // Chuyển hướng nếu có đường dẫn được cung cấp
+          if (result.redirectPath) {
+            window.location.href = result.redirectPath;
+          } else {
+            // Mặc định chuyển hướng đến trang chủ
+            window.location.href = '/';
+          }
         } else if (result.data.user.role === 'staff') {
-          // Nếu đây là tài khoản staff nhưng đang cố đăng nhập qua trang user
-          // thì chuyển hướng đến trang đăng nhập staff
-          window.location.href = '/staff/login';
-          return result;
+          // Nếu đây là tài khoản staff, hiển thị thông báo lỗi cụ thể
+          throw new Error('Đây là tài khoản nhân viên. Vui lòng đăng nhập tại trang đăng nhập dành cho nhân viên.');
+        } else {
+          // Nếu là role khác (admin, etc.), cũng hiển thị thông báo lỗi
+          throw new Error('Tài khoản của bạn không có quyền truy cập vào phần này.');
         }
-      }
-      
-      // Chuyển hướng nếu có đường dẫn được cung cấp
-      if (result.redirectPath) {
-        window.location.href = result.redirectPath;
-      } else {
-        // Mặc định chuyển hướng đến trang chủ
-        window.location.href = '/';
       }
     }
     

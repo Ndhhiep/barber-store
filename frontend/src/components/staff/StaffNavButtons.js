@@ -1,14 +1,24 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import staffAuthService from '../../services/staff_services/staffAuthService';
+// Import Bootstrap Icons CSS if not already globally imported
+// import 'bootstrap-icons/font/bootstrap-icons.css'; 
 
 const StaffNavButtons = () => {
   const navigate = useNavigate();
   const staffUser = staffAuthService.getStaffUser();
   
+  // Function to get the last name
+  const getLastName = (fullName) => {
+    if (!fullName) return 'Staff User';
+    const nameParts = fullName.trim().split(' ');
+    return nameParts[nameParts.length - 1];
+  };
+
   const handleLogout = () => {
     staffAuthService.staffLogout();
-    navigate('/login');
+    // Corrected: Redirect to staff login page after logout
+    navigate('/staff/login'); 
   };
 
   return (
@@ -42,11 +52,36 @@ const StaffNavButtons = () => {
           </li>
         </ul>
       </nav>
-      
+      {/* Footer section for user info and logout */}
       <div className="sidebar-footer">
-        <div className="user-info">
-          <span>{staffUser?.name || 'Staff User'}</span>
-          <button className="logout-btn" onClick={handleLogout}>LOGOUT</button>
+        {/* Sử dụng inline style để ghi đè lên CSS mặc định */}
+        <div 
+          className="user-info" 
+          style={{ 
+            display: "flex", 
+            flexDirection: "row", // Đảm bảo các phần tử nằm trên cùng một dòng 
+            justifyContent: "space-between", // Đẩy các phần tử ra hai đầu
+            alignItems: "center", // Căn giữa theo chiều dọc
+            width: "100%", // Chiếm toàn bộ chiều rộng
+          }}
+        > 
+          {/* Hiển thị tên cuối */}
+          <span className="text-truncate">{getLastName(staffUser?.user?.name)}</span> 
+          {/* Nút logout với icon */}
+          <button 
+            className="logout-btn btn btn-link p-0" 
+            onClick={handleLogout} 
+            title="Logout"
+            style={{ 
+              border: "none", // Bỏ border
+              background: "transparent", // Trong suốt
+              color: "inherit",
+              padding: 0,
+              lineHeight: 1 
+            }} 
+          >
+            <i className="bi bi-box-arrow-right fs-5"></i> 
+          </button>
         </div>
       </div>
     </div>

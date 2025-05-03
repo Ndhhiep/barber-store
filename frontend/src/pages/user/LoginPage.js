@@ -20,10 +20,22 @@ const LoginPage = () => {
   const redirect = new URLSearchParams(location.search).get('redirect') || '';
   
   useEffect(() => {
-    // Check if user is already logged in
+    // Check if user is already logged in with a valid token and user data
     const token = localStorage.getItem('token');
-    if (token) {
-      navigate(redirect ? `/${redirect}` : '/');
+    const userStr = localStorage.getItem('user');
+    
+    if (token && userStr) {
+      try {
+        // Make sure we have valid user data
+        const userData = JSON.parse(userStr);
+        if (userData && userData.role === 'user') {
+          navigate(redirect ? `/${redirect}` : '/');
+        }
+      } catch (e) {
+        // If user data is invalid, clear it out
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
   }, [navigate, redirect]);
   
@@ -45,17 +57,19 @@ const LoginPage = () => {
     setIsLoading(true);
     
     try {
-      // Use the authService login function instead of direct axios call
-      // The redirection will be handled by the authService
+      // Use the authService login function
       await login(formData.email, formData.password);
-      
-      // Note: Redirection now happens in the authService.login function
-      // We don't need to navigate here as it will be handled by the service
+      // Redirection is handled by the authService.login function
     } catch (error) {
-      setError(
-        error.response?.data?.message || 
-        'Login failed. Please check your credentials and try again.'
-      );
+      // Check for custom error messages
+      if (error.message) {
+        setError(error.message);
+      } else {
+        setError(
+          error.response?.data?.message || 
+          'Sai tài khoản hoặc mật khẩu. Vui lòng kiểm tra lại thông tin đăng nhập.'
+        );
+      }
       setIsLoading(false);
     }
   };

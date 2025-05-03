@@ -52,10 +52,12 @@ const staffLogin = async (email, password) => {
   }
 };
 
-// Staff Logout - only clears staff-specific data
+// Staff Logout - clears staff-specific data and navigation history
 const staffLogout = () => {
   localStorage.removeItem('staffToken');
   localStorage.removeItem('staffUser');
+  sessionStorage.removeItem('staffNavHistory');
+  sessionStorage.removeItem('staffJustLoggedIn');
   window.location.href = '/staff/login';
 };
 

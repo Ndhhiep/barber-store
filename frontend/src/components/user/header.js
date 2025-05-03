@@ -194,9 +194,12 @@ const Header = () => {
                   </ul>
                 </div>
               ) : (
-                <NavLink to="/login" className="login-btn">
+                <a 
+                  href="/login" 
+                  className="login-btn"
+                >
                   Login
-                </NavLink>
+                </a>
               )}
             </div>
           </div>

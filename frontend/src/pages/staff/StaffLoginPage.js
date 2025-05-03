@@ -34,10 +34,13 @@ const StaffLoginPage = () => {
     setIsLoading(true);
     
     try {
-      // Sử dụng staffAuthService.staffLogin thay vì authService.login
+      // Use staffAuthService.staffLogin for authentication
       const response = await staffAuthService.staffLogin(formData.email, formData.password);
       
-      // Chuyển hướng đến dashboard của staff
+      // Set a flag in sessionStorage to indicate proper login flow
+      sessionStorage.setItem('staffJustLoggedIn', 'true');
+      
+      // Navigate to staff dashboard
       navigate('/staff');
     } catch (error) {
       setError(

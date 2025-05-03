@@ -15,14 +15,27 @@ function ProductsPage() {
     const fetchProductsByCategory = async () => {
       try {
         setLoading(true);
-        // Remove cache-control headers to allow browser caching
-        const { data } = await axios.get('/api/products/categories');
+        
+        // Use the API service or configured base URL
+        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+        const { data } = await axios.get(`${baseUrl}/products/categories`);
+        
+        console.log("Products API Response:", data);
+        
+        if (!data || Object.keys(data).length === 0) {
+          console.log("No products received from API");
+          setError("No products found. The products database may be empty.");
+          setLoading(false);
+          return;
+        }
+
         setProductsByCategory(data);
         setFilteredProductsByCategory(data);
         const categoryNames = Object.keys(data);
         setActiveCategories(categoryNames);
         setLoading(false);
       } catch (err) {
+        console.error("Error fetching products:", err);
         setError(err.response && err.response.data.message 
           ? err.response.data.message 
           : err.message);
@@ -52,7 +65,7 @@ function ProductsPage() {
     
     // Only process categories that are in the active list
     activeCategories.forEach(category => {
-      if (productsByCategory[category]) {
+      if (productsByCategory[category] && Array.isArray(productsByCategory[category])) {
         // Filter products by name
         const filteredProducts = productsByCategory[category].filter(product => 
           product.name?.toLowerCase().includes(lowercaseSearchTerm)
@@ -125,14 +138,20 @@ function ProductsPage() {
                 <div key={category} className="mb-5">
                   <h2 className="h3 mb-4 pb-2 border-bottom">{category}</h2>
                   <div className="row justify-content-start">
-                    {filteredProductsByCategory[category].map((product) => (
-                      <div className="col-xl-4 col-lg-6 col-md-12 mb-4 d-flex justify-content-center" key={product._id}>
-                        <ProductCard product={{
-                          ...product,
-                          imageUrl: product.image // Mapping image field to imageUrl for compatibility
-                        }} />
+                    {Array.isArray(filteredProductsByCategory[category]) ? 
+                      filteredProductsByCategory[category].map((product) => (
+                        <div className="col-xl-4 col-lg-6 col-md-12 mb-4 d-flex justify-content-center" key={product._id}>
+                          <ProductCard product={{
+                            ...product,
+                            imageUrl: product.image // Mapping image field to imageUrl for compatibility
+                          }} />
+                        </div>
+                      ))
+                      : 
+                      <div className="col-12 text-center">
+                        <p>No products available in this category.</p>
                       </div>
-                    ))}
+                    }
                   </div>
                 </div>
               ))

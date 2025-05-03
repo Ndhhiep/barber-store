@@ -6,6 +6,8 @@ const StaffProducts = () => {
   const [categories, setCategories] = useState(['All Categories']);
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [loading, setLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false); // New state for upload loading
+  const [successMessage, setSuccessMessage] = useState(''); // New state for success message
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -27,16 +29,40 @@ const StaffProducts = () => {
     fetchCategories();
   }, [selectedCategory, currentPage]);
   
+  // Auto-hide success message after 3 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+  
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await staffProductService.getAllProducts(selectedCategory, currentPage, 10);
-      setProducts(response.products || []);
-      setTotalPages(response.totalPages || 1);
+      // Chỉ truyền category khi không phải "All Categories"
+      const categoryParam = selectedCategory !== 'All Categories' ? selectedCategory : '';
+      const response = await staffProductService.getAllProducts(categoryParam, currentPage, 10);
+      
+      // Kiểm tra dữ liệu trả về
+      if (response && response.products) {
+        setProducts(response.products);
+        setTotalPages(response.totalPages || 1);
+      } else {
+        // Fallback nếu response không đúng định dạng
+        console.warn('Invalid response format:', response);
+        setProducts([]);
+        setTotalPages(1);
+      }
+      
       setError(null);
     } catch (err) {
       console.error('Error fetching products:', err);
       setError('Failed to load products. Please try again later.');
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -45,9 +71,17 @@ const StaffProducts = () => {
   const fetchCategories = async () => {
     try {
       const response = await staffProductService.getAllCategories();
-      setCategories(['All Categories', ...response]);
+      if (Array.isArray(response)) {
+        setCategories(['All Categories', ...response]);
+      } else {
+        console.warn('Invalid categories response:', response);
+        // Fallback với một số danh mục mặc định
+        setCategories(['All Categories', 'Pomade', 'Pre-styling', 'Grooming']);
+      }
     } catch (err) {
       console.error('Error fetching categories:', err);
+      // Fallback với một số danh mục mặc định nếu có lỗi
+      setCategories(['All Categories', 'Pomade', 'Pre-styling', 'Grooming']);
     }
   };
   
@@ -127,6 +161,7 @@ const StaffProducts = () => {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsUploading(true); // Start loading state
     
     try {
       const productData = {
@@ -140,15 +175,20 @@ const StaffProducts = () => {
       
       if (editMode) {
         await staffProductService.updateProduct(currentProduct.id, productData);
+        setSuccessMessage('Product updated successfully!');
       } else {
         await staffProductService.createProduct(productData);
+        setSuccessMessage('New product added successfully!');
       }
       
       closeModal();
       fetchProducts(); // Refresh the product list
     } catch (err) {
       console.error('Error saving product:', err);
-      alert(`Failed to ${editMode ? 'update' : 'create'} product. Please try again.`);
+      setError(`Failed to ${editMode ? 'update' : 'create'} product. Please try again.`);
+      setTimeout(() => setError(null), 3000); // Clear error after 3 seconds
+    } finally {
+      setIsUploading(false); // End loading state
     }
   };
   
@@ -165,10 +205,11 @@ const StaffProducts = () => {
   };
   
   return (
-    <div className="container mt-4">
+    <div className="container-fluid px-3 mt-4">
       <h2>Manage Products</h2>
       
       {error && <div className="alert alert-danger">{error}</div>}
+      {successMessage && <div className="alert alert-success">{successMessage}</div>}
       
       <div className="mb-3">
         <button className="btn btn-success" onClick={openAddModal}>
@@ -217,7 +258,7 @@ const StaffProducts = () => {
                           <td>{product._id.slice(-6).toUpperCase()}</td>
                           <td>
                             <img 
-                              src={product.imageUrl || '/assets/products/placeholder.jpg'} 
+                              src={product.imgURL || '/assets/products/placeholder.jpg'} 
                               alt={product.name} 
                               width="40" 
                               className="img-thumbnail"
@@ -226,7 +267,7 @@ const StaffProducts = () => {
                           <td>{product.name}</td>
                           <td>{product.category}</td>
                           <td>${parseFloat(product.price).toFixed(2)}</td>
-                          <td>{product.stock}</td>
+                          <td>{product.quantity || 0}</td>
                           <td>
                             <button 
                               className="btn btn-sm btn-primary me-1" 
@@ -297,19 +338,20 @@ const StaffProducts = () => {
       
       {/* Product Modal Form */}
       {isModalOpen && (
-        <div className="modal show d-block" tabIndex="-1">
-          <div className="modal-dialog modal-lg">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">{editMode ? 'Edit Product' : 'Add New Product'}</h5>
-                <button type="button" className="btn-close" onClick={closeModal}></button>
-              </div>
-              <div className="modal-body">
-                <form onSubmit={handleSubmit}>
-                  <div className="row mb-3">
-                    <div className="col-md-8">
-                      <div className="mb-3">
-                        <label htmlFor="name" className="form-label">Product Name</label>
+        <>
+          <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+            <div className="modal-dialog modal-lg modal-dialog-centered"> {/* Added modal-dialog-centered */}
+              <div className="modal-content">
+                <div className="modal-header bg-light"> {/* Added background color */}
+                  <h5 className="modal-title">{editMode ? 'Edit Product' : 'Add New Product'}</h5>
+                  <button type="button" className="btn-close" onClick={closeModal} aria-label="Close"></button> {/* Improved close button */}
+                </div>
+                <div className="modal-body p-4"> {/* Added padding */}
+                  <form onSubmit={handleSubmit}>
+                    {/* Row 1: Name and Category */}
+                    <div className="row mb-3">
+                      <div className="col-md-6">
+                        <label htmlFor="name" className="form-label fw-bold">Product Name</label> {/* Added fw-bold */}
                         <input 
                           type="text" 
                           className="form-control" 
@@ -320,49 +362,8 @@ const StaffProducts = () => {
                           required
                         />
                       </div>
-                      
-                      <div className="mb-3">
-                        <label htmlFor="description" className="form-label">Description</label>
-                        <textarea 
-                          className="form-control" 
-                          id="description" 
-                          name="description" 
-                          rows="3" 
-                          value={currentProduct.description} 
-                          onChange={handleInputChange}
-                        ></textarea>
-                      </div>
-                    </div>
-                    
-                    <div className="col-md-4">
-                      <div className="mb-3">
-                        <label htmlFor="image" className="form-label">Product Image</label>
-                        <input 
-                          type="file" 
-                          className="form-control" 
-                          id="image" 
-                          name="image" 
-                          onChange={handleImageChange}
-                          accept="image/*"
-                        />
-                        {imagePreview && (
-                          <div className="mt-2">
-                            <img 
-                              src={imagePreview} 
-                              alt="Product preview" 
-                              className="img-fluid img-thumbnail" 
-                              style={{ maxHeight: '100px' }} 
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="row">
-                    <div className="col-md-4">
-                      <div className="mb-3">
-                        <label htmlFor="category" className="form-label">Category</label>
+                      <div className="col-md-6">
+                        <label htmlFor="category" className="form-label fw-bold">Category</label> {/* Added fw-bold */}
                         <select 
                           className="form-select" 
                           id="category" 
@@ -378,10 +379,11 @@ const StaffProducts = () => {
                         </select>
                       </div>
                     </div>
-                    
-                    <div className="col-md-4">
-                      <div className="mb-3">
-                        <label htmlFor="price" className="form-label">Price ($)</label>
+
+                    {/* Row 2: Price and Stock */}
+                    <div className="row mb-3">
+                      <div className="col-md-6">
+                        <label htmlFor="price" className="form-label fw-bold">Price ($)</label> {/* Added fw-bold */}
                         <input 
                           type="number" 
                           className="form-control" 
@@ -394,11 +396,8 @@ const StaffProducts = () => {
                           required
                         />
                       </div>
-                    </div>
-                    
-                    <div className="col-md-4">
-                      <div className="mb-3">
-                        <label htmlFor="stock" className="form-label">Stock</label>
+                      <div className="col-md-6">
+                        <label htmlFor="stock" className="form-label fw-bold">Stock</label> {/* Added fw-bold */}
                         <input 
                           type="number" 
                           className="form-control" 
@@ -411,17 +410,111 @@ const StaffProducts = () => {
                         />
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="modal-footer">
-                    <button type="button" className="btn btn-secondary" onClick={closeModal}>Cancel</button>
-                    <button type="submit" className="btn btn-primary">Save</button>
-                  </div>
-                </form>
+
+                    {/* Row 3: Description */}
+                    <div className="row mb-3">
+                      <div className="col-12">
+                        <label htmlFor="description" className="form-label fw-bold">Description</label> {/* Added fw-bold */}
+                        <textarea 
+                          className="form-control" 
+                          id="description" 
+                          name="description" 
+                          rows="4" // Increased rows for better visibility
+                          value={currentProduct.description} 
+                          onChange={handleInputChange}
+                        ></textarea>
+                      </div>
+                    </div>
+
+                    {/* Row 4: Image Upload and Preview */}
+                    <div className="row mb-4"> {/* Increased bottom margin */}
+                      <div className="col-12">
+                        <label htmlFor="image" className="form-label fw-bold">Product Image</label> {/* Added fw-bold */}
+                        <div className="d-flex align-items-start"> {/* Use flexbox for alignment */}
+                          <div className="flex-grow-1 me-3">
+                            <input 
+                              type="file" 
+                              className="form-control" 
+                              id="image" 
+                              name="image" 
+                              onChange={handleImageChange}
+                              accept="image/*"
+                            />
+                            <small className="form-text text-muted">
+                              {editMode && currentProduct.imageUrl ? 'Leave blank to keep the current image.' : 'Upload a new image.'}
+                            </small>
+                          </div>
+                          {imagePreview && (
+                            <div className="mt-0"> {/* Removed mt-2 */}
+                              <img 
+                                src={imagePreview} 
+                                alt="Product preview" 
+                                className="img-thumbnail" // Use img-thumbnail for border
+                                style={{ maxHeight: '100px', maxWidth: '150px', objectFit: 'contain' }} // Adjusted style
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Modal Footer */}
+                    <div className="modal-footer mt-4 pt-3 border-top"> {/* Added margin-top, padding-top and border */}
+                      <button 
+                        type="button" 
+                        className="btn btn-outline-secondary" 
+                        onClick={closeModal}
+                        disabled={isUploading}
+                      >
+                        Cancel
+                      </button> {/* Styled Cancel button */}
+                      <button 
+                        type="submit" 
+                        className="btn btn-primary"
+                        disabled={isUploading}
+                      >
+                        {isUploading ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            {editMode ? 'Saving...' : 'Uploading...'}
+                          </>
+                        ) : (
+                          editMode ? 'Save Changes' : 'Add Product'
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
           <div className="modal-backdrop fade show"></div>
+        </>
+      )}
+      
+      {/* Floating success notification */}
+      {successMessage && (
+        <div 
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            zIndex: 9999,
+            maxWidth: '300px'
+          }}
+          className="toast show bg-success text-white"
+        >
+          <div className="toast-header bg-success text-white">
+            <strong className="me-auto">Success</strong>
+            <button 
+              type="button" 
+              className="btn-close btn-close-white" 
+              onClick={() => setSuccessMessage('')}
+            ></button>
+          </div>
+          <div className="toast-body">
+            {successMessage}
+          </div>
         </div>
       )}
     </div>
