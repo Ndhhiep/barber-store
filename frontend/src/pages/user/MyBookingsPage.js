@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import '../../css/user/MyBookingsPage.css';
+import { getMyBookings, cancelBooking } from '../../services/user_services/bookingService';
+import { checkServerStatus } from '../../utils/serverCheck';
 
 const MyBookingsPage = () => {
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [serverOnline, setServerOnline] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -18,18 +20,29 @@ const MyBookingsPage = () => {
           navigate('/login?redirect=my-bookings');
           return;
         }
+
+        // Check server status first
+        const isServerRunning = await checkServerStatus();
+        if (!isServerRunning) {
+          setServerOnline(false);
+          setError('Cannot connect to server. Please check if the backend server is running.');
+          setIsLoading(false);
+          return;
+        }
         
-        const response = await axios.get('http://localhost:5000/api/bookings/my-bookings', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        
+        const response = await getMyBookings();
         setBookings(response.data);
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching bookings:', error);
-        setError('Failed to load your booking history. Please try again later.');
+        
+        if (error.code === 'ERR_NETWORK') {
+          setServerOnline(false);
+          setError('Network error: Cannot connect to the server. Please check your internet connection or make sure the server is running.');
+        } else {
+          setError('Failed to load your booking history. Please try again later.');
+        }
+        
         setIsLoading(false);
         
         // If unauthorized (401), redirect to login
@@ -42,6 +55,31 @@ const MyBookingsPage = () => {
     
     fetchBookings();
   }, [navigate]);
+
+  const retryConnection = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const isServerRunning = await checkServerStatus();
+      if (isServerRunning) {
+        setServerOnline(true);
+        // Retry fetching the bookings
+        const token = localStorage.getItem('token');
+        if (token) {
+          const response = await getMyBookings();
+          setBookings(response.data);
+        }
+      } else {
+        setServerOnline(false);
+        setError('Server is still not responding. Please make sure the backend server is running.');
+      }
+    } catch (error) {
+      setError('Failed to check server status. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // Format date for display
   const formatDate = (dateString) => {
@@ -69,13 +107,7 @@ const MyBookingsPage = () => {
   const handleCancelBooking = async (bookingId) => {
     if (window.confirm('Are you sure you want to cancel this booking?')) {
       try {
-        const token = localStorage.getItem('token');
-        
-        await axios.put(`http://localhost:5000/api/bookings/${bookingId}/cancel`, {}, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        await cancelBooking(bookingId);
         
         // Update the booking status in the UI
         setBookings(prevBookings =>
@@ -103,11 +135,42 @@ const MyBookingsPage = () => {
     );
   }
 
+  if (!serverOnline) {
+    return (
+      <div className="container py-5">
+        <div className="alert alert-danger" role="alert">
+          <h4 className="alert-heading">Connection Error!</h4>
+          <p>{error || 'Cannot connect to the server. Please check if the backend server is running.'}</p>
+          <hr />
+          <div className="mt-3">
+            <button 
+              className="btn btn-primary me-3" 
+              onClick={retryConnection}
+            >
+              Retry Connection
+            </button>
+            <Link to="/" className="btn btn-outline-secondary">
+              Return to Homepage
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="container py-5">
         <div className="alert alert-danger" role="alert">
           {error}
+          <div className="mt-3">
+            <button 
+              className="btn btn-primary" 
+              onClick={retryConnection}
+            >
+              Try Again
+            </button>
+          </div>
         </div>
       </div>
     );

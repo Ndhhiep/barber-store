@@ -5,9 +5,10 @@ const bookingSchema = mongoose.Schema({
     type: String,
     required: true
   },
-  barber: {
-    type: String,
-    required: false
+  barber_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Barber',
+    required: true // Thay đổi từ false thành true vì giờ bắt buộc phải có
   },
   date: {
     type: Date,

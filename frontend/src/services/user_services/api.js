@@ -1,9 +1,11 @@
 /**
  * Cấu hình base API và các helper functions cho việc gọi API
  */
+import axios from 'axios';
+import { checkServerStatus } from '../../utils/serverCheck';
 
 // Base URL cho tất cả API requests
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 /**
  * Helper function để xử lý các API calls với xác thực
@@ -12,6 +14,17 @@ const API_BASE_URL = 'http://localhost:5000/api';
  * @returns {Promise<any>} - Kết quả từ API
  */
 export const authenticatedFetch = async (endpoint, options = {}) => {
+  // Kiểm tra xem server có hoạt động không
+  try {
+    const isServerRunning = await checkServerStatus();
+    if (!isServerRunning) {
+      throw new Error('Server is not running or not accessible. Please check your backend server.');
+    }
+  } catch (serverCheckError) {
+    console.error('Server check failed:', serverCheckError);
+    // Tiếp tục với request, nhưng đã có warning trong console
+  }
+
   // Lấy token từ localStorage
   const token = localStorage.getItem('token');
   
@@ -27,58 +40,52 @@ export const authenticatedFetch = async (endpoint, options = {}) => {
   }
   
   try {
-    // Thực hiện request
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
+    // Fix: Pass the data directly instead of parsing it again
+    const response = await axios({
+      url: `${API_BASE_URL}${endpoint}`,
+      method: options.method || 'GET',
       headers,
-      credentials: 'include' // Để đảm bảo cookies được gửi
+      data: options.body ? JSON.parse(options.body) : options.data,
+      withCredentials: true, // Để đảm bảo cookies được gửi
+      timeout: 10000 // 10 seconds timeout
     });
     
-    // Kiểm tra lỗi xác thực (401)
-    if (response.status === 401) {
-      console.error('Unauthorized access, clearing authentication');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+    return response;
+  } catch (error) {
+    if (error.response) {
+      // Server trả về response với mã lỗi
+      if (error.response.status === 401) {
+        console.error('Unauthorized access, clearing authentication');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        // Redirect đến trang login sau 500ms để đảm bảo console message được hiển thị
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 500);
+        
+        return null;
+      }
       
-      // Redirect đến trang login sau 500ms để đảm bảo console message được hiển thị
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 500);
-      
-      return null;
-    }
-    
-
-    // Kiểm tra content type
-    const contentType = response.headers.get('content-type');
-    let data;
-    
-    if (contentType && contentType.includes('application/json')) {
-      data = await response.json();
-    } else {
-      data = await response.text();
-      console.warn('Response is not JSON:', data);
-      // Nếu không phải JSON, trả về text như là data
-      return {
-        success: response.ok,
-        data,
-        statusCode: response.status
-      };
-    }
-    
-    // Nếu response không ok, throw error với message từ API
-    if (!response.ok) {
-      const error = new Error(data.message || `API Error: ${response.status}`);
-      error.statusCode = response.status;
-      error.data = data;
+      // Trả lỗi từ API
+      const apiError = new Error(error.response.data?.message || `API Error: ${error.response.status}`);
+      apiError.statusCode = error.response.status;
+      apiError.data = error.response.data;
+      apiError.response = error.response;
+      throw apiError;
+    } 
+    else if (error.request) {
+      // Request được gửi nhưng không nhận được response
+      console.error('No response received from server:', error.request);
+      const networkError = new Error('Unable to connect to the server. Please check your internet connection or server status.');
+      networkError.code = 'ERR_NETWORK';
+      throw networkError;
+    } 
+    else {
+      // Lỗi khi thiết lập request
+      console.error('Error setting up request:', error.message);
       throw error;
     }
-    
-    // Trả về dữ liệu từ API
-    return data;
-  } catch (error) {
-    console.error(`API Error (${endpoint}):`, error);
-    throw error;
   }
 };
 
@@ -101,7 +108,7 @@ const api = {
    */
   post: (endpoint, data) => authenticatedFetch(endpoint, {
     method: 'POST',
-    body: JSON.stringify(data)
+    data: data // Fixed: Pass data directly rather than via body
   }),
   
   /**
@@ -112,7 +119,7 @@ const api = {
    */
   put: (endpoint, data) => authenticatedFetch(endpoint, {
     method: 'PUT',
-    body: JSON.stringify(data)
+    data: data // Fixed: Pass data directly rather than via body
   }),
   
   /**

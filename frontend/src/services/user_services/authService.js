@@ -11,38 +11,51 @@ import api from './api';
  */
 export const login = async (email, password) => {
   try {
-    const result = await api.post('/auth/login', { email, password });
+    const response = await api.post('/auth/login', { email, password });
     
-    if (result.status === 'success' && result.token) {
-      // Kiểm tra vai trò người dùng
-      if (result.data && result.data.user) {
-        // Chỉ xử lý đăng nhập cho tài khoản user thông thường
-        if (result.data.user.role === 'user') {
-          // Lưu thông tin user trong localStorage
-          // Không xóa thông tin staff nữa để có thể đăng nhập đồng thời
-          localStorage.setItem('token', result.token);
-          localStorage.setItem('user', JSON.stringify(result.data.user));
+    // Check if response has expected structure
+    if (response && response.data) {
+      const result = response.data;
+      
+      if (result.status === 'success' && result.token) {
+        // Check user role if available
+        if (result.data && result.data.user) {
+          const user = result.data.user;
           
-          // Chuyển hướng nếu có đường dẫn được cung cấp
-          if (result.redirectPath) {
-            window.location.href = result.redirectPath;
+          // Handle different roles
+          if (user.role === 'user') {
+            // Save authentication data
+            localStorage.setItem('token', result.token);
+            localStorage.setItem('user', JSON.stringify(user));
+            
+            // Handle redirection
+            if (result.redirectPath) {
+              window.location.href = result.redirectPath;
+            } else {
+              window.location.href = '/';
+            }
+          } else if (user.role === 'staff') {
+            throw new Error('Đây là tài khoản nhân viên. Vui lòng đăng nhập tại trang đăng nhập dành cho nhân viên.');
           } else {
-            // Mặc định chuyển hướng đến trang chủ
-            window.location.href = '/';
+            throw new Error('Tài khoản của bạn không có quyền truy cập vào phần này.');
           }
-        } else if (result.data.user.role === 'staff') {
-          // Nếu đây là tài khoản staff, hiển thị thông báo lỗi cụ thể
-          throw new Error('Đây là tài khoản nhân viên. Vui lòng đăng nhập tại trang đăng nhập dành cho nhân viên.');
-        } else {
-          // Nếu là role khác (admin, etc.), cũng hiển thị thông báo lỗi
-          throw new Error('Tài khoản của bạn không có quyền truy cập vào phần này.');
         }
       }
+      
+      return result;
+    } else {
+      throw new Error('Invalid response format from server');
     }
-    
-    return result;
   } catch (error) {
     console.error('Login error:', error);
+    
+    // Improved error handling
+    if (error.response) {
+      // Server returned an error response
+      const errorMessage = error.response.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.';
+      throw new Error(errorMessage);
+    }
+    
     throw error;
   }
 };

@@ -1,4 +1,6 @@
 const Booking = require('../models/Booking');
+const Barber = require('../models/Barber');
+const mongoose = require('mongoose');
 const asyncHandler = require('express-async-handler');
 
 // @desc    Create new booking
@@ -7,7 +9,7 @@ const asyncHandler = require('express-async-handler');
 const createBooking = asyncHandler(async (req, res) => {
   const {
     service,
-    barber,
+    barber_id,
     date,
     time,
     name,
@@ -17,9 +19,28 @@ const createBooking = asyncHandler(async (req, res) => {
     user_id // Added user_id to be saved if the user is logged in
   } = req.body;
 
+  // Xác thực barber_id
+  if (!barber_id) {
+    res.status(400);
+    throw new Error('Barber ID is required');
+  }
+
+  // Kiểm tra barber_id có hợp lệ không
+  if (!mongoose.Types.ObjectId.isValid(barber_id)) {
+    res.status(400);
+    throw new Error('Invalid Barber ID format');
+  }
+
+  // Kiểm tra barber có tồn tại không
+  const barber = await Barber.findById(barber_id);
+  if (!barber) {
+    res.status(404);
+    throw new Error('Barber not found');
+  }
+
   const booking = new Booking({
     service,
-    barber,
+    barber_id,
     date,
     time,
     name,
@@ -30,14 +51,21 @@ const createBooking = asyncHandler(async (req, res) => {
   });
 
   const createdBooking = await booking.save();
-  res.status(201).json(createdBooking);
+  
+  // Populate thông tin barber để trả về cho client
+  const populatedBooking = await Booking.findById(createdBooking._id)
+    .populate('barber_id', 'name specialization');
+  
+  res.status(201).json(populatedBooking);
 });
 
 // @desc    Get all bookings
 // @route   GET /api/bookings
 // @access  Private/Admin
 const getBookings = asyncHandler(async (req, res) => {
-  const bookings = await Booking.find({}).sort({ date: 1, time: 1 });
+  const bookings = await Booking.find({})
+    .populate('barber_id', 'name specialization')
+    .sort({ date: 1, time: 1 });
   res.json(bookings);
 });
 
@@ -46,6 +74,7 @@ const getBookings = asyncHandler(async (req, res) => {
 // @access  Private
 const getUserBookings = asyncHandler(async (req, res) => {
   const bookings = await Booking.find({ user_id: req.user._id })
+    .populate('barber_id', 'name specialization')
     .sort({ date: -1, createdAt: -1 }); // Sort by date (newest first)
   
   res.json(bookings);
@@ -55,7 +84,8 @@ const getUserBookings = asyncHandler(async (req, res) => {
 // @route   GET /api/bookings/:id
 // @access  Private
 const getBookingById = asyncHandler(async (req, res) => {
-  const booking = await Booking.findById(req.params.id);
+  const booking = await Booking.findById(req.params.id)
+    .populate('barber_id', 'name specialization');
 
   // Check if booking exists
   if (!booking) {

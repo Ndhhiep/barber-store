@@ -1,19 +1,28 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import '../../css/user/BookingPage.css';
+import { getAvailableTimeSlots } from '../../services/user_services/timeSlotService';
+import { getAllBarbers } from '../../services/user_services/barberService';
 
 const BookingPage = () => {
   const [bookingData, setBookingData] = useState({
     service: '',
-    barber: '',
+    barber_id: '', // ID của barber (MongoDB ObjectId)
     date: '',
     time: '',
     name: '',
     email: '',
     phone: '',
     notes: '',
-    user_id: null // Added user_id field to track user association
+    user_id: null 
   });
+
+  // State để lưu trữ danh sách barber từ API
+  const [barberList, setBarberList] = useState([]);
+  const [loadingBarbers, setLoadingBarbers] = useState(false);
+  
+  // State để lưu trữ tên của barber đã chọn (chỉ dùng để hiển thị UI)
+  const [selectedBarberName, setSelectedBarberName] = useState('');
 
   const [bookingStatus, setBookingStatus] = useState({
     submitted: false,
@@ -28,9 +37,30 @@ const BookingPage = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userData, setUserData] = useState(null);
 
+  // State to store available time slots from API
+  const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
+  const [isLoadingTimeSlots, setIsLoadingTimeSlots] = useState(false);
+
   // Format date to YYYY-MM-DD for comparing with input date value
   const formatDate = useCallback((date) => {
     return date.toISOString().split('T')[0];
+  }, []);
+
+  // Fetch barbers list from API
+  useEffect(() => {
+    const fetchBarbers = async () => {
+      try {
+        setLoadingBarbers(true);
+        const barbers = await getAllBarbers();
+        setBarberList(barbers);
+      } catch (error) {
+        console.error('Error fetching barbers:', error);
+      } finally {
+        setLoadingBarbers(false);
+      }
+    };
+
+    fetchBarbers();
   }, []);
 
   // Check if a time slot should be disabled - wrapped in useCallback
@@ -61,18 +91,22 @@ const BookingPage = () => {
       }
     }
     
+    // Then check if it's already booked (from API)
+    if (availableTimeSlots.length > 0) {
+      const timeSlotData = availableTimeSlots.find(slot => slot.start_time === timeSlot);
+      if (timeSlotData && !timeSlotData.is_available) {
+        return true;
+      }
+    }
+    
     return false;
-  }, [bookingData.date, formatDate]);
+  }, [bookingData.date, formatDate, availableTimeSlots]);
 
   // Update current time every minute for time slot validation
   useEffect(() => {
     const updateCurrentTime = () => {
-      // Directly update time slots without storing the current time in state
-      // This will re-render the component which is what we want
       setBookingData(prev => {
-        // If we have a date and time selected, check if we need to reset the time
         if (prev.date && prev.time) {
-          // If the currently selected time would now be disabled, reset it
           if (isTimeSlotDisabled(prev.time)) {
             return { ...prev, time: '' };
           }
@@ -81,9 +115,7 @@ const BookingPage = () => {
       });
     };
     
-    // Update every minute
     const timer = setInterval(updateCurrentTime, 60000);
-    
     return () => clearInterval(timer);
   }, [isTimeSlotDisabled]);
   
@@ -127,7 +159,46 @@ const BookingPage = () => {
     checkAuthStatus();
   }, []);
 
-  // Services, barbers, and time slots data
+  // Fetch available time slots when barber or date changes
+  useEffect(() => {
+    const fetchTimeSlots = async () => {
+      if (bookingData.barber_id && bookingData.date) {
+        try {
+          setIsLoadingTimeSlots(true);
+          
+          console.log("Fetching time slots for barber ID:", bookingData.barber_id, "on date:", bookingData.date);
+          
+          // Call the service to get available time slots
+          const slots = await getAvailableTimeSlots(bookingData.barber_id, bookingData.date);
+          console.log("Available time slots received:", slots);
+          setAvailableTimeSlots(slots);
+          
+          // If currently selected time is not available, reset it
+          if (bookingData.time) {
+            const isCurrentTimeAvailable = slots.some(
+              slot => slot.start_time === bookingData.time && slot.is_available
+            );
+            
+            if (!isCurrentTimeAvailable) {
+              setBookingData(prev => ({
+                ...prev,
+                time: ''
+              }));
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching available time slots:', error);
+          setAvailableTimeSlots([]);
+        } finally {
+          setIsLoadingTimeSlots(false);
+        }
+      }
+    };
+    
+    fetchTimeSlots();
+  }, [bookingData.barber_id, bookingData.date]);
+
+  // Services data
   const services = [
     "Classic Haircut",
     "Traditional Hot Towel Shave",
@@ -139,12 +210,13 @@ const BookingPage = () => {
     "Buzz Cut"
   ];
 
-  const barbers = [
-    "James Wilson (Master Barber)",
-    "Robert Davis (Senior Barber)",
-    "Michael Thompson (Beard Specialist)",
-    "Any Available Barber"
-  ];
+  // Được thay thế bằng API call để lấy danh sách barber thực tế
+  // const barbers = [
+  //   "James Wilson (Master Barber)",
+  //   "Robert Davis (Senior Barber)",
+  //   "Michael Thompson (Beard Specialist)",
+  //   "Any Available Barber"
+  // ];
 
   const timeSlots = [
     "10:00", "10:30", "11:00", "11:30",
@@ -156,15 +228,38 @@ const BookingPage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setBookingData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+
+    if (name === 'barber') {
+      // Xử lý đặc biệt cho trường barber để lấy barber_id
+      if (value === 'any') {
+        // Trường hợp "Any Available Barber"
+        setBookingData(prev => ({
+          ...prev,
+          barber_id: 'any' // Giá trị đặc biệt cho "bất kỳ barber nào"
+        }));
+        setSelectedBarberName('Any Available Barber');
+      } else {
+        // Tìm barber tương ứng trong danh sách để lấy ID
+        const selectedBarber = barberList.find(barber => barber._id === value);
+        if (selectedBarber) {
+          setBookingData(prev => ({
+            ...prev,
+            barber_id: selectedBarber._id
+          }));
+          setSelectedBarberName(selectedBarber.name + (selectedBarber.specialization ? ` (${selectedBarber.specialization})` : ''));
+        }
+      }
+    } else {
+      // Xử lý các trường khác bình thường
+      setBookingData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
 
     // If date changes, reset the time selection if the previously selected time is now invalid
     if (name === 'date') {
       setBookingData(prev => {
-        // Check if the currently selected time would be disabled with the new date
         if (prev.time && isTimeSlotDisabled(prev.time)) {
           return { ...prev, [name]: value, time: '' };
         }
@@ -192,8 +287,8 @@ const BookingPage = () => {
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
-      
-      // Submit booking with user_id if logged in
+
+      // Submit booking
       const response = await axios.post(
         'http://localhost:5000/api/bookings',
         bookingData,
@@ -211,7 +306,7 @@ const BookingPage = () => {
       // Reset form after successful submission
       setBookingData({
         service: '',
-        barber: '',
+        barber_id: '',
         date: '',
         time: '',
         name: isLoggedIn ? userData.name : '',
@@ -220,6 +315,7 @@ const BookingPage = () => {
         notes: '',
         user_id: isLoggedIn ? userData._id : null
       });
+      setSelectedBarberName('');
     } catch (error) {
       console.error('Error submitting booking:', error);
       
@@ -266,8 +362,8 @@ const BookingPage = () => {
                     <p className="mb-5">
                       <strong>Date:</strong> {bookingData.date} at {bookingData.time}<br/>
                       <strong>Service:</strong> {bookingData.service}<br/>
-                      {bookingData.barber !== "Any Available Barber" && (
-                        <><strong>Barber:</strong> {bookingData.barber}<br/></>
+                      {selectedBarberName !== "Any Available Barber" && selectedBarberName && (
+                        <><strong>Barber:</strong> {selectedBarberName}<br/></>
                       )}
                     </p>
                     <div>
@@ -276,14 +372,16 @@ const BookingPage = () => {
                         onClick={() => {
                           setBookingData({
                             service: '',
-                            barber: '',
+                            barber_id: '',
                             date: '',
                             time: '',
-                            name: '',
-                            email: '',
-                            phone: '',
-                            notes: ''
+                            name: isLoggedIn ? userData.name : '',
+                            email: isLoggedIn ? userData.email : '',
+                            phone: isLoggedIn ? userData.phone : '',
+                            notes: '',
+                            user_id: isLoggedIn ? userData._id : null
                           });
+                          setSelectedBarberName('');
                           setBookingStatus({ submitted: false, error: false, errorMessage: '' });
                         }}
                       >
@@ -322,18 +420,28 @@ const BookingPage = () => {
                             </div>
                             
                             <div className="col-12 mb-3">
-                              <label htmlFor="barber" className="form-label">Select Barber</label>
+                              <label htmlFor="barber" className="form-label">Select Barber*</label>
                               <select
                                 id="barber"
                                 name="barber"
-                                value={bookingData.barber}
+                                value={bookingData.barber_id || ''}
                                 onChange={handleChange}
+                                required
                                 className="form-select booking-form-control"
                               >
                                 <option value="">-- Select a barber --</option>
-                                {barbers.map((barber, index) => (
-                                  <option key={index} value={barber}>{barber}</option>
-                                ))}
+                                {loadingBarbers ? (
+                                  <option value="" disabled>Loading barbers...</option>
+                                ) : (
+                                  <>
+                                    {barberList.map((barber) => (
+                                      <option key={barber._id} value={barber._id}>
+                                        {barber.name} {barber.specialization ? `(${barber.specialization})` : ''}
+                                      </option>
+                                    ))}
+                                    <option value="any">Any Available Barber</option>
+                                  </>
+                                )}
                               </select>
                             </div>
                             
@@ -361,27 +469,39 @@ const BookingPage = () => {
                                 required
                               />
                               <div className="time-slots-grid">
-                                <div className="row g-2">
-                                  {timeSlots.map((time, index) => {
-                                    const disabled = isTimeSlotDisabled(time);
-                                    return (
-                                      <div key={index} className="col-6 col-md-3">
-                                        <button
-                                          type="button"
-                                          className={`btn time-slot-btn w-100 ${bookingData.time === time ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
-                                          onClick={() => !disabled && handleTimeSelect(time)}
-                                          disabled={disabled}
-                                        >
-                                          {time}
-                                        </button>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
+                                {isLoadingTimeSlots ? (
+                                  <div className="text-center my-3">
+                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    Đang tải các khung giờ...
+                                  </div>
+                                ) : (
+                                  <div className="row g-2">
+                                    {timeSlots.map((time, index) => {
+                                      const disabled = isTimeSlotDisabled(time);
+                                      return (
+                                        <div key={index} className="col-6 col-md-3">
+                                          <button
+                                            type="button"
+                                            className={`btn time-slot-btn w-100 ${bookingData.time === time ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
+                                            onClick={() => !disabled && handleTimeSelect(time)}
+                                            disabled={disabled}
+                                          >
+                                            {time}
+                                          </button>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
                               </div>
                               {bookingData.date === formatDate(new Date()) && (
                                 <small className="text-muted d-block mt-2">
                                   Time slots that have already passed or are within 30 minutes from now are disabled.
+                                </small>
+                              )}
+                              {bookingData.barber_id && bookingData.date && availableTimeSlots.length > 0 && (
+                                <small className="text-muted d-block mt-2">
+                                  Khung giờ được tô mờ đã có người đặt trước.
                                 </small>
                               )}
                             </div>

@@ -6,6 +6,8 @@ const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const authRoutes = require('./routes/authRoutes'); // Import auth routes
+const timeSlotRoutes = require('./routes/timeSlotRoutes'); // Import time slot routes
+const barberRoutes = require('./routes/barberRoutes'); // Thêm route barber
 
 // Load environment variables
 dotenv.config();
@@ -35,10 +37,27 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/auth', authRoutes); // Add auth routes
+app.use('/api/timeslots', timeSlotRoutes); // Add time slot routes
+app.use('/api/barbers', barberRoutes); // Thêm API endpoint cho barber
 
-// Home route
+// Home route - enhanced with health check information
 app.get('/', (req, res) => {
-  res.json({ message: 'API is running...' });
+  res.json({
+    message: 'API is running...',
+    status: 'healthy',
+    version: '1.0.0',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Also add a health check endpoint at API root for frontend server status checks
+app.get('/api', (req, res) => {
+  res.json({
+    message: 'API is running...',
+    status: 'healthy',
+    version: '1.0.0',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Error handling middleware

@@ -1,7 +1,14 @@
+import axios from 'axios';
+
 /**
  * Service quản lý các API liên quan đến lịch hẹn
  */
 import api from './api';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/bookings';
+
+// Get authentication token
+const getToken = () => localStorage.getItem('token');
 
 /**
  * Lấy danh sách lịch hẹn của người dùng hiện tại
@@ -22,10 +29,17 @@ export const getMyBookings = async () => {
  * @returns {Promise<Object>} - Lịch hẹn đã tạo
  */
 export const createBooking = async (bookingData) => {
+  const headers = {};
+  const token = getToken();
+  
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  
   try {
-    return await api.post('/bookings', bookingData);
+    const response = await axios.post(API_URL, bookingData, { headers });
+    return response.data;
   } catch (error) {
-    console.error('Create booking error:', error);
     throw error;
   }
 };
@@ -36,10 +50,20 @@ export const createBooking = async (bookingData) => {
  * @returns {Promise<Object>} - Kết quả hủy lịch hẹn
  */
 export const cancelBooking = async (id) => {
+  const token = getToken();
+  
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+  
   try {
-    return await api.put(`/bookings/${id}/cancel`, {});
+    const response = await axios.put(`${API_URL}/${id}/cancel`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
   } catch (error) {
-    console.error(`Cancel booking ${id} error:`, error);
     throw error;
   }
 };
