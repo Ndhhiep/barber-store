@@ -22,6 +22,10 @@ const StaffProducts = () => {
     image: null
   });
   const [imagePreview, setImagePreview] = useState('');
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
+  const [productDisplayId, setProductDisplayId] = useState(null); // New state for displayed product ID
+  const [deleteLoading, setDeleteLoading] = useState(false);
   
   // Fetch products on initial load and when filters change
   useEffect(() => {
@@ -192,15 +196,32 @@ const StaffProducts = () => {
     }
   };
   
-  const handleDeleteProduct = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
-      try {
-        await staffProductService.deleteProduct(id);
-        fetchProducts(); // Refresh the product list
-      } catch (err) {
-        console.error('Error deleting product:', err);
-        alert('Failed to delete product. Please try again.');
-      }
+  const openDeleteModal = (id, productId) => {
+    setProductToDelete(id);
+    // Store the displayed product ID (last 6 characters)
+    setProductDisplayId(productId.slice(-6).toUpperCase());
+    setDeleteModalOpen(true);
+  };
+  
+  const closeDeleteModal = () => {
+    setProductToDelete(null);
+    setProductDisplayId(null);
+    setDeleteModalOpen(false);
+  };
+  
+  const handleDeleteProduct = async () => {
+    try {
+      setDeleteLoading(true);
+      await staffProductService.deleteProduct(productToDelete);
+      fetchProducts(); // Refresh the product list
+      setSuccessMessage('Product and associated image deleted successfully!');
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      setError('Failed to delete product. Please try again.');
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setDeleteLoading(false);
+      closeDeleteModal();
     }
   };
   
@@ -239,7 +260,7 @@ const StaffProducts = () => {
               {loading ? (
                 <div className="text-center my-3"><div className="spinner-border" role="status"></div></div>
               ) : products.length > 0 ? (
-                <div className="table-responsive">
+                <div className="table-responsive" style={{ minHeight: '650px' }}>
                   <table className="table table-hover">
                     <thead>
                       <tr>
@@ -277,7 +298,7 @@ const StaffProducts = () => {
                             </button>
                             <button 
                               className="btn btn-sm btn-danger me-1" 
-                              onClick={() => handleDeleteProduct(product._id)}
+                              onClick={() => openDeleteModal(product._id, product._id)}
                             >
                               Delete
                             </button>
@@ -484,6 +505,54 @@ const StaffProducts = () => {
                       </button>
                     </div>
                   </form>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="modal-backdrop fade show"></div>
+        </>
+      )}
+      
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <>
+          <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header border-0">
+                  <h5 className="modal-title fs-4">Confirmation</h5>
+                  <button type="button" className="btn-close" onClick={closeDeleteModal} aria-label="Close"></button>
+                </div>
+                <div className="modal-body pt-0">
+                  <p className="text-secondary">
+                    Are you sure you want to delete product with ID: <span className="fw-bold">{productDisplayId}</span>? This action cannot be undone and you will be unable to recover any data.
+                  </p>
+                </div>
+                <div className="modal-footer border-0">
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ backgroundColor: '#CED4DA', borderColor: '#CED4DA', color: '#212529' }}
+                    onClick={closeDeleteModal}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-danger" 
+                    style={{ backgroundColor: '#FA5252' }}
+                    onClick={handleDeleteProduct}
+                    disabled={deleteLoading}
+                  >
+                    {deleteLoading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Deleting...
+                      </>
+                    ) : (
+                      'Yes, delete it!'
+                    )}
+                  </button>
                 </div>
               </div>
             </div>

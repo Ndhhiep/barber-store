@@ -88,9 +88,11 @@ const deleteProduct = async (id) => {
     const response = await axios.delete(`${API_URL}/products/${id}`, {
       headers: staffAuthService.authHeader()
     });
+    // Response will include information about both product and image deletion
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Failed to delete product' };
+    console.error('Error in deleteProduct service:', error);
+    throw error.response?.data || { message: 'Failed to delete product or its associated image' };
   }
 };
 

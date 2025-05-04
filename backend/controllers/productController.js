@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const cloudinary = require('../config/cloudinary');
 
 // @desc    Fetch all products with optional filters and pagination
 // @route   GET /api/products
@@ -132,11 +133,34 @@ const deleteProduct = async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
     
-    // Sử dụng findByIdAndDelete thay vì remove() cho phiên bản mongoose mới
+    // Extract Cloudinary public ID from the URL if exists
+    if (product.imgURL && product.imgURL.includes('cloudinary.com')) {
+      try {
+        // Extract the public ID from Cloudinary URL
+        const uploadIndex = product.imgURL.indexOf('/upload/');
+        if (uploadIndex !== -1) {
+          // Get everything after /upload/v1234567890/
+          const parts = product.imgURL.substring(uploadIndex + 8).split('/');
+          // Remove the version number (starts with v)
+          if (parts[0].startsWith('v') && /^\d+$/.test(parts[0].substring(1))) {
+            parts.shift();
+          }
+          
+          // Join the remaining parts to form the public ID
+          const publicId = parts.join('/').split('.')[0]; // Remove extension
+          
+          // Delete image from Cloudinary
+          await cloudinary.uploader.destroy(publicId);
+        }
+      } catch (cloudinaryError) {
+        // Continue with product deletion even if image deletion fails
+      }
+    }
+    
+    // Delete the product from MongoDB
     await Product.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Product removed' });
+    res.json({ message: 'Product and associated image removed' });
   } catch (error) {
-    console.error('Error deleting product:', error);
     res.status(400).json({ message: error.message });
   }
 };
