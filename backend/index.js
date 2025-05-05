@@ -6,8 +6,9 @@ const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const authRoutes = require('./routes/authRoutes'); // Import auth routes
-const timeSlotRoutes = require('./routes/timeSlotRoutes'); // Import time slot routes
-const barberRoutes = require('./routes/barberRoutes'); // Thêm route barber
+const barberRoutes = require('./routes/barberRoutes'); // Import barber routes
+const userRoutes = require('./routes/userRoutes'); // Import user routes
+const dashboardRoutes = require('./routes/dashboardRoutes'); // Import dashboard routes
 
 // Load environment variables
 dotenv.config();
@@ -37,8 +38,9 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/auth', authRoutes); // Add auth routes
-app.use('/api/timeslots', timeSlotRoutes); // Add time slot routes
-app.use('/api/barbers', barberRoutes); // Thêm API endpoint cho barber
+app.use('/api/barbers', barberRoutes); // Add barber routes
+app.use('/api/users', userRoutes); // Add user routes
+app.use('/api/dashboard', dashboardRoutes); // Add dashboard routes
 
 // Home route - enhanced with health check information
 app.get('/', (req, res) => {

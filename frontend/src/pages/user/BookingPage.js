@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import '../../css/user/BookingPage.css';
-import { getAvailableTimeSlots } from '../../services/user_services/timeSlotService';
-import { getAllBarbers } from '../../services/user_services/barberService';
+import timeSlotService from '../../services/user_services/timeSlotService';
+import barberService from '../../services/user_services/barberService';
 
 const BookingPage = () => {
   const [bookingData, setBookingData] = useState({
@@ -37,8 +37,8 @@ const BookingPage = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userData, setUserData] = useState(null);
 
-  // State to store available time slots from API
-  const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
+  // State to store time slot statuses from API
+  const [timeSlotStatuses, setTimeSlotStatuses] = useState([]);
   const [isLoadingTimeSlots, setIsLoadingTimeSlots] = useState(false);
 
   // Format date to YYYY-MM-DD for comparing with input date value
@@ -51,7 +51,7 @@ const BookingPage = () => {
     const fetchBarbers = async () => {
       try {
         setLoadingBarbers(true);
-        const barbers = await getAllBarbers();
+        const barbers = await barberService.getAllBarbers();
         setBarberList(barbers);
       } catch (error) {
         console.error('Error fetching barbers:', error);
@@ -65,42 +65,29 @@ const BookingPage = () => {
 
   // Check if a time slot should be disabled - wrapped in useCallback
   const isTimeSlotDisabled = useCallback((timeSlot) => {
-    if (!bookingData.date) return false;
-    
-    const today = formatDate(new Date());
-    
-    // Only check times if the selected date is today
-    if (bookingData.date === today) {
-      const now = new Date();
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
-      
-      const [slotHour, slotMinute] = timeSlot.split(':').map(Number);
-      
-      // Disable if the time slot is in the past
-      if (slotHour < currentHour || (slotHour === currentHour && slotMinute <= currentMinute)) {
-        return true;
-      }
-      
-      // Also disable if it's less than 30 minutes from now (booking buffer)
-      const slotTotalMinutes = slotHour * 60 + slotMinute;
-      const currentTotalMinutes = currentHour * 60 + currentMinute;
-      
-      if (slotTotalMinutes - currentTotalMinutes < 30) {
-        return true;
-      }
-    }
-    
-    // Then check if it's already booked (from API)
-    if (availableTimeSlots.length > 0) {
-      const timeSlotData = availableTimeSlots.find(slot => slot.start_time === timeSlot);
-      if (timeSlotData && !timeSlotData.is_available) {
-        return true;
+    // If we have statuses from the backend, use those
+    if (timeSlotStatuses.length > 0) {
+      const slotStatus = timeSlotStatuses.find(slot => slot.start_time === timeSlot);
+      if (slotStatus) {
+        return slotStatus.isPast || !slotStatus.isAvailable;
       }
     }
     
     return false;
-  }, [bookingData.date, formatDate, availableTimeSlots]);
+  }, [timeSlotStatuses]);
+
+  // Check if a time slot is in the past or booked - for future use in showing specific messages
+  // eslint-disable-next-line no-unused-vars
+  const getTimeSlotDisabledReason = useCallback((timeSlot) => {
+    if (timeSlotStatuses.length > 0) {
+      const slotStatus = timeSlotStatuses.find(slot => slot.start_time === timeSlot);
+      if (slotStatus) {
+        if (slotStatus.isPast) return 'past';
+        if (!slotStatus.isAvailable) return 'booked';
+      }
+    }
+    return null;
+  }, [timeSlotStatuses]);
 
   // Update current time every minute for time slot validation
   useEffect(() => {
@@ -117,7 +104,7 @@ const BookingPage = () => {
     
     const timer = setInterval(updateCurrentTime, 60000);
     return () => clearInterval(timer);
-  }, [isTimeSlotDisabled]);
+  }, [isTimeSlotDisabled, bookingData.time]);
   
   // Check user authentication status on component mount
   useEffect(() => {
@@ -159,24 +146,24 @@ const BookingPage = () => {
     checkAuthStatus();
   }, []);
 
-  // Fetch available time slots when barber or date changes
+  // Fetch time slot statuses when barber or date changes
   useEffect(() => {
-    const fetchTimeSlots = async () => {
+    const fetchTimeSlotStatuses = async () => {
       if (bookingData.barber_id && bookingData.date) {
         try {
           setIsLoadingTimeSlots(true);
           
-          console.log("Fetching time slots for barber ID:", bookingData.barber_id, "on date:", bookingData.date);
+          console.log("Fetching time slot statuses for barber ID:", bookingData.barber_id, "on date:", bookingData.date);
           
-          // Call the service to get available time slots
-          const slots = await getAvailableTimeSlots(bookingData.barber_id, bookingData.date);
-          console.log("Available time slots received:", slots);
-          setAvailableTimeSlots(slots);
+          // Call the service to get time slot statuses
+          const statuses = await timeSlotService.getTimeSlotStatus(bookingData.barber_id, bookingData.date);
+          console.log("Time slot statuses received:", statuses);
+          setTimeSlotStatuses(statuses);
           
           // If currently selected time is not available, reset it
           if (bookingData.time) {
-            const isCurrentTimeAvailable = slots.some(
-              slot => slot.start_time === bookingData.time && slot.is_available
+            const isCurrentTimeAvailable = statuses.some(
+              slot => slot.start_time === bookingData.time && slot.isAvailable && !slot.isPast
             );
             
             if (!isCurrentTimeAvailable) {
@@ -187,15 +174,15 @@ const BookingPage = () => {
             }
           }
         } catch (error) {
-          console.error('Error fetching available time slots:', error);
-          setAvailableTimeSlots([]);
+          console.error('Error fetching time slot statuses:', error);
+          setTimeSlotStatuses([]);
         } finally {
           setIsLoadingTimeSlots(false);
         }
       }
     };
     
-    fetchTimeSlots();
+    fetchTimeSlotStatuses();
   }, [bookingData.barber_id, bookingData.date]);
 
   // Services data
@@ -219,11 +206,10 @@ const BookingPage = () => {
   // ];
 
   const timeSlots = [
-    "10:00", "10:30", "11:00", "11:30",
-    "12:00", "12:30", "13:00", "13:30",
-    "14:00", "14:30", "15:00", "15:30",
-    "16:00", "16:30", "17:00", "17:30",
-    "18:00", "18:30", "19:00", "19:30"
+    "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+    "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
+    "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
+    "18:00", "18:30", "19:00"
   ];
 
   const handleChange = (e) => {
@@ -476,7 +462,7 @@ const BookingPage = () => {
                                   </div>
                                 ) : (
                                   <div className="row g-2">
-                                    {timeSlots.map((time, index) => {
+                                    {(timeSlotStatuses.length > 0 ? timeSlotStatuses.map(slot => slot.start_time) : timeSlots).map((time, index) => {
                                       const disabled = isTimeSlotDisabled(time);
                                       return (
                                         <div key={index} className="col-6 col-md-3">
@@ -499,7 +485,7 @@ const BookingPage = () => {
                                   Time slots that have already passed or are within 30 minutes from now are disabled.
                                 </small>
                               )}
-                              {bookingData.barber_id && bookingData.date && availableTimeSlots.length > 0 && (
+                              {bookingData.barber_id && bookingData.date && timeSlotStatuses.length > 0 && (
                                 <small className="text-muted d-block mt-2">
                                   Khung giờ được tô mờ đã có người đặt trước.
                                 </small>

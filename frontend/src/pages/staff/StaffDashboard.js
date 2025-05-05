@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import staffDashboardService from '../../services/staff_services/staffDashboardService';
 import staffAppointmentService from '../../services/staff_services/staffAppointmentService';
 import staffOrderService from '../../services/staff_services/staffOrderService';
-import staffProductService from '../../services/staff_services/staffProductService';
-import staffCustomerService from '../../services/staff_services/staffCustomerService';
 
 const StaffDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -12,7 +11,7 @@ const StaffDashboard = () => {
     orders: 0,
     products: 0,
     customers: 0,
-    recentAppointments: [],
+    todayBookings: [],
     recentOrders: []
   });
   const [error, setError] = useState(null);
@@ -23,46 +22,40 @@ const StaffDashboard = () => {
         setLoading(true);
         setError(null);
         
-        // Fetch all stats in parallel
-        // Using Promise.allSettled instead of Promise.all to handle partial failures
-        const results = await Promise.allSettled([
-          staffAppointmentService.getAppointmentStats(),
-          staffOrderService.getOrderStats(),
-          staffProductService.getProductStats(),
-          staffCustomerService.getCustomerStats(),
-          staffAppointmentService.getTodayAppointments(),
-          staffOrderService.getRecentOrders(5)
-        ]);
-
-        // Extract successful results, use fallbacks for failed ones
-        const [
-          appointmentStatsResult, 
-          orderStatsResult, 
-          productStatsResult, 
-          customerStatsResult,
-          recentAppointmentsResult,
-          recentOrdersResult
-        ] = results;
-
-        // Set dashboard data with fallbacks for any failed requests
-        setDashboardData({
-          appointments: appointmentStatsResult.status === 'fulfilled' ? appointmentStatsResult.value.total || 0 : 0,
-          orders: orderStatsResult.status === 'fulfilled' ? orderStatsResult.value.total || 0 : 0,
-          products: productStatsResult.status === 'fulfilled' ? productStatsResult.value.total || 0 : 0,
-          customers: customerStatsResult.status === 'fulfilled' ? customerStatsResult.value.total || 0 : 0,
-          recentAppointments: recentAppointmentsResult.status === 'fulfilled' ? recentAppointmentsResult.value.bookings || [] : [],
-          recentOrders: recentOrdersResult.status === 'fulfilled' ? recentOrdersResult.value || [] : []
-        });
+        // Gọi API để lấy tất cả thống kê cho dashboard
+        const response = await staffDashboardService.getDashboardStats();
         
-        // Check if any requests failed
-        const anyFailures = results.some(result => result.status === 'rejected');
-        if (anyFailures) {
-          console.warn("Some dashboard data failed to load.");
-          setError("Some data could not be loaded. Showing available information.");
+        if (response.status === 'success') {
+          setDashboardData({
+            appointments: response.data.counts.bookings || 0,
+            orders: response.data.counts.orders || 0,
+            products: response.data.counts.products || 0,
+            customers: response.data.counts.users || 0,
+            todayBookings: response.data.todayBookings || [],
+            recentOrders: response.data.recentOrders || []
+          });
+        } else {
+          throw new Error('Failed to fetch dashboard statistics');
         }
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
         setError("Failed to load dashboard data. Showing placeholder information.");
+        
+        // Trong trường hợp lỗi, cố gắng lấy dữ liệu từ các API cũ
+        try {
+          const [todayAppointments, recentOrders] = await Promise.all([
+            staffAppointmentService.getTodayAppointments(),
+            staffOrderService.getRecentOrders(5)
+          ]);
+          
+          setDashboardData(prev => ({
+            ...prev,
+            todayBookings: todayAppointments?.bookings || [],
+            recentOrders: recentOrders?.data || []
+          }));
+        } catch (fallbackErr) {
+          console.error("Error fetching fallback data:", fallbackErr);
+        }
       } finally {
         setLoading(false);
       }
@@ -140,7 +133,7 @@ const StaffDashboard = () => {
               <Link to="/staff/appointments" className="btn btn-sm btn-outline-primary">View All</Link>
             </div>
             <div className="card-body">
-              {dashboardData.recentAppointments.length > 0 ? (
+              {dashboardData.todayBookings.length > 0 ? (
                 <div className="table-responsive">
                   <table className="table table-hover">
                     <thead>
@@ -152,7 +145,7 @@ const StaffDashboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {dashboardData.recentAppointments.slice(0, 5).map((appointment) => (
+                      {dashboardData.todayBookings.map((appointment) => (
                         <tr key={appointment._id}>
                           <td>{appointment.userName || 'N/A'}</td>
                           <td>{appointment.serviceName}</td>
@@ -199,15 +192,16 @@ const StaffDashboard = () => {
                     <tbody>
                       {dashboardData.recentOrders.map((order) => (
                         <tr key={order._id}>
-                          <td>#{order.orderNumber}</td>
-                          <td>{order.userName || 'N/A'}</td>
+                          <td>#{order._id.slice(-6).toUpperCase()}</td>
+                          <td>{order.customerInfo?.name || 'N/A'}</td>
                           <td>${order.totalAmount?.toFixed(2)}</td>
                           <td>
                             <span className={`badge bg-${
                               order.status === 'processing' ? 'info' : 
                               order.status === 'shipped' ? 'primary' : 
                               order.status === 'delivered' ? 'success' : 
-                              order.status === 'cancelled' ? 'danger' : 'secondary'
+                              order.status === 'cancelled' ? 'danger' : 
+                              order.status === 'pending' ? 'warning' : 'secondary'
                             }`}>
                               {order.status?.charAt(0).toUpperCase() + order.status?.slice(1)}
                             </span>

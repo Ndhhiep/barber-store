@@ -9,10 +9,11 @@ import api from './api';
  */
 export const getMyOrders = async () => {
   try {
-    return await api.get('/orders/user/my-orders');
+    const response = await api.get('/orders/user/my-orders');
+    return response.data;
   } catch (error) {
     console.error('Get my orders error:', error);
-    throw error;
+    throw new Error(error.response?.data?.message || 'Failed to fetch orders');
   }
 };
 
@@ -23,10 +24,11 @@ export const getMyOrders = async () => {
  */
 export const getOrderById = async (id) => {
   try {
-    return await api.get(`/orders/${id}`);
+    const response = await api.get(`/orders/${id}`);
+    return response.data;
   } catch (error) {
     console.error(`Get order ${id} error:`, error);
-    throw error;
+    throw new Error(error.response?.data?.message || `Failed to fetch order details`);
   }
 };
 
@@ -50,10 +52,11 @@ export const createOrder = async (orderData) => {
       }
     }
     
-    return await api.post('/orders', orderData);
+    const response = await api.post('/orders', orderData);
+    return response.data;
   } catch (error) {
     console.error('Create order error:', error);
-    throw error;
+    throw new Error(error.response?.data?.message || 'Failed to create order');
   }
 };
 

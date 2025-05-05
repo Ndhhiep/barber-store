@@ -281,9 +281,171 @@ const getOrderById = async (req, res) => {
   }
 };
 
+// @desc    Get all orders with pagination
+// @route   GET /api/orders
+// @access  Private/Admin
+const getAllOrders = async (req, res) => {
+  try {
+    // Extract pagination parameters from the query string
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const skip = (page - 1) * limit;
+
+    // Get total count of orders for pagination info
+    const totalOrders = await Order.countDocuments();
+
+    // Fetch orders with pagination
+    const orders = await Order.find()
+      .sort({ createdAt: -1 }) // Most recent orders first
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    // Get order details for each order
+    const ordersWithDetails = await Promise.all(orders.map(async (order) => {
+      const orderDetails = await OrderDetail.find({ orderId: order._id })
+        .populate('productId', 'name price imageUrl')
+        .lean();
+      
+      return {
+        ...order,
+        items: orderDetails
+      };
+    }));
+
+    return res.status(200).json({
+      success: true,
+      count: ordersWithDetails.length,
+      total: totalOrders,
+      totalPages: Math.ceil(totalOrders / limit),
+      currentPage: page,
+      data: ordersWithDetails
+    });
+
+  } catch (error) {
+    console.error('Error fetching all orders:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching orders',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
+ * Get order statistics for dashboard
+ * @route GET /api/orders/stats
+ * @access Private/Admin/Staff
+ */
+const getOrderStats = async (req, res) => {
+  try {
+    // Calculate total revenue
+    const revenue = await Order.aggregate([
+      { $match: { status: { $nin: ['cancelled'] } } },
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+    ]);
+    
+    const totalRevenue = revenue.length > 0 ? revenue[0].total : 0;
+
+    // Count orders by status
+    const ordersByStatus = await Order.aggregate([
+      { $group: { _id: "$status", count: { $sum: 1 } } }
+    ]);
+
+    // Format the results
+    const statusCounts = {
+      pending: 0,
+      processing: 0,
+      shipped: 0,
+      delivered: 0,
+      cancelled: 0
+    };
+
+    ordersByStatus.forEach(item => {
+      if (item._id && statusCounts.hasOwnProperty(item._id)) {
+        statusCounts[item._id] = item.count;
+      }
+    });
+
+    // Get current month orders
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const monthlyOrders = await Order.countDocuments({
+      createdAt: { $gte: startOfMonth }
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        totalRevenue,
+        totalOrders: await Order.countDocuments(),
+        pendingOrders: statusCounts.pending,
+        processingOrders: statusCounts.processing,
+        shippedOrders: statusCounts.shipped,
+        deliveredOrders: statusCounts.delivered,
+        cancelledOrders: statusCounts.cancelled,
+        monthlyOrders
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching order statistics:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to retrieve order statistics',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
+ * Get recent orders for dashboard
+ * @route GET /api/orders/recent
+ * @access Private/Admin/Staff
+ */
+const getRecentOrders = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit, 10) || 5;
+    
+    // Get most recent orders
+    const orders = await Order.find()
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    // Get order details for each order
+    const ordersWithDetails = await Promise.all(orders.map(async (order) => {
+      const orderDetails = await OrderDetail.find({ orderId: order._id })
+        .populate('productId', 'name price imageUrl')
+        .lean();
+      
+      return {
+        ...order,
+        items: orderDetails
+      };
+    }));
+
+    res.status(200).json({
+      status: 'success',
+      count: ordersWithDetails.length,
+      data: ordersWithDetails
+    });
+  } catch (error) {
+    console.error('Error fetching recent orders:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to retrieve recent orders',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getOrdersByUserId,
   getOrderById,
-  getMyOrders
+  getMyOrders,
+  getAllOrders,
+  getOrderStats,
+  getRecentOrders
 };

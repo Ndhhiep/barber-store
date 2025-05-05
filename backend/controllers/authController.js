@@ -316,3 +316,53 @@ exports.resetPassword = async (req, res) => {
     });
   }
 };
+
+// Get all users with pagination and search - for staff access
+exports.getAllUsers = async (req, res) => {
+  try {
+    // Extract pagination and search parameters from query
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const skip = (page - 1) * limit;
+    const search = req.query.search || '';
+    
+    // Create search filter if search term is provided
+    const filter = {};
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Only get regular users (not staff/admin/etc)
+    filter.role = 'user';
+
+    // Count total users matching the filter
+    const totalUsers = await User.countDocuments(filter);
+    
+    // Find users with pagination
+    const users = await User.find(filter)
+      .select('-password -passwordResetToken -passwordResetExpires')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.status(200).json({
+      status: 'success',
+      count: users.length,
+      total: totalUsers,
+      totalPages: Math.ceil(totalUsers / limit),
+      currentPage: page,
+      data: { users }
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch users',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};

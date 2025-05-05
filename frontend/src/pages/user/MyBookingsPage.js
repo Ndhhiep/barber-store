@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../../css/user/MyBookingsPage.css';
 import { getMyBookings, cancelBooking } from '../../services/user_services/bookingService';
-import { checkServerStatus } from '../../utils/serverCheck';
+import { isServerOnline } from '../../utils/serverCheck';
 
 const MyBookingsPage = () => {
   const [bookings, setBookings] = useState([]);
@@ -22,7 +22,7 @@ const MyBookingsPage = () => {
         }
 
         // Check server status first
-        const isServerRunning = await checkServerStatus();
+        const isServerRunning = await isServerOnline();
         if (!isServerRunning) {
           setServerOnline(false);
           setError('Cannot connect to server. Please check if the backend server is running.');
@@ -61,7 +61,7 @@ const MyBookingsPage = () => {
     setError(null);
     
     try {
-      const isServerRunning = await checkServerStatus();
+      const isServerRunning = await isServerOnline();
       if (isServerRunning) {
         setServerOnline(true);
         // Retry fetching the bookings

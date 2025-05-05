@@ -13,4 +13,7 @@ router.use(authController.protect); // All routes after this middleware require 
 router.get('/me', authController.getMe);
 router.patch('/update-password', authController.updatePassword);
 
+// Staff routes - GET all users list
+router.get('/users', authController.restrictTo('admin', 'manager', 'barber', 'staff'), authController.getAllUsers);
+
 module.exports = router;
