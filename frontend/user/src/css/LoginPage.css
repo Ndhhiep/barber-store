@@ -1,0 +1,221 @@
+.login-page {
+  min-height: 100vh;
+  position: relative;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Overlay to darken the background image */
+.login-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 1;
+}
+
+.login-container {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding-top: 80px;
+  padding-bottom: 40px;
+}
+
+.login-container .row {
+  width: 100%;
+}
+
+/* Welcome column styling */
+.welcome-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3rem 2rem;
+}
+
+.welcome-content {
+  max-width: 500px;
+}
+
+.welcome-title {
+  color: #ffffff;
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 3.5rem;
+  margin-bottom: 2rem;
+  line-height: 1.2;
+}
+
+.welcome-text {
+  color: #ffffff;
+  font-size: 1.1rem;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+/* Form column styling */
+.form-column {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 500px;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(5px);
+}
+
+.login-card .card-body {
+  padding: 2.5rem;
+}
+
+.login-card h2 {
+  color: #333;
+  font-weight: 600;
+  font-family: 'Playfair Display', serif;
+}
+
+.login-card .form-label {
+  font-weight: 500;
+  color: #555;
+}
+
+.login-card .form-control {
+  padding: 0.75rem 1rem;
+  border-radius: 5px;
+  height: auto;
+  border: 1px solid #ced4da;
+  background-color: #f8f9fa;
+}
+
+.login-card .form-control:focus {
+  box-shadow: 0 0 0 0.25rem rgba(139, 119, 92, 0.25);
+  border-color: #8B775C;
+}
+
+.sign-in-btn {
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+  font-size: 1rem;
+  border-radius: 5px;
+  background-color: #8B775C;
+  border-color: #8B775C;
+  transition: all 0.3s ease;
+}
+
+.sign-in-btn:hover, .sign-in-btn:focus {
+  background-color: #75644C;
+  border-color: #75644C;
+}
+
+.forgot-password-link {
+  color: #8B775C;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.forgot-password-link:hover {
+  color: #75644C;
+  text-decoration: underline;
+}
+
+.terms-text {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.terms-link {
+  color: #8B775C;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.terms-link:hover {
+  color: #75644C;
+  text-decoration: underline;
+}
+
+/* Responsive styles */
+@media (max-width: 992px) {
+  .welcome-column {
+    padding: 2rem 1rem;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .welcome-content {
+    max-width: 100%;
+  }
+  
+  .welcome-title {
+    font-size: 2.75rem;
+  }
+  
+  .form-column {
+    padding: 0 1rem;
+  }
+  
+  .login-card .card-body {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .login-container {
+    padding-top: 60px;
+  }
+  
+  .welcome-title {
+    font-size: 2.25rem;
+  }
+  
+  .welcome-text {
+    font-size: 1rem;
+  }
+  
+  .login-card .card-body {
+    padding: 1.5rem;
+  }
+}
+
+.auth-container {
+  padding-top: 8rem; /* Tạo khoảng cách để form không bị che bởi header */
+}
+
+/* Ở các màn hình nhỏ hơn */
+@media (max-width: 576px) {
+  .auth-container {
+    padding-top: 6rem;
+  }
+}
+
+.register-text {
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.register-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.register-link:hover {
+  color: #8B775C;
+  text-decoration: underline;
+}
