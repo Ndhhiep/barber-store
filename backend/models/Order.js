@@ -4,7 +4,7 @@ const orderSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Users',
+      ref: 'User',
       // Không đặt là required vì các đơn hàng cũ có thể không có trường này
     },
     customerInfo: {

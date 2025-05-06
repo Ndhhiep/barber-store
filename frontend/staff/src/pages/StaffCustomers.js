@@ -21,7 +21,7 @@ const StaffCustomers = () => {
     try {
       setLoading(true);
       const response = await staffCustomerService.getAllCustomers(searchTerm, currentPage, 10);
-      setCustomers(response.users || []);
+      setCustomers(response.data || []);
       setTotalPages(response.totalPages || 1);
       setError(null);
     } catch (err) {
@@ -274,7 +274,7 @@ const StaffCustomers = () => {
       {/* Customer Details Modal */}
       {isModalOpen && customerDetails && (
         <div className="modal show d-block" tabIndex="-1">
-          <div className="modal-dialog modal-lg">
+          <div className="modal-dialog modal-lg" style={{zIndex: 1050}}>
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">

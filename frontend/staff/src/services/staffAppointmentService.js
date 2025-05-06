@@ -50,7 +50,7 @@ const getAppointmentById = async (id) => {
 // Update appointment status
 const updateAppointmentStatus = async (id, status) => {
   try {
-    const response = await axios.patch(
+    const response = await axios.put(
       `${API_URL}/bookings/${id}/status`,
       { status },
       { headers: staffAuthService.authHeader() }

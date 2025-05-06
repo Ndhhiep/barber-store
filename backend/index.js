@@ -1,5 +1,8 @@
 const express = require('express');
 const dotenv = require('dotenv');
+// Thiết lập múi giờ Việt Nam (UTC+7) cho toàn bộ ứng dụng
+process.env.TZ = 'Asia/Ho_Chi_Minh';
+
 const cors = require('cors');
 const connectDB = require('./config/db');
 const productRoutes = require('./routes/productRoutes');
@@ -9,6 +12,7 @@ const authRoutes = require('./routes/authRoutes'); // Import auth routes
 const barberRoutes = require('./routes/barberRoutes'); // Import barber routes
 const userRoutes = require('./routes/userRoutes'); // Import user routes
 const dashboardRoutes = require('./routes/dashboardRoutes'); // Import dashboard routes
+const serviceRoutes = require('./routes/serviceRoutes'); // Import service routes
 
 // Load environment variables
 dotenv.config();
@@ -21,7 +25,7 @@ const app = express();
 // CORS configuration with specific options
 const corsOptions = {
   origin: ['http://localhost:3000', 'http://localhost:3001'], // Allow both frontend origins
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these methods
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Added PATCH method
   allowedHeaders: ['Content-Type', 'Accept', 'Authorization'], // Allow these headers
   credentials: true, // Allow cookies
   optionsSuccessStatus: 200 // Some legacy browsers choke on 204
@@ -41,6 +45,7 @@ app.use('/api/auth', authRoutes); // Add auth routes
 app.use('/api/barbers', barberRoutes); // Add barber routes
 app.use('/api/users', userRoutes); // Add user routes
 app.use('/api/dashboard', dashboardRoutes); // Add dashboard routes
+app.use('/api/services', serviceRoutes); // Add service routes
 
 // Home route - enhanced with health check information
 app.get('/', (req, res) => {

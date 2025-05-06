@@ -46,6 +46,16 @@ const StaffNavButtons = () => {
             </NavLink>
           </li>
           <li className="nav-item">
+            <NavLink to="/services" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              Services
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink to="/barbers" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              Barbers
+            </NavLink>
+          </li>
+          <li className="nav-item">
             <NavLink to="/customers" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               Customers
             </NavLink>

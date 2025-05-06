@@ -30,7 +30,7 @@ const productSchema = new mongoose.Schema(
     quantity: {
       type: Number,
       required: [true, 'Product quantity is required'],
-      default: true,
+      default: 0,
     },
   },
   {

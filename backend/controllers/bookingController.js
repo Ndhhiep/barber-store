@@ -3,6 +3,7 @@ const Barber = require('../models/Barber');
 const User = require('../models/User'); // Thêm import model User
 const mongoose = require('mongoose');
 const asyncHandler = require('express-async-handler');
+const dateUtils = require('../utils/dateUtils'); // Import tiện ích xử lý thời gian
 
 // @desc    Create new booking
 // @route   POST /api/bookings
@@ -39,10 +40,13 @@ const createBooking = asyncHandler(async (req, res) => {
     throw new Error('Barber not found');
   }
 
+  // Chuyển đổi date sang đúng múi giờ Việt Nam
+  const vnDate = dateUtils.toVNDateTime(date);
+
   const booking = new Booking({
     service,
     barber_id,
-    date,
+    date: vnDate, // Sử dụng ngày đã được chuyển đổi sang múi giờ Việt Nam
     time,
     name,
     email,
@@ -72,35 +76,35 @@ const getBookings = asyncHandler(async (req, res) => {
       // Filter by specific date
       const date = req.query.date;
       
-      // Use ISO date strings to properly handle timezone issues
-      const startDateStr = `${date}T00:00:00.000Z`;
-      const endDateStr = `${date}T23:59:59.999Z`;
+      // Sử dụng dateUtils để lấy đầu ngày và cuối ngày
+      const startDate = dateUtils.getVNStartOfDay(new Date(date));
+      const endDate = dateUtils.getVNEndOfDay(new Date(date));
       
       filter.date = {
-        $gte: new Date(startDateStr),
-        $lte: new Date(endDateStr)
+        $gte: startDate,
+        $lte: endDate
       };
       
       console.log(`Filtering bookings for date: ${date}`);
-      console.log(`Start date: ${new Date(startDateStr).toISOString()}`);
-      console.log(`End date: ${new Date(endDateStr).toISOString()}`);
+      console.log(`Start date: ${startDate.toISOString()}`);
+      console.log(`End date: ${endDate.toISOString()}`);
     } else if (req.query.startDate && req.query.endDate) {
       // Filter by date range
       const startDate = req.query.startDate;
       const endDate = req.query.endDate;
       
-      // Use ISO date strings to properly handle timezone issues
-      const startDateStr = `${startDate}T00:00:00.000Z`;
-      const endDateStr = `${endDate}T23:59:59.999Z`;
+      // Sử dụng dateUtils để lấy đầu ngày và cuối ngày
+      const start = dateUtils.getVNStartOfDay(new Date(startDate));
+      const end = dateUtils.getVNEndOfDay(new Date(endDate));
       
       filter.date = {
-        $gte: new Date(startDateStr),
-        $lte: new Date(endDateStr)
+        $gte: start,
+        $lte: end
       };
       
       console.log(`Filtering bookings from ${startDate} to ${endDate}`);
-      console.log(`Start date: ${new Date(startDateStr).toISOString()}`);
-      console.log(`End date: ${new Date(endDateStr).toISOString()}`);
+      console.log(`Start date: ${start.toISOString()}`);
+      console.log(`End date: ${end.toISOString()}`);
     }
     
     // Add logging to help debug the filter and query
@@ -122,6 +126,10 @@ const getBookings = asyncHandler(async (req, res) => {
       
       // Add customer name from booking.name
       formattedBooking.userName = booking.name || 'N/A';
+      
+      // Format date và time để hiển thị
+      formattedBooking.formattedDate = dateUtils.formatDate(booking.date);
+      formattedBooking.formattedTime = booking.time;
       
       // Nếu có user_id và nó là ObjectId hợp lệ, thử lấy thông tin user
       if (booking.user_id && mongoose.Types.ObjectId.isValid(booking.user_id)) {
@@ -315,14 +323,16 @@ const getAvailableTimeSlots = async (req, res) => {
     // If workingHours is not defined, use default hours
     const start = barber.workingHours?.start || '09:00';
     const end = barber.workingHours?.end || '19:00';
-    const allTimeSlots = generateTimeSlots(start, end, 30); // 30-minute slots
+    
+    // Sử dụng dateUtils.generateTimeSlots thay vì hàm local
+    const allTimeSlots = dateUtils.generateTimeSlots(new Date(date), 30, { open: start, close: end });
 
     // Find all bookings for this barber on the specified date
     const bookings = await Booking.find({
       barber_id: barberId,
       date: {
-        $gte: new Date(`${date}T00:00:00.000Z`),
-        $lt: new Date(`${date}T23:59:59.999Z`)
+        $gte: dateUtils.getVNStartOfDay(new Date(date)),
+        $lte: dateUtils.getVNEndOfDay(new Date(date))
       },
       status: { $in: ['pending', 'confirmed'] }
     });
@@ -373,47 +383,9 @@ const getAvailableTimeSlots = async (req, res) => {
   }
 };
 
-/**
- * Generate time slots between start and end time
- * @param {string} startTime - Start time (HH:MM)
- * @param {string} endTime - End time (HH:MM)
- * @param {number} durationMinutes - Duration of each slot in minutes
- * @returns {Array<string>} - Array of time slots in HH:MM format
- */
-const generateTimeSlots = (startTime, endTime, durationMinutes = 30) => {
-  const slots = [];
-  
-  // Parse start and end times
-  const [startHours, startMinutes] = startTime.split(':').map(Number);
-  const [endHours, endMinutes] = endTime.split(':').map(Number);
-  
-  // Convert to minutes for easier calculations
-  let startTimeInMinutes = startHours * 60 + startMinutes;
-  const endTimeInMinutes = endHours * 60 + endMinutes;
-  
-  // Generate slots
-  while (startTimeInMinutes + durationMinutes <= endTimeInMinutes) {
-    // Format the time slot
-    const hours = Math.floor(startTimeInMinutes / 60);
-    const minutes = startTimeInMinutes % 60;
-    
-    const formattedHours = hours.toString().padStart(2, '0');
-    const formattedMinutes = minutes.toString().padStart(2, '0');
-    
-    slots.push(`${formattedHours}:${formattedMinutes}`);
-    
-    // Move to next slot, no break between slots
-    startTimeInMinutes += durationMinutes;
-  }
-  
-  return slots;
-};
-
-/**
- * Check if a specific time slot is available
- * @route GET /api/bookings/check-availability
- * @access Public
- */
+// @desc    Check if a specific time slot is available
+// @route   GET /api/bookings/check-availability
+// @access  Public
 const checkTimeSlotAvailability = async (req, res) => {
   try {
     const { date, timeSlot, barberId } = req.query;
@@ -520,14 +492,14 @@ const getTimeSlotStatus = async (req, res) => {
     // If workingHours is not defined, use default hours
     const start = barber.workingHours?.start || '09:00';
     const end = barber.workingHours?.end || '19:00';
-    const allTimeSlots = generateTimeSlots(start, end, 30); // 30-minute slots
+    const allTimeSlots = dateUtils.generateTimeSlots(new Date(date), 30, { open: start, close: end });
 
     // Find all bookings for this barber on the specified date
     const bookings = await Booking.find({
       barber_id: barberId,
       date: {
-        $gte: new Date(`${date}T00:00:00.000Z`),
-        $lt: new Date(`${date}T23:59:59.999Z`)
+        $gte: dateUtils.getVNStartOfDay(new Date(date)),
+        $lte: dateUtils.getVNEndOfDay(new Date(date))
       },
       status: { $in: ['pending', 'confirmed'] }
     });

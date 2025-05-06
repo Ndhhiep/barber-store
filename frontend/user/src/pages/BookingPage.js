@@ -3,6 +3,7 @@ import axios from 'axios';
 import '../css/BookingPage.css';
 import timeSlotService from '../services/timeSlotService';
 import barberService from '../services/barberService';
+import serviceService from '../services/serviceService';
 
 const BookingPage = () => {
   const [bookingData, setBookingData] = useState({
@@ -20,6 +21,10 @@ const BookingPage = () => {
   // State để lưu trữ danh sách barber từ API
   const [barberList, setBarberList] = useState([]);
   const [loadingBarbers, setLoadingBarbers] = useState(false);
+  
+  // State to store services from API
+  const [serviceList, setServiceList] = useState([]);
+  const [loadingServices, setLoadingServices] = useState(false);
   
   // State để lưu trữ tên của barber đã chọn (chỉ dùng để hiển thị UI)
   const [selectedBarberName, setSelectedBarberName] = useState('');
@@ -61,6 +66,27 @@ const BookingPage = () => {
     };
 
     fetchBarbers();
+  }, []);
+  
+  // Fetch services list from API
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setLoadingServices(true);
+        const response = await serviceService.getAllServices();
+        // Only use active services
+        const activeServices = response.data.filter(service => service.isActive !== false);
+        setServiceList(activeServices);
+      } catch (error) {
+        console.error('Error fetching services:', error);
+        // If API fails, provide empty services list
+        setServiceList([]);
+      } finally {
+        setLoadingServices(false);
+      }
+    };
+
+    fetchServices();
   }, []);
 
   // Check if a time slot should be disabled - wrapped in useCallback
@@ -185,26 +211,7 @@ const BookingPage = () => {
     fetchTimeSlotStatuses();
   }, [bookingData.barber_id, bookingData.date]);
 
-  // Services data
-  const services = [
-    "Classic Haircut",
-    "Traditional Hot Towel Shave",
-    "Beard Trim & Style",
-    "The Gentleman's Package",
-    "Executive Cut & Style",
-    "Father & Son Cut",
-    "Grey Blending",
-    "Buzz Cut"
-  ];
-
-  // Được thay thế bằng API call để lấy danh sách barber thực tế
-  // const barbers = [
-  //   "James Wilson (Master Barber)",
-  //   "Robert Davis (Senior Barber)",
-  //   "Michael Thompson (Beard Specialist)",
-  //   "Any Available Barber"
-  // ];
-
+  // Fallback time slots if API fails
   const timeSlots = [
     "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
     "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
@@ -320,6 +327,12 @@ const BookingPage = () => {
     return formatDate(new Date());
   };
 
+  // Format price to display as currency
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
+      .format(price);
+  };
+
   return (
     <div className="py-5 booking-page-bg">
       <div className="container">
@@ -397,11 +410,20 @@ const BookingPage = () => {
                                 onChange={handleChange}
                                 required
                                 className="form-select booking-form-control"
+                                disabled={loadingServices}
                               >
                                 <option value="">-- Select a service --</option>
-                                {services.map((service, index) => (
-                                  <option key={index} value={service}>{service}</option>
-                                ))}
+                                {loadingServices ? (
+                                  <option value="" disabled>Loading services...</option>
+                                ) : serviceList.length > 0 ? (
+                                  serviceList.map((service) => (
+                                    <option key={service._id} value={service.name}>
+                                      {service.name} ({formatPrice(service.price)})
+                                    </option>
+                                  ))
+                                ) : (
+                                  <option value="" disabled>No services available</option>
+                                )}
                               </select>
                             </div>
                             

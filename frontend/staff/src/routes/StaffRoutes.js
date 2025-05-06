@@ -7,6 +7,8 @@ import StaffAppointments from '../pages/StaffAppointments';
 import StaffOrders from '../pages/StaffOrders';
 import StaffProducts from '../pages/StaffProducts';
 import StaffCustomers from '../pages/StaffCustomers';
+import StaffServices from '../pages/StaffServices';
+import StaffBarbers from '../pages/StaffBarbers';
 import StaffLayout from '../components/StaffLayout';
 import StaffLoginPage from '../pages/StaffLoginPage';
 
@@ -29,6 +31,8 @@ const StaffRoutes = () => {
           <Route path="/orders" element={<StaffOrders />} />
           <Route path="/products" element={<StaffProducts />} />
           <Route path="/customers" element={<StaffCustomers />} />
+          <Route path="/services" element={<StaffServices />} />
+          <Route path="/barbers" element={<StaffBarbers />} />
         </Route>
       </Route>
     </Routes>

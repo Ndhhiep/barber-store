@@ -1,34 +1,24 @@
-import api from './api';
-import { isServerOnline } from '../utils/serverCheck';
+import axios from 'axios';
 
-/**
- * Get all active barbers
- * @returns {Promise<Array>} - Array of barber objects
- */
+const API_URL = 'http://localhost:5000/api';
+
+// Get all active barbers
 const getAllBarbers = async () => {
   try {
-    // Check if server is online
-    const serverReachable = await isServerOnline();
-    if (!serverReachable) {
-      throw new Error('Server is not reachable');
-    }
-
-    const response = await api.get('/barbers');
-    return response.data.data.barbers;
+    const response = await axios.get(`${API_URL}/barbers`);
+    // Fix the data access to match the controller's response structure
+    return response.data.data.barbers || [];
   } catch (error) {
-    console.error('Error fetching barbers:', error);
+    console.error("Error fetching barbers:", error);
     throw error;
   }
 };
 
-/**
- * Get details for a specific barber
- * @param {string} id - Barber ID
- * @returns {Promise<Object>} - Barber details
- */
+// Get barber by ID
 const getBarberById = async (id) => {
   try {
-    const response = await api.get(`/barbers/${id}`);
+    const response = await axios.get(`${API_URL}/barbers/${id}`);
+    // Fix the data access to match the controller's response structure
     return response.data.data.barber;
   } catch (error) {
     console.error(`Error fetching barber with ID ${id}:`, error);
@@ -36,28 +26,9 @@ const getBarberById = async (id) => {
   }
 };
 
-/**
- * Get barber's working days and hours
- * @param {string} id - Barber ID
- * @returns {Promise<Object>} - Working days and hours
- */
-const getBarberSchedule = async (id) => {
-  try {
-    const barber = await getBarberById(id);
-    return {
-      workingDays: barber.workingDays,
-      workingHours: barber.workingHours
-    };
-  } catch (error) {
-    console.error(`Error fetching barber schedule for ID ${id}:`, error);
-    throw error;
-  }
-};
-
 const barberService = {
   getAllBarbers,
-  getBarberById,
-  getBarberSchedule
+  getBarberById
 };
 
 export default barberService;

@@ -23,8 +23,8 @@ const StaffOrders = () => {
       setLoading(true);
       const status = selectedFilter === 'All Orders' ? '' : selectedFilter.toLowerCase();
       const response = await staffOrderService.getAllOrders(status, currentPage, 10);
-      setOrders(response.orders || []);
-      setTotalPages(response.totalPages || 1);
+      setOrders(response.data || []); // Changed from response.orders to response.data
+      setTotalPages(response.totalPages || response.total_pages || Math.ceil(response.total / 10) || 1);
       setError(null);
     } catch (err) {
       console.error('Error fetching orders:', err);
@@ -67,7 +67,15 @@ const StaffOrders = () => {
   
   const handleViewOrder = async (id) => {
     try {
-      const orderDetails = await staffOrderService.getOrderById(id);
+      const response = await staffOrderService.getOrderById(id);
+      // Extract the order details from the data property if it exists, otherwise use the response directly
+      const orderDetails = response.data || response;
+      
+      // Add a defensive check to ensure we have a valid orderDetails object
+      if (!orderDetails || !orderDetails._id) {
+        throw new Error('Invalid order data received');
+      }
+      
       setViewOrder(orderDetails);
       setIsModalOpen(true);
     } catch (err) {
@@ -257,20 +265,20 @@ const StaffOrders = () => {
       
       {/* Order Details Modal */}
       {isModalOpen && viewOrder && (
-        <div className="modal show d-block" tabIndex="-1">
-          <div className="modal-dialog modal-lg">
+        <div className="modal show d-block" tabIndex="1">
+          <div className="modal-dialog modal-lg" style={{zIndex: 1050}}>
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Order #{viewOrder.orderNumber || viewOrder._id.slice(-6).toUpperCase()}</h5>
+                <h5 className="modal-title">Order #{viewOrder.orderNumber || viewOrder._id?.slice(-6).toUpperCase()}</h5>
                 <button type="button" className="btn-close" onClick={closeModal}></button>
               </div>
               <div className="modal-body">
                 <div className="row mb-3">
                   <div className="col-md-6">
                     <h6>Customer Information</h6>
-                    <p><strong>Name:</strong> {viewOrder.userName || 'N/A'}</p>
-                    <p><strong>Email:</strong> {viewOrder.userEmail || 'N/A'}</p>
-                    <p><strong>Phone:</strong> {viewOrder.userPhone || 'N/A'}</p>
+                    <p><strong>Name:</strong> {viewOrder.customerInfo?.name || 'N/A'}</p>
+                    <p><strong>Email:</strong> {viewOrder.customerInfo?.email || 'N/A'}</p>
+                    <p><strong>Phone:</strong> {viewOrder.customerInfo?.phone || 'N/A'}</p>
                   </div>
                   <div className="col-md-6">
                     <h6>Order Information</h6>
@@ -291,7 +299,7 @@ const StaffOrders = () => {
                 
                 <h6>Shipping Address</h6>
                 <p>
-                  {viewOrder.shippingAddress?.street}, {viewOrder.shippingAddress?.city}, {viewOrder.shippingAddress?.state} {viewOrder.shippingAddress?.zipCode}, {viewOrder.shippingAddress?.country}
+                  {viewOrder.shippingAddress || 'Address not provided'}
                 </p>
                 
                 <h6>Order Items</h6>
@@ -306,27 +314,33 @@ const StaffOrders = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {viewOrder.items?.map((item, index) => (
-                        <tr key={index}>
-                          <td>{item.productName}</td>
-                          <td>${item.price?.toFixed(2)}</td>
-                          <td>{item.quantity}</td>
-                          <td>${(item.price * item.quantity).toFixed(2)}</td>
+                      {viewOrder.items && viewOrder.items.length > 0 ? (
+                        viewOrder.items.map((item, index) => (
+                          <tr key={index}>
+                            <td>{item.productId?.name || 'Product'}</td>
+                            <td>${item.priceAtPurchase?.toFixed(2) || '0.00'}</td>
+                            <td>{item.quantity || 1}</td>
+                            <td>${((item.priceAtPurchase || 0) * (item.quantity || 1)).toFixed(2)}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="4" className="text-center">No items found</td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                     <tfoot>
                       <tr>
                         <td colSpan="3" className="text-end"><strong>Subtotal</strong></td>
-                        <td>${viewOrder.subtotal?.toFixed(2) || (viewOrder.totalAmount - viewOrder.shippingCost).toFixed(2)}</td>
+                        <td>${viewOrder.totalAmount?.toFixed(2) || '0.00'}</td>
                       </tr>
                       <tr>
                         <td colSpan="3" className="text-end"><strong>Shipping</strong></td>
-                        <td>${viewOrder.shippingCost?.toFixed(2) || '0.00'}</td>
+                        <td>${'0.00'}</td>
                       </tr>
                       <tr>
                         <td colSpan="3" className="text-end"><strong>Total</strong></td>
-                        <td><strong>${viewOrder.totalAmount?.toFixed(2)}</strong></td>
+                        <td><strong>${viewOrder.totalAmount?.toFixed(2) || '0.00'}</strong></td>
                       </tr>
                     </tfoot>
                   </table>
@@ -369,11 +383,10 @@ const StaffOrders = () => {
                     </button>
                   </div>
                 </div>
-                <button type="button" className="btn btn-secondary" onClick={closeModal}>Close</button>
               </div>
             </div>
           </div>
-          <div className="modal-backdrop fade show"></div>
+          <div className="modal-backdrop show" style={{zIndex: 1040}}></div>
         </div>
       )}
     </div>

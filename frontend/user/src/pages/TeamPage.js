@@ -1,42 +1,54 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../css/TeamPage.css';
+import barberService from '../services/barberService';
 
 const TeamPage = () => {
-  const barbers = [
+  const [barbers, setBarbers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchBarbers = async () => {
+      try {
+        setLoading(true);
+        const data = await barberService.getAllBarbers();
+        // Sort barbers to show most senior ones first (assuming they were added in order of seniority)
+        setBarbers(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching barbers:', err);
+        setError('Failed to load our team data. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBarbers();
+  }, []);
+
+  // Fallback barbers data in case API call fails
+  const fallbackBarbers = [
     {
-      id: 1,
+      _id: '1',
       name: "James Wilson",
       title: "Master Barber & Founder",
       description: "With over 15 years of experience, James trained in London and New York before opening The Gentleman's Cut. He specializes in classic cuts and traditional shaving techniques.",
       expertise: ["Classic Haircuts", "Straight Razor Shaves", "Beard Styling"],
-      image: "/assets/barber-1.jpg"
+      image_url: "/assets/barber-1.jpg"
     },
     {
-      id: 2,
+      _id: '2',
       name: "Robert Davis",
       title: "Senior Barber",
       description: "Robert brings 10 years of barbering expertise with a particular talent for contemporary styles and precision fades. His attention to detail ensures each client leaves looking their best.",
       expertise: ["Contemporary Styles", "Skin Fades", "Hair Design"],
-      image: "/assets/barber-2.jpg"
-    },
-    {
-      id: 3,
-      name: "Michael Thompson",
-      title: "Beard Specialist",
-      description: "Michael is our beard care expert with specialized training in beard sculpting and maintenance. His knowledge of facial hair styling has made him a favorite among our bearded clients.",
-      expertise: ["Beard Sculpting", "Hot Towel Treatments", "Mustache Styling"],
-      image: "/assets/barber-3.jpg"
-    },
-    {
-      id: 4,
-      name: "Daniel Martinez",
-      title: "Style Consultant",
-      description: "With a background in men's fashion and 6 years of barbering experience, Daniel offers not just great cuts but also styling advice to complement your overall look.",
-      expertise: ["Textured Cuts", "Styling Consultations", "Product Knowledge"],
-      image: "/assets/barber-4.jpg"
+      image_url: "/assets/barber-2.jpg"
     }
   ];
+
+  // Use fallback data if API call fails or returns empty
+  const displayBarbers = barbers.length > 0 ? barbers : (error ? fallbackBarbers : []);
 
   return (
     <div>
@@ -59,47 +71,67 @@ const TeamPage = () => {
             </p>
           </div>
 
-          {barbers.map((barber) => (
-            <div key={barber.id} className="row align-items-center mb-5 pb-5 border-bottom">
-              <div className="col-lg-5 mb-4 mb-lg-0">
-                <div className="position-relative">
-                  <img 
-                    src={barber.image} 
-                    alt={barber.name} 
-                    className="img-fluid shadow team-member-image"
-                  />
-                  <div 
-                    className={barber.id % 2 === 0 ? 'image-border-even' : 'image-border-odd'}
-                  ></div>
+          {loading ? (
+            <div className="text-center py-5">
+              <div className="spinner-border" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p className="mt-3">Loading our skilled team...</p>
+            </div>
+          ) : displayBarbers.length === 0 ? (
+            <div className="alert alert-info text-center">
+              No team members are currently available. Please check back later.
+            </div>
+          ) : (
+            displayBarbers.map((barber, index) => (
+              <div key={barber._id} className="row align-items-center mb-5 pb-5 border-bottom">
+                <div className="col-lg-5 mb-4 mb-lg-0">
+                  <div className="position-relative">
+                    <img 
+                      src={barber.imgURL || `/assets/barber-${index + 1}.jpg`} 
+                      alt={barber.name} 
+                      className="img-fluid shadow team-member-image"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://via.placeholder.com/600x800?text=Barber+Image";
+                      }}
+                    />
+                    <div 
+                      className={index % 2 === 0 ? 'image-border-odd' : 'image-border-even'}
+                    ></div>
+                  </div>
+                </div>
+                <div className="col-lg-7 px-lg-5">
+                  <h2 className="h1 mb-2 team-member-name">
+                    {barber.name}
+                  </h2>
+                  <p className="text-accent mb-4 team-member-title">
+                    {barber.title || barber.specialization || 'Barber'}
+                  </p>
+                  <p className="lead mb-4">
+                    {barber.description}
+                  </p>
+                  <h3 className="h5 mb-3 specialties-heading">
+                    Specialties
+                  </h3>
+                  <ul className="list-unstyled mb-4">
+                    {(barber.expertise || []).map((skill, index) => (
+                      <li key={index} className="mb-2 d-flex align-items-center">
+                        <i className="bi bi-check-circle me-2 specialty-icon"></i>
+                        <span>{skill}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link 
+                    to={`/booking?barber=${encodeURIComponent(barber._id)}`} 
+                    className="btn book-with-barber"
+                  >
+                    Book with {barber.name.split(' ')[0]}
+                  </Link>
                 </div>
               </div>
-              <div className="col-lg-7 px-lg-5">
-                <h2 className="h1 mb-2 team-member-name">
-                  {barber.name}
-                </h2>
-                <p className="text-accent mb-4 team-member-title">
-                  {barber.title}
-                </p>
-                <p className="lead mb-4">
-                  {barber.description}
-                </p>
-                <h3 className="h5 mb-3 specialties-heading">
-                  Specialties
-                </h3>
-                <ul className="list-unstyled mb-4">
-                  {barber.expertise.map((skill, index) => (
-                    <li key={index} className="mb-2 d-flex align-items-center">
-                      <i className="bi bi-check-circle me-2 specialty-icon"></i>
-                      <span>{skill}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link to="/booking" className="btn book-with-barber">
-                  Book with {barber.name.split(' ')[0]}
-                </Link>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </section>
 
@@ -113,6 +145,10 @@ const TeamPage = () => {
                   src="/assets/join-team.jpg" 
                   alt="Barbershop Team" 
                   className="img-fluid shadow"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://via.placeholder.com/600x400?text=Join+Our+Team";
+                  }}
                 />
                 <div className="join-team-image-border"></div>
               </div>

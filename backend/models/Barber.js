@@ -23,7 +23,7 @@ const barberSchema = mongoose.Schema({
     type: String,
     required: false
   },
-  image_url: {
+  imgURL: {
     type: String,
     required: false
   },

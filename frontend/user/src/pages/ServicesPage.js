@@ -1,66 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../css/ServicesPage.css';
+import serviceService from '../services/serviceService';
 
 const ServicesPage = () => {
-  const services = [
-    {
-      id: 1,
-      name: "Classic Haircut",
-      description: "A precision haircut tailored to your preferences. Includes consultation, shampoo, cut, and styling.",
-      price: "$32",
-      duration: "45 min"
-    },
-    {
-      id: 2,
-      name: "Traditional Hot Towel Shave",
-      description: "Experience our signature straight razor shave with hot towel treatment, pre-shave oil, and soothing aftershave.",
-      price: "$40",
-      duration: "45 min"
-    },
-    {
-      id: 3,
-      name: "Beard Trim & Style",
-      description: "Expert beard shaping and styling with hot towel and premium beard oils for the perfect finish.",
-      price: "$25",
-      duration: "30 min"
-    },
-    {
-      id: 4,
-      name: "The Gentleman's Package",
-      description: "Our complete grooming experience including a haircut, hot towel shave, and facial massage.",
-      price: "$75",
-      duration: "90 min"
-    },
-    {
-      id: 5,
-      name: "Executive Cut & Style",
-      description: "Premium haircut with additional styling time and product consultation for the discerning professional.",
-      price: "$45",
-      duration: "60 min"
-    },
-    {
-      id: 6,
-      name: "Father & Son Cut",
-      description: "Haircuts for both father and son (12 and under) in our classic barbershop atmosphere.",
-      price: "$60",
-      duration: "75 min"
-    },
-    {
-      id: 7,
-      name: "Grey Blending",
-      description: "Subtle grey reduction treatment that maintains a distinguished yet refreshed appearance.",
-      price: "$55",
-      duration: "60 min"
-    },
-    {
-      id: 8,
-      name: "Buzz Cut",
-      description: "Clean, classic all-over short cut with clipper of your choice.",
-      price: "$25",
-      duration: "30 min"
-    }
-  ];
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch services from API when component mounts
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        const response = await serviceService.getAllServices();
+        // Only show active services
+        const activeServices = response.data.filter(service => service.isActive !== false);
+        setServices(activeServices);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching services:', err);
+        setError('Unable to load services at this time. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
 
   return (
     <div className="py-5 services-page">
@@ -74,29 +42,48 @@ const ServicesPage = () => {
         </div>
         
         {/* Services Section */}
-        <div className="row g-4">
-          {services.map(service => (
-            <div key={service.id} className="col-md-6">
-              <div className="card h-100 shadow-sm service-card">
-                <div className="card-body p-4">
-                  <div className="d-flex justify-content-between align-items-start mb-3">
-                    <h3 className="h4 service-name">{service.name}</h3>
-                    <div className="d-flex flex-column align-items-end">
-                      <span className="service-price mb-1">{service.price}</span>
-                      <span className="text-muted service-duration">{service.duration}</span>
+        {loading ? (
+          <div className="text-center my-5">
+            <div className="spinner-border" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-2">Loading services...</p>
+          </div>
+        ) : error ? (
+          <div className="alert alert-danger text-center" role="alert">
+            {error}
+          </div>
+        ) : services.length === 0 ? (
+          <div className="alert alert-info text-center" role="alert">
+            No services available at this time. Please check back later.
+          </div>
+        ) : (
+          <div className="row g-4">
+            {services.map(service => (
+              <div key={service._id} className="col-md-6">
+                <div className="card h-100 shadow-sm service-card">
+                  <div className="card-body p-4">
+                    <div className="d-flex justify-content-between align-items-start mb-3">
+                      <h3 className="h4 service-name">{service.name}</h3>
+                      <div className="d-flex flex-column align-items-end">
+                        <span className="service-price mb-1">${service.price}</span>
+                        <span className="text-muted service-duration">
+                          30 min
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <p className="card-text mb-3 service-description">{service.description}</p>
-                  <div className="d-flex justify-content-end">
-                    <Link to="/booking" className="btn btn-sm book-btn">
-                      BOOK NOW
-                    </Link>
+                    <p className="card-text mb-3 service-description">{service.description}</p>
+                    <div className="d-flex justify-content-end">
+                      <Link to="/booking" className="btn btn-sm book-btn">
+                        BOOK NOW
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
         
         {/* Additional Information Section */}
         <div className="row mt-5 pt-4">

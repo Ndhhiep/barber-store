@@ -14,7 +14,13 @@ const getAllCustomers = async (search = '', page = 1, limit = 10) => {
     const response = await axios.get(`${API_URL}/users?${query.toString()}`, {
       headers: staffAuthService.authHeader()
     });
-    return response.data;
+    
+    // Handle different response structures
+    const responseData = response.data;
+    return {
+      data: responseData.data?.users || responseData.data || responseData.users || responseData || [],
+      totalPages: responseData.totalPages || responseData.total_pages || Math.ceil((responseData.total || 0) / limit) || 1
+    };
   } catch (error) {
     throw error.response?.data || { message: 'Failed to fetch customers' };
   }
@@ -26,7 +32,10 @@ const getCustomerById = async (id) => {
     const response = await axios.get(`${API_URL}/users/${id}`, {
       headers: staffAuthService.authHeader()
     });
-    return response.data;
+    
+    // Extract user data from the response, handling different structures
+    const responseData = response.data;
+    return responseData.data?.user || responseData.data || responseData.user || responseData;
   } catch (error) {
     throw error.response?.data || { message: 'Failed to fetch customer' };
   }
@@ -52,7 +61,13 @@ const getCustomerBookings = async (customerId) => {
     const response = await axios.get(`${API_URL}/bookings/user/${customerId}`, {
       headers: staffAuthService.authHeader()
     });
-    return response.data;
+    
+    // Handle different response structures
+    const responseData = response.data;
+    return {
+      bookings: responseData.data || responseData.bookings || [],
+      total: responseData.total || responseData.count || 0
+    };
   } catch (error) {
     throw error.response?.data || { message: 'Failed to fetch customer bookings' };
   }
@@ -64,7 +79,13 @@ const getCustomerOrders = async (customerId) => {
     const response = await axios.get(`${API_URL}/orders/user/${customerId}`, {
       headers: staffAuthService.authHeader()
     });
-    return response.data;
+    
+    // Handle different response structures
+    const responseData = response.data;
+    return {
+      orders: responseData.data || responseData.orders || [],
+      total: responseData.total || responseData.count || 0
+    };
   } catch (error) {
     throw error.response?.data || { message: 'Failed to fetch customer orders' };
   }

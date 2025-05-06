@@ -12,11 +12,20 @@ const bookingSchema = mongoose.Schema({
   },
   date: {
     type: Date,
-    required: true
+    required: true,
+    // Getter để đảm bảo ngày được hiển thị đúng theo múi giờ Việt Nam
+    get: function(date) {
+      return date;
+    }
   },
   time: {
     type: String,
     required: true
+  },
+  // Thêm trường fullDateTime để tính toán thời gian chính xác
+  fullDateTime: {
+    type: Date,
+    required: false
   },
   name: {
     type: String,
@@ -49,7 +58,20 @@ const bookingSchema = mongoose.Schema({
     default: Date.now
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { getters: true }, // Kích hoạt getters khi chuyển đổi sang JSON
+  toObject: { getters: true } // Kích hoạt getters khi chuyển đổi sang object
+});
+
+// Middleware trước khi lưu để tạo fullDateTime từ date và time
+bookingSchema.pre('save', function(next) {
+  if (this.date && this.time) {
+    const [hours, minutes] = this.time.split(':').map(Number);
+    const dateTime = new Date(this.date);
+    dateTime.setHours(hours, minutes, 0, 0);
+    this.fullDateTime = dateTime;
+  }
+  next();
 });
 
 const Booking = mongoose.model('Booking', bookingSchema, 'bookinglist');
