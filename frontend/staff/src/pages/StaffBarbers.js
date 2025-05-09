@@ -46,32 +46,22 @@ const StaffBarbers = () => {
   const fetchBarbers = async () => {
     try {
       setLoading(true);
-      console.log('Fetching barbers...');
       const response = await staffBarberService.getAllBarbersForStaff();
-      console.log('API Response:', response);
       
-      // Kiểm tra cấu trúc dữ liệu từ API và trích xuất đúng mảng barbers
+      // Simplified data handling with minimal logging
       if (response && response.success && response.data && Array.isArray(response.data.barbers)) {
-        // Nếu backend trả về cấu trúc { success: true, data: { barbers: [...] } }
-        console.log('Using data.barbers array:', response.data.barbers);
         setBarbers(response.data.barbers);
       } else if (response && Array.isArray(response.data)) {
-        // Nếu cấu trúc là { data: [...] }
-        console.log('Using data array:', response.data);
         setBarbers(response.data);
       } else if (response && Array.isArray(response)) {
-        // Nếu response trực tiếp là mảng
-        console.log('Using response as array:', response);
         setBarbers(response);
       } else {
-        // Trường hợp khác, ghi log để debug
-        console.warn('Unexpected API response structure:', response);
         setBarbers([]);
       }
       
       setError(null);
     } catch (err) {
-      console.error('Error fetching barbers:', err);
+      console.error('Error fetching barbers:', err.message);
       setError('Failed to load barbers. Please try again later.');
       setBarbers([]); // Đảm bảo barbers luôn là mảng, ngay cả khi có lỗi
     } finally {

@@ -1,10 +1,13 @@
 const express = require('express');
 const dotenv = require('dotenv');
+const http = require('http'); // Added HTTP module
 // Thiết lập múi giờ Việt Nam (UTC+7) cho toàn bộ ứng dụng
 process.env.TZ = 'Asia/Ho_Chi_Minh';
 
 const cors = require('cors');
 const connectDB = require('./config/db');
+const { initializeChangeStreams } = require('./utils/changeStreams');
+const { initSocketIO } = require('./utils/socketIO'); // Added Socket.IO utility
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
@@ -17,12 +20,12 @@ const serviceRoutes = require('./routes/serviceRoutes'); // Import service route
 // Load environment variables
 dotenv.config();
 
-// Connect to database
-connectDB();
-
 const app = express();
 
-// CORS configuration with specific options
+// Create HTTP server with Express app
+const server = http.createServer(app);
+
+// CORS configuration with specific options - định nghĩa một lần dùng chung
 const corsOptions = {
   origin: ['http://localhost:3000', 'http://localhost:3001'], // Allow both frontend origins
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Added PATCH method
@@ -30,6 +33,9 @@ const corsOptions = {
   credentials: true, // Allow cookies
   optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 };
+
+// Initialize Socket.IO with the HTTP server and pass the corsOptions
+const io = initSocketIO(server, corsOptions);
 
 // Apply CORS middleware with options
 app.use(cors(corsOptions));
@@ -77,8 +83,21 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
+// Connect to database
+connectDB().then(async () => {
+  // Initialize change streams after database connection is established
+  try {
+    await initializeChangeStreams();
+    console.log('Change streams initialized for Orders and Bookings collections');
+  } catch (error) {
+    console.error('Failed to initialize change streams:', error);
+  }
+}).catch(err => {
+  console.error('Failed to connect to MongoDB:', err);
+});
+
+// Start server with Socket.IO integration
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT} with Socket.IO support`);
 });

@@ -58,7 +58,8 @@ const updateCustomer = async (id, customerData) => {
 // Get customer's bookings
 const getCustomerBookings = async (customerId) => {
   try {
-    const response = await axios.get(`${API_URL}/bookings/user/${customerId}`, {
+    // Use the general bookings endpoint with a user filter query parameter
+    const response = await axios.get(`${API_URL}/bookings?userId=${customerId}`, {
       headers: staffAuthService.authHeader()
     });
     
@@ -69,7 +70,8 @@ const getCustomerBookings = async (customerId) => {
       total: responseData.total || responseData.count || 0
     };
   } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch customer bookings' };
+    console.error('Error fetching customer bookings:', error.message);
+    return { bookings: [], total: 0 }; // Return empty data instead of throwing an error
   }
 };
 

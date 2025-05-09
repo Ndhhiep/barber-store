@@ -19,16 +19,15 @@ const getAllBarbers = async () => {
 const getAllBarbersForStaff = async () => {
   try {
     const headers = staffAuthService.authHeader();
-    console.log('Auth headers:', headers);
-    console.log('Calling API endpoint:', `${API_URL}/barbers/staff`);
+    // Removed sensitive auth header logging
     
     const response = await axios.get(`${API_URL}/barbers/staff`, {
       headers: headers
     });
-    console.log('Response received:', response);
+    // Removed full response logging
     return response.data;
   } catch (error) {
-    console.error('API Error:', error.response || error);
+    console.error('Error fetching barbers:', error.message);
     throw error.response?.data || { message: 'Failed to fetch barbers' };
   }
 };
@@ -89,7 +88,7 @@ const updateBarber = async (id, barberData) => {
       title: barberData.title
     };
     
-    console.log('Updating barber with payload:', barberPayload);
+    // Removed payload logging
     
     const response = await axios.put(`${API_URL}/barbers/${id}`, barberPayload, {
       headers: {
@@ -99,7 +98,7 @@ const updateBarber = async (id, barberData) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Error saving barber:', error.response || error);
+    console.error('Error updating barber:', error.message);
     throw error.response?.data || { message: 'Failed to update barber' };
   }
 };

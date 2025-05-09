@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import StaffRoutes from './routes/StaffRoutes';
+import { SocketProvider } from './context/SocketContext';
+import { NotificationProvider } from './context/NotificationContext';
 
 // Hàm cuộn lên đầu trang khi điều hướng
 function ScrollToTop() {
@@ -19,13 +21,17 @@ function App() {
   return (
     <Router>
       <ScrollToTop />
-      <div className="App">
-        <main>
-          <Routes>
-            <Route path="/*" element={<StaffRoutes />} />
-          </Routes>
-        </main>
-      </div>
+      <SocketProvider>
+        <NotificationProvider>
+          <div className="App">
+            <main>
+              <Routes>
+                <Route path="/*" element={<StaffRoutes />} />
+              </Routes>
+            </main>
+          </div>
+        </NotificationProvider>
+      </SocketProvider>
     </Router>
   );
 }

@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import staffOrderService from '../services/staffOrderService';
+import { useSocketContext } from '../context/SocketContext';
+import { useNotifications } from '../context/NotificationContext';
 
 const StaffOrders = () => {
+  // State cho dữ liệu và UI
   const [orders, setOrders] = useState([]);
+  const [bookings, setBookings] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFilter, setSelectedFilter] = useState('All Orders');
@@ -10,62 +14,176 @@ const StaffOrders = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [viewOrder, setViewOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [socketErrors, setSocketErrors] = useState([]);
+  // Thêm state mới để theo dõi đơn hàng mới
+  const [newOrderIds, setNewOrderIds] = useState(new Set());
   
-  // Status options for filtering orders
+  // Sử dụng Socket.IO context với các trạng thái mở rộng
+  const { isConnected, isLoading, error: socketError, registerHandler, unregisterHandler, reconnect } = useSocketContext();
+  
+  // Sử dụng NotificationContext để xóa thông báo khi đến trang orders
+  const { clearOrderNotifications } = useNotifications();
+  
+  // Xóa thông báo đơn hàng khi component mount
+  useEffect(() => {
+    clearOrderNotifications();
+  }, [clearOrderNotifications]);
+  
+  // Status options cho filter
   const statusOptions = ['All Orders', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
   
+  // Handler cho sự kiện newOrder - được tối ưu bằng useCallback
+  const handleNewOrder = useCallback((data) => {
+    try {
+      console.log('Received new order event:', data);
+      
+      // Kiểm tra nếu là sự kiện 'insert' (thêm mới đơn hàng)
+      if (data.operationType === 'insert' && data.fullDocument) {
+        // Thêm đơn hàng mới vào đầu mảng orders
+        setOrders(prevOrders => [data.fullDocument, ...prevOrders]);
+        
+        // Đánh dấu đơn hàng này là mới trong Set
+        setNewOrderIds(prev => new Set(prev).add(data.fullDocument._id));
+        
+        // Hiển thị phần thông báo nếu chưa hiển thị
+        setShowNotifications(true);
+        
+        // Sau 60 giây, bỏ đánh dấu "NEW" cho đơn hàng này
+        setTimeout(() => {
+          setNewOrderIds(prev => {
+            const updated = new Set(prev);
+            updated.delete(data.fullDocument._id);
+            return updated;
+          });
+        }, 60000); // 60 seconds
+      } 
+      // Nếu là sự kiện cập nhật
+      else if (data.operationType === 'update' && data.documentId) {
+        // Tìm và cập nhật đơn hàng trong danh sách hiện tại
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            order._id === data.documentId 
+              ? { ...order, ...(data.updateDescription?.updatedFields || {}) } 
+              : order
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Error processing order data:', err);
+      setSocketErrors(prev => [...prev, {
+        time: new Date().toISOString(),
+        message: `Lỗi xử lý dữ liệu đơn hàng: ${err.message}`,
+        event: 'newOrder'
+      }]);
+    }
+  }, []);
+  
+  // Handler cho sự kiện newBooking - được tối ưu bằng useCallback
+  const handleNewBooking = useCallback((data) => {
+    try {
+      console.log('Received new booking event:', data);
+      
+      // Kiểm tra nếu là sự kiện 'insert' (thêm mới booking)
+      if (data.operationType === 'insert' && data.fullDocument) {
+        // Thêm booking mới vào đầu mảng bookings
+        setBookings(prevBookings => [data.fullDocument, ...prevBookings]);
+        
+        // Hiển thị phần thông báo nếu chưa hiển thị
+        setShowNotifications(true);
+      }
+    } catch (err) {
+      console.error('Error processing booking data:', err);
+      setSocketErrors(prev => [...prev, {
+        time: new Date().toISOString(),
+        message: `Lỗi xử lý dữ liệu đặt lịch: ${err.message}`,
+        event: 'newBooking'
+      }]);
+    }
+  }, []);
+  
+  // Lắng nghe sự kiện Socket.IO
+  useEffect(() => {
+    if (!isConnected) return;
+    
+    console.log('Setting up socket listeners in StaffOrders');
+    
+    // Đăng ký các sự kiện với Socket.IO
+    registerHandler('newOrder', handleNewOrder);
+    registerHandler('newBooking', handleNewBooking);
+    
+    // Clean up khi component unmount
+    return () => {
+      console.log('Cleaning up socket listeners in StaffOrders');
+      unregisterHandler('newOrder', handleNewOrder);
+      unregisterHandler('newBooking', handleNewBooking);
+    };
+  }, [isConnected, registerHandler, unregisterHandler, handleNewOrder, handleNewBooking]);
+  
+  // Fetch orders khi filter hoặc trang thay đổi
   useEffect(() => {
     fetchOrders();
   }, [selectedFilter, currentPage]);
   
+  // Hàm fetch orders từ API - được tối ưu hóa với try-catch
   const fetchOrders = async () => {
     try {
       setLoading(true);
       const status = selectedFilter === 'All Orders' ? '' : selectedFilter.toLowerCase();
       const response = await staffOrderService.getAllOrders(status, currentPage, 10);
-      setOrders(response.data || []); // Changed from response.orders to response.data
+      
+      if (!response || (!response.data && !response.orders)) {
+        throw new Error('Invalid response format from server');
+      }
+      
+      setOrders(response.data || response.orders || []);
       setTotalPages(response.totalPages || response.total_pages || Math.ceil(response.total / 10) || 1);
       setError(null);
     } catch (err) {
       console.error('Error fetching orders:', err);
-      setError('Failed to load orders. Please try again later.');
+      setError(`Failed to load orders: ${err.message}. Please try again later.`);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
   };
   
-  const handleFilterChange = (e) => {
+  // Handler cho thay đổi filter - tối ưu hóa
+  const handleFilterChange = useCallback((e) => {
     setSelectedFilter(e.target.value);
     setCurrentPage(1); // Reset to first page when changing filter
-  };
+  }, []);
   
-  const handlePageChange = (page) => {
+  // Handler cho thay đổi trang - tối ưu hóa
+  const handlePageChange = useCallback((page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
-  };
+  }, [totalPages]);
   
-  const handleStatusUpdate = async (id, newStatus) => {
+  // Handler cho cập nhật trạng thái đơn hàng - tối ưu hóa
+  const handleStatusUpdate = useCallback(async (id, newStatus) => {
     try {
       await staffOrderService.updateOrderStatus(id, newStatus);
       
       // Update local state to reflect the change
-      setOrders(orders.map(order => 
-        order._id === id ? { ...order, status: newStatus } : order
-      ));
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order._id === id ? { ...order, status: newStatus } : order
+        )
+      );
       
       // If viewing order details, update that too
-      if (viewOrder && viewOrder._id === id) {
-        setViewOrder({ ...viewOrder, status: newStatus });
-      }
+      setViewOrder(prev => prev && prev._id === id ? { ...prev, status: newStatus } : prev);
       
     } catch (err) {
       console.error('Error updating order status:', err);
-      alert('Failed to update order status. Please try again.');
+      alert(`Failed to update order status: ${err.message}. Please try again.`);
     }
-  };
+  }, []);
   
-  const handleViewOrder = async (id) => {
+  // Handler để xem chi tiết đơn hàng - tối ưu hóa
+  const handleViewOrder = useCallback(async (id) => {
     try {
       const response = await staffOrderService.getOrderById(id);
       // Extract the order details from the data property if it exists, otherwise use the response directly
@@ -80,26 +198,198 @@ const StaffOrders = () => {
       setIsModalOpen(true);
     } catch (err) {
       console.error('Error fetching order details:', err);
-      alert('Failed to load order details. Please try again.');
+      alert(`Failed to load order details: ${err.message}. Please try again.`);
     }
-  };
+  }, []);
   
-  const closeModal = () => {
+  // Handler để đóng modal
+  const closeModal = useCallback(() => {
     setIsModalOpen(false);
     setViewOrder(null);
-  };
+  }, []);
   
-  const formatDate = (dateString) => {
+  // Xóa thông báo lỗi socket
+  const dismissSocketError = useCallback((index) => {
+    setSocketErrors(prev => prev.filter((_, i) => i !== index));
+  }, []);
+  
+  // Thử kết nối lại khi có lỗi
+  const handleReconnect = useCallback(() => {
+    reconnect();
+  }, [reconnect]);
+  
+  // Format date helper
+  const formatDate = useCallback((dateString) => {
     const options = { day: '2-digit', month: 'short', year: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
-  };
+  }, []);
   
   return (
     <div className="container mt-4">
       <h2>Manage Orders</h2>
       
+      {/* Hiển thị lỗi chính */}
       {error && <div className="alert alert-danger">{error}</div>}
       
+      {/* Hiển thị lỗi socket nếu có */}
+      {socketError && (
+        <div className="alert alert-warning alert-dismissible fade show" role="alert">
+          <strong>Socket Error:</strong> {socketError}
+          <button 
+            type="button" 
+            className="btn-close" 
+            data-bs-dismiss="alert" 
+            aria-label="Close"
+            onClick={handleReconnect}
+          ></button>
+        </div>
+      )}
+      
+      {/* Hiển thị danh sách lỗi xử lý socket events */}
+      {socketErrors.length > 0 && (
+        <div className="alert alert-danger">
+          <h6>Lỗi xử lý dữ liệu real-time:</h6>
+          <ul className="mb-0">
+            {socketErrors.map((error, index) => (
+              <li key={`socket-error-${index}`} className="d-flex justify-content-between align-items-center">
+                <span>
+                  <strong>{error.event}:</strong> {error.message}
+                  <small className="ms-2 text-muted">
+                    {new Date(error.time).toLocaleTimeString()}
+                  </small>
+                </span>
+                <button 
+                  className="btn btn-sm btn-close" 
+                  onClick={() => dismissSocketError(index)}
+                ></button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      
+      {/* Hiển thị trạng thái kết nối Socket.IO */}
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          {isLoading ? (
+            <span className="badge bg-warning me-2">
+              Socket.IO: Connecting...
+            </span>
+          ) : (
+            <span className={`badge ${isConnected ? 'bg-success' : 'bg-danger'} me-2`}>
+              Socket.IO: {isConnected ? 'Connected' : 'Disconnected'}
+            </span>
+          )}
+          
+          <button 
+            className="btn btn-sm btn-primary me-2" 
+            onClick={() => setShowNotifications(!showNotifications)}
+            disabled={isLoading}
+          >
+            {showNotifications ? 'Hide' : 'Show'} Real-time Notifications
+          </button>
+          
+          {!isConnected && !isLoading && (
+            <button 
+              className="btn btn-sm btn-warning" 
+              onClick={handleReconnect}
+            >
+              Reconnect
+            </button>
+          )}
+        </div>
+      </div>
+      
+      {/* Real-time Notifications Panel */}
+      {showNotifications && (
+        <div className="row mb-4">
+          <div className="col-12">
+            <div className="card border-primary">
+              <div className="card-header bg-primary text-white">
+                <h5 className="mb-0">Real-time Notifications</h5>
+              </div>
+              <div className="card-body">
+                {isLoading ? (
+                  <div className="text-center py-4">
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <p className="mt-2">Establishing connection to real-time server...</p>
+                  </div>
+                ) : (
+                  <div className="row">
+                    {/* New Orders Column */}
+                    <div className="col-md-6">
+                      <h6>New Orders</h6>
+                      {orders.length > 0 ? (
+                        <ul className="list-group">
+                          {orders.slice(0, 5).map(order => (
+                            <li 
+                              key={`order-${order._id}`}
+                              className="list-group-item d-flex justify-content-between align-items-center"
+                            >
+                              <div>
+                                <span className="badge bg-success me-2">Order</span>
+                                #{order._id.slice(-6).toUpperCase()} - {order.customerInfo?.name || 'N/A'}
+                                <small className="ms-2 text-muted">
+                                  {order.createdAt && new Date(order.createdAt).toLocaleTimeString()}
+                                </small>
+                              </div>
+                              <button 
+                                className="btn btn-sm btn-info"
+                                onClick={() => handleViewOrder(order._id)}
+                              >
+                                View
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>No new orders received.</p>
+                      )}
+                    </div>
+                    
+                    {/* New Bookings Column */}
+                    <div className="col-md-6">
+                      <h6>New Bookings</h6>
+                      {bookings.length > 0 ? (
+                        <ul className="list-group">
+                          {bookings.slice(0, 5).map(booking => (
+                            <li 
+                              key={`booking-${booking._id}`}
+                              className="list-group-item d-flex justify-content-between align-items-center"
+                            >
+                              <div>
+                                <span className="badge bg-primary me-2">Booking</span>
+                                {booking.userName || 'N/A'} - {booking.serviceName || 'Service'}
+                                <small className="ms-2 text-muted">
+                                  {booking.date && new Date(booking.date).toLocaleDateString()} {booking.time}
+                                </small>
+                              </div>
+                              <span className={`badge bg-${
+                                booking.status === 'pending' ? 'warning' : 
+                                booking.status === 'confirmed' ? 'success' : 
+                                booking.status === 'cancelled' ? 'danger' : 
+                                booking.status === 'completed' ? 'info' : 'secondary'
+                              }`}>
+                                {booking.status?.charAt(0).toUpperCase() + booking.status?.slice(1)}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>No new bookings received.</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Main Orders Table */}
       <div className="row mb-4">
         <div className="col">
           <div className="card">
@@ -113,7 +403,7 @@ const StaffOrders = () => {
                   onChange={handleFilterChange}
                 >
                   {statusOptions.map((option, index) => (
-                    <option key={index} value={option}>{option}</option>
+                    <option key={`filter-option-${index}`} value={option}>{option}</option>
                   ))}
                 </select>
               </div>
@@ -136,8 +426,12 @@ const StaffOrders = () => {
                     </thead>
                     <tbody>
                       {orders.map(order => (
-                        <tr key={order._id}>
-                          <td>#{order.orderNumber || order._id.slice(-6).toUpperCase()}</td>
+                        <tr key={order._id} className={newOrderIds.has(order._id) ? 'table-warning' : ''}>
+                          <td>#{order.orderNumber || order._id.slice(-6).toUpperCase()}
+                            {newOrderIds.has(order._id) && (
+                              <span className="badge bg-danger ms-2 animate__animated animate__fadeIn animate__pulse animate__infinite">NEW</span>
+                            )}
+                          </td>
                           <td>{order.userName || 'N/A'}</td>
                           <td>{formatDate(order.createdAt)}</td>
                           <td>${order.totalAmount?.toFixed(2)}</td>

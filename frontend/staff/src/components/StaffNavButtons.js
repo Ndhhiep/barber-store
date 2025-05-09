@@ -1,12 +1,34 @@
-import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import staffAuthService from '../services/staffAuthService';
+import { useNotifications } from '../context/NotificationContext';
 // Import Bootstrap Icons CSS if not already globally imported
 // import 'bootstrap-icons/font/bootstrap-icons.css'; 
 
 const StaffNavButtons = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const staffUser = staffAuthService.getStaffUser();
+  
+  // Sử dụng NotificationContext để lấy số lượng thông báo và các hàm xóa thông báo
+  const { 
+    orderNotifications, 
+    bookingNotifications, 
+    clearOrderNotifications, 
+    clearBookingNotifications 
+  } = useNotifications();
+
+  // Theo dõi đường dẫn hiện tại để xóa thông báo khi người dùng truy cập trang tương ứng
+  useEffect(() => {
+    // Khi user vào trang orders, xóa thông báo đơn hàng
+    if (location.pathname.includes('/orders')) {
+      clearOrderNotifications();
+    }
+    // Khi user vào trang appointments, xóa thông báo đặt lịch
+    else if (location.pathname.includes('/appointments')) {
+      clearBookingNotifications();
+    }
+  }, [location.pathname, clearOrderNotifications, clearBookingNotifications]);
   
   // Function to get the last name
   const getLastName = (fullName) => {
@@ -21,6 +43,31 @@ const StaffNavButtons = () => {
     navigate('/login'); 
   };
 
+  // CSS cho badge thông báo
+  const notificationBadgeStyle = {
+    position: 'absolute',
+    top: '-8px',
+    right: '-8px',
+    fontSize: '0.65rem',
+    padding: '0.25em 0.6em',
+    borderRadius: '50%',
+    backgroundColor: '#dc3545',
+    color: 'white',
+    fontWeight: 'bold',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '18px',
+    height: '18px',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+    border: '1px solid #fff'
+  };
+
+  // CSS cho container chứa link và badge
+  const navItemStyle = {
+    position: 'relative'
+  };
+
   return (
     <div className="staff-sidebar">
       <nav className="sidebar-nav">
@@ -30,14 +77,24 @@ const StaffNavButtons = () => {
               Dashboard
             </NavLink>
           </li>
-          <li className="nav-item">
+          <li className="nav-item" style={navItemStyle}>
             <NavLink to="/appointments" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               Appointments
+              {bookingNotifications > 0 && (
+                <span style={notificationBadgeStyle}>
+                  {bookingNotifications > 99 ? '99+' : bookingNotifications}
+                </span>
+              )}
             </NavLink>
           </li>
-          <li className="nav-item">
+          <li className="nav-item" style={navItemStyle}>
             <NavLink to="/orders" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               Orders
+              {orderNotifications > 0 && (
+                <span style={notificationBadgeStyle}>
+                  {orderNotifications > 99 ? '99+' : orderNotifications}
+                </span>
+              )}
             </NavLink>
           </li>
           <li className="nav-item">

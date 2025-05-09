@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import staffDashboardService from '../services/staffDashboardService';
 import staffAppointmentService from '../services/staffAppointmentService';
 import staffOrderService from '../services/staffOrderService';
+import { useSocketContext } from '../context/SocketContext';
 
 const StaffDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -15,6 +16,10 @@ const StaffDashboard = () => {
     recentOrders: []
   });
   const [error, setError] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  
+  // Sử dụng Socket.IO context
+  const { isConnected, registerHandler, unregisterHandler } = useSocketContext();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -63,6 +68,90 @@ const StaffDashboard = () => {
 
     fetchDashboardData();
   }, []);
+  
+  // Thiết lập lắng nghe sự kiện Socket.IO khi component được mount
+  useEffect(() => {
+    if (!isConnected) return;
+    
+    console.log('Setting up socket listeners for dashboard');
+    
+    // Handler cho đơn hàng mới
+    const handleNewOrder = (data) => {
+      console.log('Received new order event:', data);
+      
+      // Tạo thông báo mới
+      if (data.operationType === 'insert') {
+        const newNotification = {
+          id: Date.now(),
+          type: 'order',
+          message: `New order created: #${data.documentId.slice(-6).toUpperCase()}`,
+          timestamp: new Date().toISOString(),
+          seen: false
+        };
+        
+        setNotifications(prev => [newNotification, ...prev.slice(0, 9)]);
+        
+        // Cập nhật danh sách đơn hàng gần đây nếu là đơn hàng mới
+        if (data.fullDocument) {
+          const newOrder = data.fullDocument;
+          setDashboardData(prev => ({
+            ...prev,
+            recentOrders: [newOrder, ...prev.recentOrders.slice(0, 4)], // Giữ chỉ 5 đơn hàng gần nhất
+            orders: prev.orders + 1 // Tăng số lượng đơn hàng
+          }));
+        }
+      }
+    };
+    
+    // Handler cho lịch hẹn mới
+    const handleNewBooking = (data) => {
+      console.log('Received new booking event:', data);
+      
+      // Tạo thông báo mới
+      if (data.operationType === 'insert') {
+        const newNotification = {
+          id: Date.now(),
+          type: 'booking',
+          message: `New appointment scheduled: ${data.fullDocument?.serviceName || 'Service'}`,
+          timestamp: new Date().toISOString(),
+          seen: false
+        };
+        
+        setNotifications(prev => [newNotification, ...prev.slice(0, 9)]);
+        
+        // Cập nhật danh sách lịch hẹn hôm nay nếu là lịch hẹn mới cho ngày hôm nay
+        if (data.fullDocument) {
+          const today = new Date().toISOString().split('T')[0];
+          const bookingDate = new Date(data.fullDocument.date).toISOString().split('T')[0];
+          
+          if (bookingDate === today) {
+            setDashboardData(prev => ({
+              ...prev,
+              todayBookings: [data.fullDocument, ...prev.todayBookings],
+              appointments: prev.appointments + 1 // Tăng số lượng lịch hẹn
+            }));
+          } else {
+            // Nếu không phải lịch hẹn cho ngày hôm nay, chỉ tăng tổng số
+            setDashboardData(prev => ({
+              ...prev,
+              appointments: prev.appointments + 1
+            }));
+          }
+        }
+      }
+    };
+    
+    // Đăng ký các event handler
+    registerHandler('newOrder', handleNewOrder);
+    registerHandler('newBooking', handleNewBooking);
+    
+    // Clean up khi component unmount
+    return () => {
+      console.log('Cleaning up socket listeners');
+      unregisterHandler('newOrder', handleNewOrder);
+      unregisterHandler('newBooking', handleNewBooking);
+    };
+  }, [isConnected, registerHandler, unregisterHandler]);
 
   // Format date to display in a readable format
   const formatDate = (dateString) => {
@@ -73,6 +162,11 @@ const StaffDashboard = () => {
   // Format time to display in a readable format
   const formatTime = (timeString) => {
     return new Date(`2000-01-01T${timeString}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+  
+  // Xoá thông báo
+  const dismissNotification = (id) => {
+    setNotifications(prev => prev.filter(notification => notification.id !== id));
   };
 
   if (loading) {
@@ -87,6 +181,58 @@ const StaffDashboard = () => {
         <div className="alert alert-warning alert-dismissible fade show" role="alert">
           <strong>Note:</strong> {error}
           <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      )}
+      
+      {/* Hiển thị trạng thái kết nối Socket.IO */}
+      <div className="mb-3">
+        <span className={`badge ${isConnected ? 'bg-success' : 'bg-danger'}`}>
+          Socket.IO: {isConnected ? 'Connected' : 'Disconnected'}
+        </span>
+      </div>
+      
+      {/* Hiển thị thông báo real-time */}
+      {notifications.length > 0 && (
+        <div className="row mb-4">
+          <div className="col-12">
+            <div className="card border-primary">
+              <div className="card-header bg-primary text-white d-flex justify-content-between">
+                <span>Real-time Notifications</span>
+                <button 
+                  className="btn btn-sm btn-light" 
+                  onClick={() => setNotifications([])}
+                >
+                  Clear All
+                </button>
+              </div>
+              <div className="card-body p-0">
+                <ul className="list-group list-group-flush">
+                  {notifications.map((notification) => (
+                    <li 
+                      key={notification.id} 
+                      className="list-group-item d-flex justify-content-between align-items-center"
+                    >
+                      <div>
+                        <span className={`badge me-2 ${notification.type === 'order' ? 'bg-success' : 'bg-primary'}`}>
+                          {notification.type === 'order' ? 'Order' : 'Booking'}
+                        </span>
+                        {notification.message}
+                        <small className="ms-2 text-muted">
+                          {new Date(notification.timestamp).toLocaleTimeString()}
+                        </small>
+                      </div>
+                      <button 
+                        className="btn btn-sm btn-light border" 
+                        onClick={() => dismissNotification(notification.id)}
+                      >
+                        <i className="bi bi-x"></i>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       )}
       

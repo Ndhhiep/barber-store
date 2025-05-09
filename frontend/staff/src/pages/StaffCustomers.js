@@ -59,13 +59,18 @@ const StaffCustomers = () => {
       
       // Fetch both bookings and orders for this customer
       const [bookings, orders] = await Promise.all([
-        staffCustomerService.getCustomerBookings(id),
+        staffCustomerService.getCustomerBookings(id), // This function should be updated to filter by user_id
         staffCustomerService.getCustomerOrders(id)
       ]);
       
+      // Make sure we're only setting bookings that belong to this specific customer
+      const customerBookings = Array.isArray(bookings.bookings) 
+        ? bookings.bookings.filter(booking => booking.user_id === id || booking.userId === id)
+        : [];
+      
       setCustomerDetails({
         ...customer,
-        bookings: bookings.bookings || [],
+        bookings: customerBookings,
         orders: orders.orders || []
       });
       

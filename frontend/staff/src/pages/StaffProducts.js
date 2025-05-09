@@ -78,12 +78,11 @@ const StaffProducts = () => {
       if (Array.isArray(response)) {
         setCategories(['All Categories', ...response]);
       } else {
-        console.warn('Invalid categories response:', response);
         // Fallback với một số danh mục mặc định
         setCategories(['All Categories', 'Pomade', 'Pre-styling', 'Grooming']);
       }
     } catch (err) {
-      console.error('Error fetching categories:', err);
+      console.error('Error fetching categories:', err.message);
       // Fallback với một số danh mục mặc định nếu có lỗi
       setCategories(['All Categories', 'Pomade', 'Pre-styling', 'Grooming']);
     }

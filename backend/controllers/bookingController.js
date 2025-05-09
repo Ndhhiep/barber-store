@@ -72,6 +72,11 @@ const getBookings = asyncHandler(async (req, res) => {
     // Handle date filtering if provided
     const filter = {};
     
+    // Filter by user ID if provided
+    if (req.query.userId) {
+      filter.user_id = req.query.userId;
+    }
+    
     if (req.query.date) {
       // Filter by specific date
       const date = req.query.date;
