@@ -4,6 +4,7 @@ import Header from './components/header';
 import Footer from './components/Footer';
 import { useEffect } from 'react';
 import { CartProvider } from './context/CartContext'; 
+import { SocketProvider } from './context/SocketContext';
 import UserRoutes from './routes/UserRoutes';
 
 function ScrollToTop() {
@@ -25,20 +26,21 @@ function AppContent() {
   
   // Check whether to show user header
   const showUserHeader = !hideHeaderPaths.includes(location.pathname);
-  
-  return (
-    <CartProvider>
-      <div className="App">
-        {showUserHeader && <Header />}
-        <main>
-          <Routes>
-            {/* User routes */}
-            <Route path="/*" element={<UserRoutes />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
-    </CartProvider>
+    return (
+    <SocketProvider>
+      <CartProvider>
+        <div className="App">
+          {showUserHeader && <Header />}
+          <main>
+            <Routes>
+              {/* User routes */}
+              <Route path="/*" element={<UserRoutes />} />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </CartProvider>
+    </SocketProvider>
   );
 }
 

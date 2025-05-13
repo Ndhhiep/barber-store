@@ -1,1 +1,33 @@
 /* Styles specific to ProductsPage */
+@import './Common.css';
+
+.products-page {
+  background-color: #F5F2EE;
+}
+
+/* Hero Section */
+.hero-section {
+  background-color: transparent;
+  padding: 3rem 0;
+  text-align: center;
+}
+
+.hero-title {
+  font-family: 'Playfair Display', serif;
+  color: #2B2A2A;
+  font-weight: bold;
+}
+
+.hero-section hr {
+  width: 50%;
+  margin: 1.5rem auto;
+  border: 0;
+  height: 4px;
+  background-color: #8B775C;
+  border-radius: 10px;
+}
+
+.hero-description {
+  max-width: 800px;
+  margin: 0 auto;
+}

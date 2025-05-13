@@ -3,6 +3,9 @@
 .footer {
   background-color: #2B2A2A;
   color: #D9D0C7;
+  position: relative;
+  margin-top: 5rem; /* Increased margin to create more space between content and footer */
+  clear: both; /* Ensure footer clears any floated elements */
 }
 
 .footer-heading {

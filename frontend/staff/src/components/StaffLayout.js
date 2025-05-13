@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
+import StaffHeader from './StaffHeader';
 import StaffNavButtons from './StaffNavButtons';
 
 import staffAuthService from '../services/staffAuthService';
@@ -48,14 +49,15 @@ const StaffLayout = () => {
   if (!authorized) {
     // If not properly authenticated or didn't enter through login, redirect to staff login
     return <Navigate to="/login" replace />;
-  }
-  
-  return (
+  }  return (
     <div className="staff-page-container">
       <div className="staff-layout-container">
         <StaffNavButtons />
         <main className="staff-main-content">
-          <Outlet />
+          <StaffHeader />
+          <div className="staff-content-body">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

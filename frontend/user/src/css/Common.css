@@ -1,0 +1,76 @@
+/* Common styles shared across multiple pages */
+
+/* Page Title Section - used on all regular pages except homepage */
+.page-title-section {
+  background-color: #8B775C;
+  padding: 3rem 0;
+  text-align: center;
+  min-height: 250px; /* Ensuring consistent height across pages */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.page-title {
+  font-family: 'Playfair Display', serif;
+  color: #FFFFFF; /* Changed to white */
+  font-weight: bold;
+}
+
+.page-title-section hr {
+  width: 50%;
+  margin: 1.5rem auto;
+  border: 0;
+  height: 4px;
+  background-color: #FFFFFF; /* Changed to white */
+  border-radius: 10px;
+}
+
+.page-subtitle {
+  color: #FFFFFF; /* White text */
+  max-width: 800px;
+  margin: 0 auto;
+  font-size: 1.2rem;
+  font-weight: 300;
+}
+
+.page-description {
+  max-width: 800px;
+  margin: 0 auto;
+  color: #333;
+}
+
+/* CTA Section - Used for call-to-action sections */
+.cta-section {
+  background-color: #F5F2EE;
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.cta-title {
+  font-family: 'Playfair Display', serif;
+  color: #2B2A2A;
+  font-weight: bold;
+}
+
+.cta-description {
+  max-width: 800px;
+  margin: 0 auto;
+  color: #333;
+}
+
+.cta-button {
+  background-color: #8B775C;
+  border-color: #8B4513;
+  color: #ffffff;
+  padding: 0.75rem 2rem;
+  font-family: 'Lato', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.cta-button:hover {
+  background-color: #703610;
+  border-color: #703610;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(139, 69, 19, 0.25);
+}

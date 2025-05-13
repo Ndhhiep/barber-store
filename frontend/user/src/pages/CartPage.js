@@ -240,10 +240,9 @@ const CartPage = () => {
                         <th scope="col" className="py-3">Total</th>
                         <th scope="col" className="py-3"></th>
                       </tr>
-                    </thead>
-                    <tbody>
+                    </thead>                    <tbody>
                       {cartItems.map((item) => (
-                        <tr key={item.product._id}>
+                        <tr key={item.product._id} className="cart-item-row">
                           <td className="ps-4">
                             <img 
                               src={item.product.imgURL || '/assets/placeholder.png'} 
@@ -252,10 +251,12 @@ const CartPage = () => {
                             />
                           </td>
                           <td>
-                            <Link to={`/products/${item.product._id}`} className="text-decoration-none">
-                              <h6 className="mb-1 product-name">{item.product.name}</h6>
-                            </Link>
-                            <small className="text-muted">{item.product.category}</small>
+                            <div className="product-info">
+                              <Link to={`/products/${item.product._id}`} className="text-decoration-none">
+                                <h6 className="mb-1 product-name">{item.product.name}</h6>
+                              </Link>
+                              <small className="text-muted">{item.product.category}</small>
+                            </div>
                           </td>
                           <td>${item.product.price?.toFixed(2)}</td>
                           <td>
@@ -305,12 +306,11 @@ const CartPage = () => {
               </Link>
             </div>
           </div>
-          
-          {/* Right side - Order Summary with position: sticky */}
+            {/* Right side - Order Summary with position: sticky */}
           <div className="col-lg-4">
             <div id="order-summary">
-              <div className="card border-0 shadow-sm mb-4">
-                <div className="card-body">
+              <div className="card border-0 shadow-sm mb-4 order-summary-card">
+                <div className="card-body d-flex flex-column">
                   <h5 className="card-title mb-3">Order Summary</h5>
                   <div className="d-flex justify-content-between mb-2">
                     <span>Subtotal:</span>

@@ -1,0 +1,35 @@
+/* Dashboard table containers */
+.dashboard-table-container {
+  height: 350px;
+  overflow-y: auto;
+  margin-bottom: 0;
+}
+
+/* Ensure proper table headers and scrolling */
+.dashboard-table-container table {
+  width: 100%;
+}
+
+.dashboard-table-container thead th {
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa;
+  z-index: 1;
+}
+
+/* Card body containing tables should have no padding bottom */
+.dashboard-card .card-body {
+  padding-bottom: 0;
+}
+
+/* Make card have fixed height */
+.dashboard-card {
+  height: 450px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Message for empty tables */
+.dashboard-card .text-center {
+  margin-top: 140px;
+}

@@ -15,6 +15,45 @@ const getTimeSlotStatus = async (barberId, date) => {
       throw new Error('Server is not reachable');
     }
 
+    // If barberId is 'any', use a different endpoint or provide default time slots
+    if (barberId === 'any') {
+      // Return default time slots without checking availability
+      // These can be adjusted according to your business hours
+      const defaultTimeSlots = [
+        "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+        "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
+        "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
+        "18:00", "18:30", "19:00"
+      ];
+
+      // Filter out past time slots if the date is today
+      if (date === new Date().toISOString().split('T')[0]) {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const currentTotalMinutes = currentHour * 60 + currentMinute;
+
+        return defaultTimeSlots.map(timeSlot => {
+          const [slotHour, slotMinute] = timeSlot.split(':').map(Number);
+          const slotTotalMinutes = slotHour * 60 + slotMinute;
+          
+          return {
+            start_time: timeSlot,
+            isPast: slotTotalMinutes < (currentTotalMinutes + 30),
+            isAvailable: slotTotalMinutes >= (currentTotalMinutes + 30)
+          };
+        });
+      }
+
+      // For future dates, all slots are available
+      return defaultTimeSlots.map(timeSlot => ({
+        start_time: timeSlot,
+        isPast: false,
+        isAvailable: true
+      }));
+    }
+
+    // Regular flow for specific barber
     const response = await api.get('/bookings/time-slots-status', {
       params: {
         barberId,

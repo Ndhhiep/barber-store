@@ -7,6 +7,7 @@ import HomePage from '../pages/HomePage';
 import ServicesPage from '../pages/ServicesPage';
 import ContactPage from '../pages/ContactPage';
 import BookingPage from '../pages/BookingPage';
+import BookingConfirmedPage from '../pages/BookingConfirmedPage';
 import AboutPage from '../pages/AboutPage';
 import TeamPage from '../pages/TeamPage';
 import ProductsPage from '../pages/ProductsPage';
@@ -27,9 +28,9 @@ const UserRoutes = () => {
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/team" element={<TeamPage />} />
-      <Route path="/products" element={<ProductsPage />} />
-      <Route path="/products/:id" element={<ProductDetailPage />} />
+      <Route path="/products" element={<ProductsPage />} />      <Route path="/products/:id" element={<ProductDetailPage />} />
       <Route path="/cart" element={<CartPage />} />
+      <Route path="/booking-confirmed" element={<BookingConfirmedPage />} />
       
       {/* Routes accessible only when not logged in */}
       <Route element={<PublicOnlyRoute />}>

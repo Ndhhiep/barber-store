@@ -3,6 +3,7 @@
 /* Page Background */
 .booking-page-bg {
   background-color: #F5F2EE;
+  padding-bottom: 3rem; /* Optimized padding for the page */
 }
 
 /* Typography */
@@ -21,6 +22,15 @@
   border: none;
   border-radius: 0;
   box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+  transition: none !important;
+  transform: none !important;
+  margin-bottom: 1.5rem;
+}
+
+/* Prevent any movement or shadow changes on hover */
+.booking-card:hover {
+  transform: none !important;
+  box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
 }
 
 .booking-section-title {
@@ -32,6 +42,14 @@
   background-color: #EFEBE5;
   border-radius: 0;
   border: none;
+  transition: none !important;
+  transform: none !important;
+}
+
+/* Prevent any movement or shadow changes on hover */
+.booking-section-card:hover {
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 /* Form Controls */
@@ -96,6 +114,8 @@
 .confirmation-title {
   font-family: 'Playfair Display, serif';
   color: #2B2A2A;
+  font-size: 1.8rem;
+  margin-bottom: 1.25rem;
 }
 
 /* Buttons */
@@ -129,6 +149,49 @@
   border: none;
   background-color: #2B2A2A;
   color: #D9D0C7;
+  margin-bottom: 3rem; /* Adjusted margin for the policy card */
+}
+
+/* Booking Confirmation Information */
+.booking-info-container {
+  width: 100%;
+  margin: 0 auto;
+  padding-left: 0;
+}
+
+.booking-info-item {
+  margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+.booking-info-label {
+  display: inline-block;
+  min-width: 70px;
+  color: #2B2A2A;
+  font-weight: 700;
+  text-align: center;
+  margin-right: 8px;
+}
+
+.booking-info-value {
+  color: #8B775C;
+  font-weight: 700;
+  margin-right: 5px;
+  text-align: center;
+  padding: 5px 10px;
+  background-color: #ffffff;
+  border-radius: 4px;
+  display: inline-block;
+  min-width: 110px;
+}
+
+.booking-info-normal {
+  margin: 0 5px;
+  color: #504B40;
+  font-weight: normal;
 }
 
 .policy-title {
@@ -138,4 +201,171 @@
 
 .policy-list {
   padding-left: 1.2rem;
+}
+
+/* Fix for shadow hover effects */
+.shadow-sm, .card {
+  transition: none !important;
+  transform: none !important;
+}
+
+/* Modal specific styles */
+.modal-body {
+  padding: 2rem !important;
+}
+
+.modal-dialog {
+  max-width: 650px;
+  margin: 1.75rem auto;
+  display: flex;
+  align-items: center;
+  min-height: calc(100% - 3.5rem);
+}
+
+.modal-lg {
+  max-width: 800px;
+}
+
+.modal-content {
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Booking confirmed modal - centering and layout */
+.booking-confirmed-modal {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.booking-info-container {
+  background-color: #f8f9fa !important;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1.5rem !important;
+  max-width: 100%;
+  margin: 0 auto;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* Make booking info more visible in modal */
+.booking-info-item {
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Confirmation modal table styling */
+.booking-info-container table.table-borderless {
+  margin-bottom: 0;
+}
+
+.booking-info-container table td {
+  padding: 12px 5px;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.booking-info-container table tr:last-child td {
+  border-bottom: none;
+}
+
+.shadow-sm:hover, .card:hover {
+  box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+  transform: none !important;
+}
+
+/* Fix for input groups hover effects */
+.input-group, .input-group-text, .form-control {
+  transition: none !important;
+  transform: none !important;
+}
+
+.input-group:hover, .input-group-text:hover, .form-control:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Fix for button hover movement */
+.btn {
+  transition: background-color 0.2s ease, color 0.2s ease !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn:hover {
+  transform: none !important;
+}
+
+/* Global class to disable all hover effects */
+.no-hover-effect {
+  transition: none !important;
+  transform: none !important;
+  box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+}
+
+.no-hover-effect:hover {
+  transition: none !important;
+  transform: none !important;
+  box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+}
+
+/* Override all Bootstrap hover effects */
+.card, .card:hover,
+.form-select, .form-select:hover,
+.form-control, .form-control:hover,
+.input-group, .input-group:hover,
+.input-group-text, .input-group-text:hover {
+  margin: 0 !important;
+  outline: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  -moz-transform: none !important;
+  -ms-transform: none !important;
+  -o-transform: none !important;
+  transition: none !important;
+  -webkit-transition: none !important;
+  -moz-transition: none !important;
+  -ms-transition: none !important;
+  -o-transition: none !important;
+}
+
+/* Extra specificity to override any library using !important */
+.booking-page-bg .booking-card.card, 
+.booking-page-bg .booking-card.card:hover {
+  box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* Add spacing for footer - ensure footer doesn't overlap with content */
+.booking-page-container {
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+/* Animation for success checkmark */
+.success-checkmark {
+  display: inline-block;
+  animation: bounceIn 0.8s ease-out;
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
 }

@@ -4,6 +4,7 @@ import staffDashboardService from '../services/staffDashboardService';
 import staffAppointmentService from '../services/staffAppointmentService';
 import staffOrderService from '../services/staffOrderService';
 import { useSocketContext } from '../context/SocketContext';
+import '../css/StaffDashboard.css';
 
 const StaffDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -270,17 +271,16 @@ const StaffDashboard = () => {
           </div>
         </div>
       </div>
-      
-      <div className="row mt-4">
+        <div className="row mt-4">
         <div className="col-md-6 mb-4">
-          <div className="card">
+          <div className="card dashboard-card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <span>Today's Appointments</span>
-              <Link to="/staff/appointments" className="btn btn-sm btn-outline-primary">View All</Link>
+              <Link to="/appointments" className="btn btn-sm btn-outline-primary">View All</Link>
             </div>
             <div className="card-body">
               {dashboardData.todayBookings.length > 0 ? (
-                <div className="table-responsive">
+                <div className="table-responsive dashboard-table-container">
                   <table className="table table-hover">
                     <thead>
                       <tr>
@@ -310,22 +310,20 @@ const StaffDashboard = () => {
                       ))}
                     </tbody>
                   </table>
-                </div>
-              ) : (
+                </div>              ) : (
                 <p className="text-center">No appointments for today</p>
               )}
             </div>
           </div>
-        </div>
-        <div className="col-md-6 mb-4">
-          <div className="card">
+        </div>        <div className="col-md-6 mb-4">
+          <div className="card dashboard-card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <span>Recent Orders</span>
-              <Link to="/staff/orders" className="btn btn-sm btn-outline-primary">View All</Link>
+              <Link to="/orders" className="btn btn-sm btn-outline-primary">View All</Link>
             </div>
             <div className="card-body">
               {dashboardData.recentOrders.length > 0 ? (
-                <div className="table-responsive">
+                <div className="table-responsive dashboard-table-container">
                   <table className="table table-hover">
                     <thead>
                       <tr>
@@ -356,8 +354,7 @@ const StaffDashboard = () => {
                       ))}
                     </tbody>
                   </table>
-                </div>
-              ) : (
+                </div>              ) : (
                 <p className="text-center">No recent orders</p>
               )}
             </div>

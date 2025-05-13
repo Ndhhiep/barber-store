@@ -50,26 +50,18 @@ const TeamPage = () => {
   // Use fallback data if API call fails or returns empty
   const displayBarbers = barbers.length > 0 ? barbers : (error ? fallbackBarbers : []);
 
-  return (
-    <div>
-      {/* Hero Section */}
-      <section className="py-5 team-hero text-center">
+  return (    <div>      {/* Page Title Section */}      <section className="page-title-section">
         <div className="container py-4">
-          <h1 className="display-4 mb-3 team-hero-title">Meet Our Team</h1>
-          <p className="lead mx-auto" style={{ maxWidth: '800px' }}>
-            Skilled professionals with a passion for the art and craft of barbering.
-          </p>
+          <h1 className="display-4 mb-3 page-title">Meet Our Team</h1>
+          <hr />
+          <p className="page-subtitle">Our skilled barbers are dedicated to delivering exceptional grooming experiences</p>
         </div>
       </section>
 
       {/* Team Members */}
       <section className="py-5 team-section">
         <div className="container">
-          <div className="mb-5 text-center">
-            <p className="lead text-muted">
-              Our team of experienced barbers combines traditional techniques with contemporary styles to deliver exceptional grooming services tailored to each client.
-            </p>
-          </div>
+          
 
           {loading ? (
             <div className="text-center py-5">
@@ -142,7 +134,7 @@ const TeamPage = () => {
             <div className="col-lg-6 mb-4 mb-lg-0 order-lg-2">
               <div className="position-relative">
                 <img 
-                  src="/assets/join-team.jpg" 
+                  src="/assets/team01.jfif" 
                   alt="Barbershop Team" 
                   className="img-fluid shadow"
                   onError={(e) => {

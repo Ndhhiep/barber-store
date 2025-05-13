@@ -12,9 +12,8 @@ function Footer() {
           </div>
           <div className="col-md-4 mb-4 mb-md-0">
             <h5 className="text-uppercase mb-3 footer-heading">Hours</h5>
-            <p className="footer-text mb-1">Monday - Friday: 9am - 7pm</p>
-            <p className="footer-text mb-1">Saturday: 10am - 6pm</p>
-            <p className="footer-text">Sunday: Closed</p>
+            <p className="footer-text mb-1">Monday - Sunday: 9am - 7pm</p>
+            
           </div>
           <div className="col-md-4">
             <h5 className="text-uppercase mb-3 footer-heading">Contact</h5>

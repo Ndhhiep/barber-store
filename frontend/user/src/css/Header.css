@@ -1,14 +1,15 @@
 /* Styles specific to Header component */
 
 .header-navbar {
-  background-color: #2B2A2A;
+  background-color: white;
   width: 100%;
   z-index: 1000;
-  height: 100px; /* Set fixed height to match your design */
+  height: 80px; /* Adjusted based on the image */
   display: flex;
   align-items: center;
   padding: 0;
   transition: box-shadow 0.3s ease;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 /* Sticky header styles */
@@ -17,11 +18,11 @@
   top: 0;
   left: 0;
   right: 0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   animation: slideDown 0.3s ease;
 }
 
-/* Animation cho sticky header */
+/* Animation for sticky header */
 @keyframes slideDown {
   from {
     transform: translateY(-100%);
@@ -31,57 +32,34 @@
   }
 }
 
-/* Logo styles - keep consistent with design */
-.header-brand-logo {
+/* Logo circle styling */
+.header-logo-circle {
+  width: 48px;
+  height: 48px;
+  background-color: #8B775C; /* Brown color from image */
   border-radius: 50%;
-  width: 70px !important; /* Match your design in screenshot */
-  height: 70px !important;
-  object-fit: cover;
-}
-
-/* Ensure consistent logo size */
-.sticky-header .header-brand-logo {
-  width: 70px !important; 
-  height: 70px !important;
-}
-
-/* Add padding to body to prevent content jump when header becomes fixed */
-body {
-  margin: 0;
-  padding: 0;
-}
-
-body.has-sticky-header {
-  padding-top: 125px; /* Khớp với chiều cao của header */
-}
-
-@media (max-width: 576px) {
-  body.has-sticky-header {
-    padding-top: 110px; /* Adjust for smaller screens */
-  }
-}
-
-.header-container {
-  width: 100%;
-  padding-right: var(--bs-gutter-x, 0.75rem);
-  padding-left: var(--bs-gutter-x, 0.75rem);
-  margin-right: auto;
-  margin-left: auto;
-  height: 100%;
   display: flex;
   align-items: center;
+  justify-content: center;
+}
+
+.logo-letters {
+  color: white;
+  font-family: 'Playfair Display', serif;
+  font-weight: bold;
+  font-size: 20px;
 }
 
 .header-brand-name {
   font-family: 'Playfair Display', serif;
-  color: #D9D0C7;
-  font-size: 1.5rem; /* Adjusted to match design */
+  color: #333;
+  font-size: 1.25rem;
   margin-left: 0.75rem;
 }
 
 @media (max-width: 991px) {
   .header-brand-name {
-    font-size: 1.4rem;
+    font-size: 1.1rem;
   }
 }
 
@@ -99,7 +77,7 @@ body.has-sticky-header {
   .header-nav {
     margin-top: 1rem;
     padding: 0.5rem 0;
-    border-top: 1px solid rgba(217, 208, 199, 0.2);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -114,13 +92,16 @@ body.has-sticky-header {
   }
 }
 
+/* Updated navigation links */
 .header-nav-link {
-  color: #D9D0C7; /* var(--primary-light) */
+  color: #333;
   font-family: 'Lato', sans-serif;
-  font-size: 1.25rem; /* Increased from 1.1rem */
+  font-size: 1rem;
   transition: all 0.3s ease;
-  padding: 0.65rem 1rem; /* Increased from 0.5rem 0.75rem */
+  padding: 0.5rem 0.75rem;
   position: relative;
+  text-align: center;
+  display: inline-block;
 }
 
 @media (max-width: 991px) {
@@ -131,9 +112,9 @@ body.has-sticky-header {
   }
 }
 
-/* Ensure hover state has accent color */
+/* Ensure hover and active states have accent color */
 .header-nav-link:hover {
-  color: #8B775C !important; /* var(--accent) */
+  color: #8B775C !important;
 }
 
 /* Ensure all active links have accent color */
@@ -147,21 +128,39 @@ body.has-sticky-header {
   color: #8B775C !important;
 }
 
-/* Add underline to active links */
-.header-nav-link.active::after {
+/* Add underline to active links and hover state */
+.header-nav-link::after {
   content: '';
   position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 70%;
+  bottom: -10px;
+  left: 0;
+  right: 0;
+  width: 0;
   height: 2px;
+  margin: 0 auto;
   background-color: #8B775C;
+  transition: width 0.3s ease;
+}
+
+.header-nav-link:hover::after {
+  width: 80%;
+}
+
+.header-nav-link.active::after {
+  width: 80%;
 }
 
 @media (max-width: 991px) {
+  .header-nav-link::after {
+    bottom: -5px;
+  }
+  
   .header-nav-link.active::after {
-    width: 50%;
+    width: 60%;
+  }
+  
+  .header-nav-link:hover::after {
+    width: 60%;
   }
 }
 
@@ -171,15 +170,17 @@ body.has-sticky-header {
 }
 
 .header-book-btn {
-  border-color: #8B775C; /* var(--accent) */
-  color: #D9D0C7; /* var(--primary-light) */
-  font-family: 'Playfair Display', serif;
-  font-size: 1.25rem; /* Increased from 1.1rem */
-  padding: 0.65rem 1.5rem; /* Increased from 0.5rem 1.25rem */
+  border-color: #8B775C; /* Consistent brown color */
+  color: #8B775C; /* Brown text */
+  font-family: 'Lato', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 0.65rem 1.5rem;
   transition: all 0.3s ease;
   letter-spacing: 0.5px;
-  border: 2px solid #8B775C; /* var(--accent) */
-  border-radius: 5px; 
+  border: 2px solid #8B775C;
+  border-radius: 4px;
+  background-color: transparent;
 }
 
 @media (max-width: 991px) {
@@ -192,9 +193,11 @@ body.has-sticky-header {
 }
 
 .header-book-btn:hover {
-  background-color: #8B775C; /* var(--accent) */
-  border-color: #8B775C; /* var(--accent) */
+  background-color: #8B775C;
+  border-color: #8B775C;
   color: #FFFFFF; /* White text on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(139, 119, 92, 0.25);
 }
 
 /* Login button styling */
@@ -238,7 +241,7 @@ body.has-sticky-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #D9D0C7;
+  color: #333;
   font-size: 1.4rem;
   width: 40px;
   height: 40px;
@@ -331,7 +334,7 @@ body.has-sticky-header {
 .user-dropdown-btn {
   display: flex;
   align-items: center;
-  color: #D9D0C7;
+  color: #333;
   background: transparent;
   border: none;
   padding: 0.5rem 1rem;
@@ -361,4 +364,39 @@ body.has-sticky-header {
 .dropdown-item.my-info i {
   margin-right: 8px;
   font-size: 1.1rem;
+}
+
+/* Book Appointment Button - Right side */
+.book-appointment-btn {
+  background-color: transparent;
+  color: #8B775C;
+  border: 2px solid #8B775C;
+  border-radius: 4px;
+  font-family: 'Lato', sans-serif;
+  font-weight: 600;
+  padding: 8px 20px;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.book-appointment-btn:hover {
+  background-color: #8B775C;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(139, 119, 92, 0.25);
+}
+
+/* Mobile Book Appointment Button */
+.nav-item .header-book-btn {
+  background-color: transparent;
+  color: #8B775C;
+  border: 2px solid #8B775C;
+  border-radius: 4px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.nav-item .header-book-btn:hover {
+  background-color: #8B775C;
+  color: white;
 }

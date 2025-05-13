@@ -1,9 +1,12 @@
 const Booking = require('../models/Booking');
 const Barber = require('../models/Barber');
-const User = require('../models/User'); // Thêm import model User
+const User = require('../models/User'); 
+const Token = require('../models/Token');
 const mongoose = require('mongoose');
 const asyncHandler = require('express-async-handler');
-const dateUtils = require('../utils/dateUtils'); // Import tiện ích xử lý thời gian
+const dateUtils = require('../utils/dateUtils'); 
+const { sendBookingConfirmationEmail } = require('../utils/emailUtils');
+const crypto = require('crypto');
 
 // @desc    Create new booking
 // @route   POST /api/bookings
@@ -18,7 +21,8 @@ const createBooking = asyncHandler(async (req, res) => {
     email,
     phone,
     notes,
-    user_id // Added user_id to be saved if the user is logged in
+    user_id, // Added user_id to be saved if the user is logged in
+    requireEmailConfirmation = false // Flag to determine if email confirmation is needed
   } = req.body;
 
   // Xác thực barber_id
@@ -52,6 +56,7 @@ const createBooking = asyncHandler(async (req, res) => {
     email,
     phone,
     notes,
+    status: requireEmailConfirmation ? 'pending' : 'confirmed', // Set status based on email confirmation requirement
     user_id: user_id || (req.user ? req.user._id : null) // Use provided user_id, or get from authenticated user if available
   });
 
@@ -61,7 +66,58 @@ const createBooking = asyncHandler(async (req, res) => {
   const populatedBooking = await Booking.findById(createdBooking._id)
     .populate('barber_id', 'name specialization');
   
-  res.status(201).json(populatedBooking);
+  // Handle email confirmation if required
+  if (requireEmailConfirmation) {
+    try {
+      // Generate random token
+      const tokenString = crypto.randomBytes(32).toString('hex');
+      
+      // Create token record
+      const token = new Token({
+        bookingId: createdBooking._id,
+        token: tokenString,
+      });
+      
+      await token.save();
+      
+      // Get barber name for email
+      const barberName = barber ? barber.name : 'Any Available Barber';
+      
+      // Determine base URL for confirmation link
+      const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      
+      // Send confirmation email
+      await sendBookingConfirmationEmail({
+        to: email,
+        booking: {
+          ...booking.toObject(),
+          barber_name: barberName,
+          _id: createdBooking._id
+        },
+        token: tokenString,
+        baseUrl
+      });
+      
+      res.status(201).json({
+        message: 'Booking created. Please check your email for confirmation.',
+        bookingId: createdBooking._id,
+        requiresConfirmation: true
+      });
+    } catch (error) {
+      console.error('Error sending confirmation email:', error);
+      
+      // If email fails, still return success but note the email issue
+      res.status(201).json({
+        message: 'Booking created but confirmation email could not be sent. Please contact support.',
+        bookingId: createdBooking._id,
+        requiresConfirmation: true,
+        emailError: true
+      });
+    }
+  } else {
+    // Return regular response if email confirmation not required
+    res.status(201).json(populatedBooking);
+  }
 });
 
 // @desc    Get all bookings
@@ -664,6 +720,67 @@ const getBookingStats = async (req, res) => {
   }
 };
 
+// @desc    Confirm booking with token
+// @route   POST /api/bookings/confirm
+// @access  Public
+const confirmBooking = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+  
+  if (!token) {
+    res.status(400);
+    throw new Error('Token is required');
+  }
+  
+  // Find the token document
+  const tokenDoc = await Token.findOne({ token });
+  
+  if (!tokenDoc) {
+    res.status(404);
+    throw new Error('Invalid or expired confirmation token');
+  }
+  
+  // Check if token is expired
+  if (new Date() > new Date(tokenDoc.expiresAt)) {
+    await Token.deleteOne({ _id: tokenDoc._id });
+    res.status(400);
+    throw new Error('Confirmation token has expired');
+  }
+  
+  // Find and update the booking
+  const booking = await Booking.findById(tokenDoc.bookingId);
+  
+  if (!booking) {
+    res.status(404);
+    throw new Error('Booking not found');
+  }
+  
+  // Update booking status to confirmed
+  booking.status = 'confirmed';
+  await booking.save();
+  
+  // Delete the used token
+  await Token.deleteOne({ _id: tokenDoc._id });
+  
+  // Get barber name if applicable
+  let barberName = null;
+  if (booking.barber_id) {
+    const barber = await Barber.findById(booking.barber_id);
+    if (barber) {
+      barberName = barber.name;
+    }
+  }
+  
+  // Return confirmed booking details
+  res.json({
+    success: true,
+    message: 'Booking confirmed successfully',
+    booking: {
+      ...booking.toObject(),
+      barber_name: barberName
+    }
+  });
+});
+
 module.exports = {
   createBooking,
   getBookings,
@@ -674,5 +791,6 @@ module.exports = {
   getAvailableTimeSlots,
   checkTimeSlotAvailability,
   getTimeSlotStatus,
-  getBookingStats
+  getBookingStats,
+  confirmBooking
 };

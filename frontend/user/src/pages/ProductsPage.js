@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ProductSearch from '../components/ProductSearch';
 import ProductCard from '../components/ProductCard';
+import '../css/ProductsPage.css';
 
-function ProductsPage() {
+const ProductsPage = () => {
   const [productsByCategory, setProductsByCategory] = useState({});
   const [filteredProductsByCategory, setFilteredProductsByCategory] = useState({});
   const [loading, setLoading] = useState(true);
@@ -87,16 +88,18 @@ function ProductsPage() {
   const handleCategoryFilter = (categories) => {
     console.log("ProductsPage received categories:", categories);
     setActiveCategories([...categories]); // Important: create a new array
-  };
-
+  };  
+  
   return (
-    <div className="container-fluid py-5">
-      <div className="row">
-        <div className="col-12 text-center mb-5">
-          <h1 className="display-4 mb-3">Premium Grooming Products</h1>
-          <p className="lead">We offer a carefully curated selection of grooming essentials to help you maintain your look at home.</p>
+    <div className="products-page">      {/* Page Title Section */}      <section className="page-title-section">
+        <div className="container py-4">
+          <h1 className="display-4 mb-3 page-title">Premium Grooming Products</h1>
+          <hr />
+          <p className="page-subtitle">Quality grooming essentials for the modern gentleman's daily routine</p>
         </div>
-      </div>
+      </section>
+      
+      <div className="container-fluid py-5">
       
       {loading ? (
         <div className="text-center">
@@ -111,8 +114,8 @@ function ProductsPage() {
       ) : (
         <div className="row" style={{padding: '0 30px'}}>
           {/* Left sidebar with search and filter - fixed position */}
-          <div className="col-lg-3 col-md-4">
-            <div className="position-sticky" style={{ top: '120px', paddingTop: '1rem' }}>
+          <div className="col-lg-2 col-md-4">
+            <div className="position-sticky" style={{ top: '120px', paddingTop: '5rem' }}>
               <ProductSearch 
                 categories={Object.keys(productsByCategory)}
                 onSearch={handleSearch}
@@ -149,8 +152,7 @@ function ProductsPage() {
                       ))
                       : 
                       <div className="col-12 text-center">
-                        <p>No products available in this category.</p>
-                      </div>
+                        <p>No products available in this category.</p>                      </div>
                     }
                   </div>
                 </div>
@@ -159,8 +161,8 @@ function ProductsPage() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
+      </div>
+    </div>  );
+};
 
 export default ProductsPage;

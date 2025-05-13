@@ -5,19 +5,19 @@ import '../css/HomePage.css';
 
 const HomePage = () => {
   return (
-    <div>
-      {/* Hero Section */}
-      <section 
+    <div>      {/* Hero Section */}      <section 
         className="py-5 text-center text-white home-hero-section" 
         style={{
-          backgroundImage: 'url(/assets/home01.jpg)'
+          backgroundImage: 'url(/assets/home01.jpg)',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          backgroundBlendMode: 'multiply'
         }}
       >
-        <div className="hero-overlay"></div>
+        <div className="hero-overlay" style={{backgroundColor: 'rgba(0,0,0,0.4)'}}></div>
         <div className="container px-4 hero-content">
           <div className="row justify-content-center">
-            <div className="col-lg-10">
-              <h1 className="display-2 fw-bold mb-4 hero-title">
+            <div className="col-lg-10">              
+              <h1 className="display-2 fw-bold mb-4 hero-title" >
                 Timeless Style, Modern Craftsmanship
               </h1>
               <p className="lead mb-5 hero-description">

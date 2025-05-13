@@ -10,13 +10,15 @@ const {
   getAvailableTimeSlots,
   checkTimeSlotAvailability,
   getTimeSlotStatus,
-  getBookingStats
+  getBookingStats,
+  confirmBooking
 } = require('../controllers/bookingController');
 const { protect } = require('../middleware/authMiddleware');
 const { restrictTo } = require('../controllers/authController');
 
 // Public routes
 router.post('/', createBooking);
+router.post('/confirm', confirmBooking);
 router.get('/time-slots', getAvailableTimeSlots);
 router.get('/time-slots-status', getTimeSlotStatus);
 router.get('/check-availability', checkTimeSlotAvailability);

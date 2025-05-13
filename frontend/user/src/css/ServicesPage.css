@@ -1,4 +1,5 @@
 /* Styles specific to ServicesPage */
+@import './Common.css';
 
 .services-page {
   background-color: #F5F2EE;
@@ -56,19 +57,53 @@
 
 /* What to Expect Section */
 .what-to-expect {
-  background-color: #2B2A2A;
-  color: #D9D0C7;
+  background-color: #8B775C;
+  color: #ffffff;
   border-radius: 0;
+  height: 100%;
 }
 
 .what-to-expect h3 {
+  color: #FFFFFF;
+  font-family: 'Playfair Display', serif;
+}
+
+.what-to-expect .material-symbols-outlined {
+  color: #FFFFFF; /* Dark color specifically for icons in this section */
+}
+
+.expect-icon {
+  color: #FFFFFF !important; /* Force dark color with !important */
+  font-size: 24px;
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+/* Grooming Policies Section */
+.grooming-policies {
+  background-color: #2B2A2A;
+  color: #D9D0C7;
+  border-radius: 0;
+  height: 100%;
+}
+
+.grooming-policies h3 {
   color: #D9D0C7;
   font-family: 'Playfair Display', serif;
 }
 
 /* Icon colors */
-.info-icon, .check-icon {
+.info-icon {
   color: #8B775C;
+  font-size: 1.2rem;
+}
+
+
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 1, 'wght' 700, 'GRAD' 0, 'opsz' 24;
+  font-size: 20px;
+  margin-right: 10px;
 }
 
 /* Call to Action */

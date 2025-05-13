@@ -42,12 +42,11 @@ const StaffNavButtons = () => {
     // Corrected: Redirect to staff login page after logout
     navigate('/login'); 
   };
-
   // CSS cho badge thông báo
   const notificationBadgeStyle = {
     position: 'absolute',
-    top: '-8px',
-    right: '-8px',
+    top: '10px',
+    right: '15px',
     fontSize: '0.65rem',
     padding: '0.25em 0.6em',
     borderRadius: '50%',
@@ -67,18 +66,19 @@ const StaffNavButtons = () => {
   const navItemStyle = {
     position: 'relative'
   };
-
   return (
     <div className="staff-sidebar">
       <nav className="sidebar-nav">
         <ul>
           <li className="nav-item">
             <NavLink to="/" end className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              <i className="bi bi-speedometer2 me-2"></i>
               Dashboard
             </NavLink>
           </li>
           <li className="nav-item" style={navItemStyle}>
             <NavLink to="/appointments" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              <i className="bi bi-calendar-check me-2"></i>
               Appointments
               {bookingNotifications > 0 && (
                 <span style={notificationBadgeStyle}>
@@ -89,6 +89,7 @@ const StaffNavButtons = () => {
           </li>
           <li className="nav-item" style={navItemStyle}>
             <NavLink to="/orders" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              <i className="bi bi-bag me-2"></i>
               Orders
               {orderNotifications > 0 && (
                 <span style={notificationBadgeStyle}>
@@ -99,58 +100,31 @@ const StaffNavButtons = () => {
           </li>
           <li className="nav-item">
             <NavLink to="/products" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              <i className="bi bi-box-seam me-2"></i>
               Products
             </NavLink>
           </li>
           <li className="nav-item">
             <NavLink to="/services" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              <i className="bi bi-scissors me-2"></i>
               Services
             </NavLink>
           </li>
           <li className="nav-item">
             <NavLink to="/barbers" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              <i className="bi bi-person-badge me-2"></i>
               Barbers
             </NavLink>
           </li>
           <li className="nav-item">
             <NavLink to="/customers" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
+              <i className="bi bi-people me-2"></i>
               Customers
             </NavLink>
           </li>
         </ul>
       </nav>
-      {/* Footer section for user info and logout */}
-      <div className="sidebar-footer">
-        {/* Sử dụng inline style để ghi đè lên CSS mặc định */}
-        <div 
-          className="user-info" 
-          style={{ 
-            display: "flex", 
-            flexDirection: "row", // Đảm bảo các phần tử nằm trên cùng một dòng 
-            justifyContent: "space-between", // Đẩy các phần tử ra hai đầu
-            alignItems: "center", // Căn giữa theo chiều dọc
-            width: "100%", // Chiếm toàn bộ chiều rộng
-          }}
-        > 
-          {/* Hiển thị tên cuối */}
-          <span className="text-truncate">{getLastName(staffUser?.user?.name)}</span> 
-          {/* Nút logout với icon */}
-          <button 
-            className="logout-btn btn btn-link p-0" 
-            onClick={handleLogout} 
-            title="Logout"
-            style={{ 
-              border: "none", // Bỏ border
-              background: "transparent", // Trong suốt
-              color: "inherit",
-              padding: 0,
-              lineHeight: 1 
-            }} 
-          >
-            <i className="bi bi-box-arrow-right fs-5"></i> 
-          </button>
-        </div>
-      </div>
+      
     </div>
   );
 };

@@ -28,18 +28,16 @@ const ServicesPage = () => {
 
     fetchServices();
   }, []);
-
-
   return (
-    <div className="py-5 services-page">
-      <div className="container">
-        <div className="text-center mb-5">
-          <h1 className="display-4 mb-3 services-heading">Our Services</h1>
-          <p className="lead mx-auto services-lead">
-            At The Gentleman's Cut, we offer a range of premium grooming services delivered with skill and attention to detail.
-            Each service includes a consultation to understand your preferences and ensure your complete satisfaction.
-          </p>
+    <div className="services-page">      {/* Page Title Section */}      <section className="page-title-section">
+        <div className="container py-4">
+          <h1 className="display-4 mb-3 page-title">Our Services</h1>
+          <hr />
+          <p className="page-subtitle">Discover premium grooming services designed for the modern gentleman</p>
         </div>
+      </section>
+      
+      <div className="container py-5">
         
         {/* Services Section */}
         {loading ? (
@@ -86,59 +84,53 @@ const ServicesPage = () => {
         )}
         
         {/* Additional Information Section */}
-        <div className="row mt-5 pt-4">
-          <div className="col-lg-6 mb-4">
+        <div className="row mt-5 pt-4">          <div className="col-lg-6 mb-4">
             <div className="card border-0 shadow-sm h-100 what-to-expect">
               <div className="card-body p-4">
-                <h3 className="h4 mb-4">What to Expect</h3>
-                <ul className="list-unstyled mb-0">
-                  <li className="mb-3 d-flex">
-                    <i className="bi bi-check2 me-2 check-icon"></i>
+                <h3 className="h4 mb-4 text-white">What to Expect</h3>
+                <ul className="list-unstyled mb-0">                  <li className="mb-3 d-flex align-items-center">
+                    <span className="material-symbols-outlined expect-icon">check_circle</span>
                     <span>Complimentary consultation before every service</span>
-                  </li>
-                  <li className="mb-3 d-flex">
-                    <i className="bi bi-check2 me-2 check-icon"></i>
+                  </li>                  <li className="mb-3 d-flex align-items-center">
+                    <span className="material-symbols-outlined expect-icon">check_circle</span>
                     <span>Relaxed atmosphere with complimentary beverages</span>
                   </li>
-                  <li className="mb-3 d-flex">
-                    <i className="bi bi-check2 me-2 check-icon"></i>
+                  <li className="mb-3 d-flex align-items-center">
+                    <span className="material-symbols-outlined expect-icon">check_circle</span>
                     <span>Premium grooming products used for every service</span>
                   </li>
-                  <li className="mb-3 d-flex">
-                    <i className="bi bi-check2 me-2 check-icon"></i>
+                  <li className="mb-3 d-flex align-items-center">
+                    <span className="material-symbols-outlined expect-icon">check_circle</span>
                     <span>Hot towel refreshment with each haircut</span>
                   </li>
-                  <li className="d-flex">
-                    <i className="bi bi-check2 me-2 check-icon"></i>
+                  <li className="d-flex align-items-center">
+                    <span className="material-symbols-outlined expect-icon">check_circle</span>
                     <span>Style advice and product recommendations</span>
                   </li>
                 </ul>
               </div>
             </div>
-          </div>
-          
-          <div className="col-lg-6">
-            <div className="card border-0 shadow-sm h-100 service-card">
+          </div>            <div className="col-lg-6 mb-4">
+            <div className="card border-0 shadow-sm h-100 grooming-policies">
               <div className="card-body p-4">
-                <h3 className="h4 mb-4 service-name">Grooming Policies</h3>
+                <h3 className="h4 mb-4">Grooming Policies</h3>
                 <ul className="list-unstyled mb-0">
-                  <li className="mb-3 d-flex">
+                  <li className="mb-3 d-flex align-items-center">
                     <i className="bi bi-info-circle me-2 info-icon"></i>
                     <span>Please arrive 5-10 minutes before your appointment time</span>
-                  </li>
-                  <li className="mb-3 d-flex">
+                  </li>                  <li className="mb-3 d-flex align-items-center">
                     <i className="bi bi-info-circle me-2 info-icon"></i>
                     <span>24-hour cancellation notice required to avoid charge</span>
                   </li>
-                  <li className="mb-3 d-flex">
+                  <li className="mb-3 d-flex align-items-center">
                     <i className="bi bi-info-circle me-2 info-icon"></i>
                     <span>We accept cash and all major credit/debit cards</span>
                   </li>
-                  <li className="mb-3 d-flex">
+                  <li className="mb-3 d-flex align-items-center">
                     <i className="bi bi-info-circle me-2 info-icon"></i>
                     <span>Tips are appreciated but not included in service price</span>
                   </li>
-                  <li className="d-flex">
+                  <li className="d-flex align-items-center">
                     <i className="bi bi-info-circle me-2 info-icon"></i>
                     <span>Gift certificates available for all services</span>
                   </li>
@@ -153,8 +145,7 @@ const ServicesPage = () => {
           <p className="lead mb-4 cta-text">Ready to experience the difference?</p>
           <Link to="/booking" className="btn btn-lg px-5 cta-btn">
             Book Your Appointment
-          </Link>
-        </div>
+          </Link>        </div>
       </div>
     </div>
   );

@@ -36,6 +36,51 @@
   color: #333;
 }
 
+.product-info {
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.cart-item-row {
+  height: 100px; /* Fixed height for each cart item row */
+}
+
+/* Fixed height for cart cards */
+#cart-container .card {
+  min-height: 400px; /* Minimum height for the cart item card */
+  max-height: 600px; /* Maximum height to prevent excessive scrolling */
+  overflow: auto; /* Add scrolling if content overflows */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fixed height for order summary card */
+#order-summary .card {
+  height: 400px; /* Fixed height for the order summary card */
+  display: flex;
+  flex-direction: column;
+}
+
+.order-summary-card .card-body {
+  justify-content: space-between; /* Distribute space evenly */
+}
+
+/* Push the action buttons to the bottom of the card */
+.order-summary-card .d-grid {
+  margin-top: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  #cart-container .card,
+  #order-summary .card {
+    height: auto; /* Auto height on smaller screens */
+    min-height: 300px; /* Smaller minimum height for mobile */
+  }
+}
+
 .quantity-controls {
   display: flex;
   align-items: center;

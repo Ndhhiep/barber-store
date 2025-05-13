@@ -31,17 +31,16 @@ const ContactPage = () => {
       error: false
     });
     console.log("Form submitted:", formData);
-  };
-
-  return (
-    <div className="py-5 contact-page-bg">
-      <div className="container">
-        <div className="text-center mb-5">
-          <h1 className="display-4 mb-3 contact-title">Contact Us</h1>
-          <p className="lead mx-auto contact-lead-text">
-            Have questions about our services or want to schedule a consultation? We'd love to hear from you.
-          </p>
+  };  return (
+    <div className="contact-page-bg">      {/* Page Title Section */}      <section className="page-title-section">
+        <div className="container py-4">
+          <h1 className="display-4 mb-3 page-title">Contact Us</h1>
+          <hr />
+          <p className="page-subtitle">We're here to assist with your questions and appointment needs</p>
         </div>
+      </section>
+      
+      <div className="container py-5">
 
         <div className="row g-5">
           {/* Contact Form */}
@@ -199,8 +198,7 @@ const ContactPage = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </div>      </div>
       </div>
     </div>
   );

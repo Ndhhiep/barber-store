@@ -51,7 +51,6 @@ const Header = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
   return (
     <>
       {/* Header placeholder that appears when header becomes fixed */}
@@ -59,20 +58,14 @@ const Header = () => {
       
       <header className={`navbar navbar-expand-lg header-navbar ${isScrolled ? 'sticky-header' : ''}`}>
         <div className="header-container container-fluid px-2 px-sm-3 px-md-4">
+          {/* Logo and Brand Name */}
           <NavLink to="/" className="navbar-brand d-flex align-items-center">
-            <img 
-              src="/assets/logo.PNG" 
-              alt="The Gentleman's Cut" 
-              className="header-brand-logo"
-            />
-            <span className="header-brand-name d-none d-sm-inline">
+            <div className="header-logo-circle">
+              <span className="logo-letters">GC</span>
+            </div>
+            <span className="header-brand-name ms-2">
               The Gentleman's Cut
             </span>
-          </NavLink>
-          
-          {/* Book Appointment button - Moved to left side */}
-          <NavLink to="/booking" className="btn header-book-btn d-none d-lg-block me-auto ms-4">
-            Book Appointment
           </NavLink>
           
           <button 
@@ -92,6 +85,7 @@ const Header = () => {
             className={`${isNavCollapsed ? 'collapse' : ''} navbar-collapse`} 
             id="navbarNav"
           >
+            {/* Main Navigation - Centered */}
             <ul className="navbar-nav mx-auto header-nav">
               <li className="nav-item">
                 <NavLink to="/" className={({isActive}) => 
@@ -133,13 +127,14 @@ const Header = () => {
               {/* Mobile Only Book Appointment Button */}
               <li className="nav-item d-lg-none">
                 <NavLink to="/booking" className="btn header-book-btn w-100 mt-3">
-                  Book Appointment
+                  BOOK APPOINTMENT
                 </NavLink>
               </li>
             </ul>
             
+            {/* Right Side Elements - Cart, User and Book Button */}
             <div className="d-flex align-items-center">
-              {/* Cart button - Moved to right side */}
+              {/* Cart button */}
               <NavLink to="/cart" className="position-relative cart-btn me-3">
                 <i className="bi bi-cart3 fs-5"></i>
                 {itemCount > 0 && (
@@ -150,26 +145,22 @@ const Header = () => {
                 )}
               </NavLink>
 
-              {/* Divider between cart and login */}
-              <div className="vr mx-2 d-none d-sm-block header-divider"></div>
-              
-              {/* User Authentication Links */}
+              {/* User Authentication Icon */}
               {isLoggedIn ? (
-                <div className="dropdown">
+                <div className="dropdown me-3">
                   <button 
-                    className="user-dropdown-btn dropdown-toggle" 
+                    className="user-dropdown-btn" 
                     type="button"
                     id="navbarDropdown" 
                     data-bs-toggle="dropdown" 
                     aria-expanded="false"
                   >
-                    <i className="bi bi-person-circle user-icon"></i>
-                    <span>{userName}</span>
+                    <i className="bi bi-person-circle user-icon fs-5"></i>
                   </button>
                   <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                     <li>
                       <NavLink to="/user-profile" className="dropdown-item my-info">
-                        <i className="bi bi-person"></i>My Information
+                        <i className="bi bi-person me-2"></i>My Information
                       </NavLink>
                     </li>
                     <li>
@@ -194,13 +185,18 @@ const Header = () => {
                   </ul>
                 </div>
               ) : (
-                <a 
-                  href="/login" 
-                  className="login-btn"
+                <NavLink 
+                  to="/login" 
+                  className="user-icon-btn me-3"
                 >
-                  Login
-                </a>
+                  <i className="bi bi-person-circle fs-5"></i>
+                </NavLink>
               )}
+              
+              {/* Book Appointment Button - Right side */}
+              <NavLink to="/booking" className="btn book-appointment-btn d-none d-lg-block">
+                BOOK APPOINTMENT
+              </NavLink>
             </div>
           </div>
         </div>

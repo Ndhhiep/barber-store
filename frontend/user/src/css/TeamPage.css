@@ -1,13 +1,24 @@
 /* Styles specific to TeamPage */
+@import './Common.css';
 
 /* Hero section */
 .team-hero {
-  background-color: #2B2A2A;
-  color: white;
+  background-color: transparent;
 }
 
 .team-hero-title {
   font-family: 'Playfair Display', serif;
+  color: #2B2A2A;
+  font-weight: bold;
+}
+
+.team-hero hr {
+  width: 50%;
+  margin: 1.5rem auto;
+  border: 0;
+  height: 4px;
+  background-color: #8B775C;
+  border-radius: 10px;
 }
 
 /* Team section */

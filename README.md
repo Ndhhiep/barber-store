@@ -2,6 +2,28 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## New Features
+
+### Email Confirmation for Bookings
+
+We've added an email confirmation feature for booking appointments. When a customer makes a booking:
+
+1. They receive an email with booking details and a confirmation link
+2. The booking remains in "pending" status until confirmation
+3. After clicking the link, the booking is confirmed and status is updated
+
+For detailed documentation, see [Email Confirmation Documentation](./doc/email-confirmation.md).
+
+#### Testing Email Functionality
+
+To test the email functionality during development:
+```
+cd backend
+node tests/test-email.js
+```
+
+This creates a test email using [Ethereal Email](https://ethereal.email/) and provides a preview link.
+
 ## Available Scripts
 
 In the project directory, you can run:

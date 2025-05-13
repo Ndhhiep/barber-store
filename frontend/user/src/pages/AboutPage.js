@@ -2,16 +2,13 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import '../css/AboutPage.css';
 
-const AboutPage = () => {
-  return (
-    <div>
-      {/* Hero Section */}
-      <section className="hero-section">
+const AboutPage = () => {  return (
+    <div>      {/* Page Title Section */}
+      <section className="page-title-section">
         <div className="container py-4">
-          <h1 className="display-4 mb-3 hero-title">About The Gentleman's Cut</h1>
-          <p className="lead mx-auto hero-description">
-            A traditional barbershop experience with modern expertise and classic style.
-          </p>
+          <h1 className="display-4 mb-3 page-title">About The Gentleman's Cut</h1>
+          <hr />
+          <p className="page-subtitle">Where traditional barbering craftsmanship meets modern style and exceptional service</p>
         </div>
       </section>
 
@@ -22,7 +19,7 @@ const AboutPage = () => {
             <div className="col-lg-6 mb-4 mb-lg-0">
               <div className="image-container">
                 <img 
-                  src="/assets/about-main.jpg" 
+                  src="/assets/about01.jpg" 
                   alt="Barbershop Interior" 
                   className="img-fluid shadow"
                 />
@@ -105,7 +102,7 @@ const AboutPage = () => {
             <div className="col-lg-6 order-lg-2 mb-4 mb-lg-0">
               <div className="image-container">
                 <img 
-                  src="/assets/about-approach.jpg" 
+                  src="/assets/about02.png" 
                   alt="Barber at Work" 
                   className="img-fluid shadow"
                 />
@@ -143,10 +140,10 @@ const AboutPage = () => {
       </section>
 
       {/* Call to Action */}
-      <section className="py-5 hero-section">
+      <section className="py-5 cta-section">
         <div className="container py-4">
-          <h2 className="h1 mb-4 hero-title">Experience The Difference</h2>
-          <p className="lead mx-auto mb-5 hero-description">
+          <h2 className="h1 mb-4 cta-title">Experience The Difference</h2>
+          <p className="lead mx-auto mb-5 cta-description">
             We invite you to visit The Gentleman's Cut and experience our commitment to exceptional grooming services in a classic barbershop atmosphere.
           </p>
           <Link to="/booking" className="btn btn-lg cta-button">

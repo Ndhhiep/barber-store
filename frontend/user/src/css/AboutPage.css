@@ -1,26 +1,10 @@
 /* Styles specific to AboutPage */
+@import './Common.css';
 
 /* Typography */
 .about-title {
   font-family: 'Playfair Display, serif';
   color: #2B2A2A;
-}
-
-.hero-title {
-  font-family: 'Playfair Display, serif';
-}
-
-/* Layout and sections */
-.hero-section {
-  background-color: #2B2A2A;
-  color: white;
-  padding: 3rem 0;
-  text-align: center;
-}
-
-.hero-description {
-  max-width: 800px;
-  margin: 0 auto;
 }
 
 .values-section {
