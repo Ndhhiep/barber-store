@@ -5,12 +5,12 @@ import timeSlotService from '../services/timeSlotService';
 import barberService from '../services/barberService';
 import serviceService from '../services/serviceService';
 import { useLocation, useNavigate } from 'react-router-dom';
+import BookingConfirmedModal from '../components/BookingConfirmedModal';
 
 const BookingPage = () => {
   const [bookingData, setBookingData] = useState({
     service: '',
-    barber_id: '', // ID của barber (MongoDB ObjectId)
-    date: '',
+    barber_id: '', 
     time: '',
     name: '',
     email: '',
@@ -19,7 +19,7 @@ const BookingPage = () => {
     user_id: null 
   });
 
-  // State để lưu trữ danh sách barber từ API
+  // State to store the list of barbers from API
   const [barberList, setBarberList] = useState([]);
   const [loadingBarbers, setLoadingBarbers] = useState(false);
   
@@ -27,8 +27,6 @@ const BookingPage = () => {
   const [serviceList, setServiceList] = useState([]);
   const [loadingServices, setLoadingServices] = useState(false);
   
-  // State để lưu trữ tên của barber đã chọn (chỉ dùng để hiển thị UI)
-  const [selectedBarberName, setSelectedBarberName] = useState('');
   const [bookingStatus, setBookingStatus] = useState({
     submitted: false,
     error: false,
@@ -52,11 +50,10 @@ const BookingPage = () => {
   // New state variables for email confirmation feature
   const [showEmailConfirmModal, setShowEmailConfirmModal] = useState(false);
   const [showBookingConfirmedModal, setShowBookingConfirmedModal] = useState(false);
-  const [pendingBookingId, setPendingBookingId] = useState(null);
   const [isValidatingToken, setIsValidatingToken] = useState(false);
   
   // For getting URL parameters and navigation
-  const location = useLocation();
+  const location = useLocation ();
   const navigate = useNavigate();
 
   // Format date to YYYY-MM-DD for comparing with input date value
@@ -115,16 +112,7 @@ const BookingPage = () => {
 
   // Check if a time slot is in the past or booked - for future use in showing specific messages
   // eslint-disable-next-line no-unused-vars
-  const getTimeSlotDisabledReason = useCallback((timeSlot) => {
-    if (timeSlotStatuses.length > 0) {
-      const slotStatus = timeSlotStatuses.find(slot => slot.start_time === timeSlot);
-      if (slotStatus) {
-        if (slotStatus.isPast) return 'past';
-        if (!slotStatus.isAvailable) return 'booked';
-      }
-    }
-    return null;
-  }, [timeSlotStatuses]);
+  
 
   // Update current time every minute for time slot validation
   useEffect(() => {
@@ -213,8 +201,79 @@ const BookingPage = () => {
       }
     };
       fetchTimeSlotStatuses();
-  }, [bookingData.barber_id, bookingData.date]); // Remove bookingData.time from dependency array
+  }, [bookingData.barber_id, bookingData.date, bookingData.time]); // Remove bookingData.time from dependency array
 
+  // Wrap `validateBookingToken` in a `useCallback` hook
+  const validateBookingToken = useCallback(async (token) => {
+    try {
+      setIsValidatingToken(true);
+  
+      // Call API to validate the token
+      const response = await axios.post(
+        'http://localhost:5000/api/bookings/confirm',
+        { token }
+      );
+  
+      if (response.data.success) {
+        const { booking } = response.data;
+  
+        // Store confirmation info in booking status
+        setBookingStatus({
+          submitted: false, // Changed to false since we're using modal instead
+          error: false,
+          errorMessage: '',
+          confirmedDate: booking.date,
+          confirmedTime: booking.time,
+          confirmedService: booking.service,
+          confirmedEmail: booking.email
+        });
+  
+        // Clear pending booking data
+        localStorage.removeItem('pendingBooking');
+  
+        // Reset form data
+        setBookingData({
+          service: '',
+          barber_id: '',
+          date: '',
+          time: '',
+          name: isLoggedIn ? userData.name : '',
+          email: isLoggedIn ? userData.email : '',
+          phone: isLoggedIn ? userData.phone : '',
+          notes: '',
+          user_id: isLoggedIn ? userData._id : null
+        });
+  
+        // Remove token from URL to prevent reprocessing
+        navigate('/booking', { replace: true });
+  
+        // Show confirmation modal instead of inline confirmation
+        setShowBookingConfirmedModal(true);
+  
+        return true;
+      } else {
+        // Token validation failed
+        setBookingStatus({
+          submitted: false,
+          error: true,
+          errorMessage: response.data.message || 'Invalid or expired confirmation link.'
+        });
+        return false;
+      }
+    } catch (error) {
+      // Error handled silently
+  
+      setBookingStatus({
+        submitted: false,
+        error: true,
+        errorMessage: 'Failed to validate the confirmation link. It may have expired.'
+      });
+      return false;
+    } finally {
+      setIsValidatingToken(false);
+    }
+  }, [isLoggedIn, navigate, setBookingStatus, setBookingData, setIsValidatingToken, setShowBookingConfirmedModal, userData]);
+  
   // Check for confirmation token in URL parameters on component mount
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -227,12 +286,11 @@ const BookingPage = () => {
     const pendingBookingData = localStorage.getItem('pendingBooking');
     if (pendingBookingData) {
       try {
-        const parsedData = JSON.parse(pendingBookingData);
-        setPendingBookingId(parsedData.id);
+        JSON.parse(pendingBookingData); // Removed assignment to 'parsedData'
       } catch (error) {        // Error handled silently
       }
     }
-  }, [location.search]);
+  }, [location.search, validateBookingToken]);
 
   // Fallback time slots if API fails
   const timeSlots = [
@@ -246,32 +304,17 @@ const BookingPage = () => {
     const { name, value } = e.target;
 
     if (name === 'barber') {
-      // Xử lý đặc biệt cho trường barber để lấy barber_id
-      if (value === 'any') {
-        // Trường hợp "Any Available Barber"
+      // Special handling for barber field to get barber_id
+      const selectedBarber = barberList.find(barber => barber._id === value);
+      if (selectedBarber) {
         setBookingData(prev => ({
           ...prev,
-          barber_id: 'any', // Giá trị đặc biệt cho "bất kỳ barber nào"
+          barber_id: selectedBarber._id,
           time: '' // Reset time selection when barber changes
         }));
-        setSelectedBarberName('Any Available Barber');
         
-        // Just reset time slot statuses - they'll be fetched with the special handling in timeSlotService
+        // Reset time slot statuses when barber changes
         setTimeSlotStatuses([]);
-      } else {
-        // Tìm barber tương ứng trong danh sách để lấy ID
-        const selectedBarber = barberList.find(barber => barber._id === value);
-        if (selectedBarber) {
-          setBookingData(prev => ({
-            ...prev,
-            barber_id: selectedBarber._id,
-            time: '' // Reset time selection when barber changes
-          }));
-          setSelectedBarberName(selectedBarber.name);
-          
-          // Reset time slot statuses when barber changes
-          setTimeSlotStatuses([]);
-        }
       }
     } else if (name === 'date') {
       // Reset time selection and time slot statuses when date changes
@@ -283,7 +326,7 @@ const BookingPage = () => {
       // Reset time slot statuses when date changes
       setTimeSlotStatuses([]);
     } else {
-      // Xử lý các trường khác bình thường
+      // Handle other fields normally
       setBookingData(prev => ({
         ...prev,
         [name]: value
@@ -327,9 +370,6 @@ const BookingPage = () => {
         { headers }
       );
       
-      // Store the pending booking ID
-      setPendingBookingId(response.data.bookingId);
-      
       // Show email confirmation modal instead of setting submitted state
       setShowEmailConfirmModal(true);
       
@@ -351,89 +391,13 @@ const BookingPage = () => {
       });
       
       // Reset pending booking state
-      setPendingBookingId(null);
       localStorage.removeItem('pendingBooking');
     } finally {
       setIsLoading(false);
     }  };
   
   // Function to validate booking confirmation token
-  const validateBookingToken = async (token) => {
-    try {
-      setIsValidatingToken(true);
-      
-      // Call API to validate the token
-      const response = await axios.post(
-        'http://localhost:5000/api/bookings/confirm',
-        { token }
-      );
-      
-      if (response.data.success) {
-        const { booking } = response.data;
-        
-        // Store confirmation info in booking status
-        setBookingStatus({
-          submitted: false, // Changed to false since we're using modal instead
-          error: false,
-          errorMessage: '',
-          confirmedDate: booking.date,
-          confirmedTime: booking.time,
-          confirmedService: booking.service,
-          confirmedEmail: booking.email
-        });
-        
-        // Set barber name if available
-        if (booking.barber_name && booking.barber_name !== 'Any Available Barber') {
-          setSelectedBarberName(booking.barber_name);
-        } else {
-          setSelectedBarberName('');
-        }
-        
-        // Clear pending booking data
-        localStorage.removeItem('pendingBooking');
-        setPendingBookingId(null);
-        
-        // Reset form data
-        setBookingData({
-          service: '',
-          barber_id: '',
-          date: '',
-          time: '',
-          name: isLoggedIn ? userData.name : '',
-          email: isLoggedIn ? userData.email : '',
-          phone: isLoggedIn ? userData.phone : '',
-          notes: '',
-          user_id: isLoggedIn ? userData._id : null
-        });
-        
-        // Remove token from URL to prevent reprocessing
-        navigate('/booking', { replace: true });
-        
-        // Show confirmation modal instead of inline confirmation
-        setShowBookingConfirmedModal(true);
-        
-        return true;
-      } else {
-        // Token validation failed
-        setBookingStatus({
-          submitted: false,
-          error: true,
-          errorMessage: response.data.message || 'Invalid or expired confirmation link.'
-        });
-        return false;
-      }    } catch (error) {
-      // Error handled silently
-      
-      setBookingStatus({
-        submitted: false,
-        error: true,
-        errorMessage: 'Failed to validate the confirmation link. It may have expired.'
-      });
-      return false;
-    } finally {
-      setIsValidatingToken(false);
-    }
-  };
+  
 
   // Get minimum date (today) for the date picker
   const getMinDate = () => {
@@ -501,153 +465,34 @@ const BookingPage = () => {
         </div>
       </div>    );  };
   
-  // Booking Confirmed Modal Component
-  const BookingConfirmedModal = () => {
-    return (
-      <div className="modal show d-block booking-confirmed-modal" tabIndex="-1" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
-        <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content" style={{maxWidth: '700px', margin: '0 auto'}}>
-            <div className="modal-header border-0 p-0 m-0">
-                        
-              <button 
-                type="button" 
-                className="btn-close" 
-                onClick={() => {
-                  setShowBookingConfirmedModal(false);
-                  setBookingStatus({
-                    submitted: false,
-                    error: false,
-                    errorMessage: '',
-                    confirmedDate: '',
-                    confirmedTime: '',
-                    confirmedService: '',
-                    confirmedEmail: ''
-                  });
-                }}
-              ></button>
-            </div>            <div className="modal-body text-center py-4">
-              <div className="confirmation-icon mb-4">
-                <div className="success-checkmark">
-                  <i className="bi bi-check-circle-fill text-success" style={{fontSize: "4.5rem"}}></i>
-                </div>
-              </div>
-              <h2 className="h3 confirmation-title">
-                Booking Confirmed!
-              </h2>
-              <p className="mb-4">
-                Thank you for confirming your booking with The Gentleman's Cut. 
-                Your appointment is now confirmed and added to our schedule.
-              </p><div className="booking-info-container p-4 mb-4 bg-light rounded">
-                <table className="table table-borderless mb-0">
-                  <tbody>
-                    <tr>
-                      <td width="20%" className="fw-bold text-end">Date:</td>
-                      <td>
-                        <span className="booking-info-value">{bookingStatus.confirmedDate}</span> 
-                      </td>
-                    </tr>
-                    <tr>
-                      <td width="20%" className="fw-bold text-end">Time:</td>
-                      <td>
-                        <span className="booking-info-value">{bookingStatus.confirmedTime}</span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td width="20%" className="fw-bold text-end">Service:</td>
-                      <td>
-                        <span className="booking-info-value">{bookingStatus.confirmedService}</span>
-                      </td>
-                    </tr>
-                    {selectedBarberName !== "Any Available Barber" && selectedBarberName && (
-                      <tr>
-                        <td width="20%" className="fw-bold text-end">Barber:</td>
-                        <td>
-                          <span className="booking-info-value">{selectedBarberName}</span>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>            <div className="modal-footer border-0">
-              <div className="d-flex justify-content-between w-100">
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary booking-outline-btn px-4"
-                  onClick={() => {
-                    setShowBookingConfirmedModal(false);
-                    setBookingStatus({
-                      submitted: false,
-                      error: false,
-                      errorMessage: '',
-                      confirmedDate: '',
-                      confirmedTime: '',
-                      confirmedService: '',
-                      confirmedEmail: ''
-                    });
-                    navigate('/');
-                  }}
-                >
-                  <i className="bi bi-house me-2"></i>
-                  Return to Home
-                </button>
-                <button
-                  type="button"
-                  className="btn booking-btn px-4"
-                  onClick={() => {
-                    setShowBookingConfirmedModal(false);
-                    setBookingData({
-                      service: '',
-                      barber_id: '',
-                      date: '',
-                      time: '',
-                      name: isLoggedIn ? userData.name : '',
-                      email: isLoggedIn ? userData.email : '',
-                      phone: isLoggedIn ? userData.phone : '',
-                      notes: '',
-                      user_id: isLoggedIn ? userData._id : null
-                    });
-                    setSelectedBarberName('');
-                    setBookingStatus({
-                      submitted: false,
-                      error: false,
-                      errorMessage: '',
-                      confirmedDate: '',
-                      confirmedTime: '',
-                      confirmedService: '',
-                      confirmedEmail: ''
-                    });
-                  }}
-                >
-                  <i className="bi bi-calendar-plus me-2"></i>
-                  Book Another Appointment
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>    );
-  };
-
   return (
-    <div className="py-5 booking-page-bg">
+    <div className="booking-page">
+      {/* Page Title Section */}
+      <div className="page-title-section py-5">
+        <div className="container text-center">
+          <h1 className="display-4 mb-3 page-title">Book Your Appointment</h1>
+          <hr/>
+          <p className="page-subtitle">Schedule your visit to The Gentleman's Cut for a premium grooming experience.</p>
+        </div>
+      </div>
+
       {/* Email Confirmation Modal */}
       {showEmailConfirmModal && <EmailConfirmationModal />}
 
       {/* Booking Confirmed Modal */}
-      {showBookingConfirmedModal && <BookingConfirmedModal />}
+      {showBookingConfirmedModal && <BookingConfirmedModal
+        bookingStatus={bookingStatus}
+        setShowBookingConfirmedModal={setShowBookingConfirmedModal}
+        setBookingStatus={setBookingStatus}
+        setBookingData={setBookingData}
+        isLoggedIn={isLoggedIn}
+        userData={userData}
+      />}
       
-      <div className="container booking-page-container">
-        <div className="text-center mb-5">
-          <h1 className="display-4 mb-3 booking-title">Book Your Appointment</h1>
-          <p className="lead mx-auto booking-lead-text">
-            Schedule your visit to The Gentleman's Cut for a premium grooming experience.
-          </p>
-        </div>
-
+      <div className="container booking-page-container" style={{ marginTop: '50px' }}>
         <div className="row justify-content-center">
           <div className="col-lg-10">
-            <div className="card booking-card">
+            <div className="card booking-card" style={{borderRadius: '5px' }}>
               <div className="card-body p-4 p-md-5">
                 {isValidatingToken && (
                   <div className="py-5 text-center">
@@ -720,7 +565,6 @@ const BookingPage = () => {
                                     <option value="" disabled>Loading barbers...</option>
                                   ) : (
                                     <>
-                                      <option value="any">Any Available Barber</option>
                                       {barberList.map((barber) => (
                                         <option key={barber._id} value={barber._id}>
                                           {barber.name}
@@ -732,7 +576,7 @@ const BookingPage = () => {
                                 </select>
                               </div>
                               <small className="text-muted mt-1 d-block">
-                                Choose your preferred barber or select "Any Available Barber"
+                                Choose your preferred barber
                               </small>
                             </div>
                               <div className="col-12 mb-4">

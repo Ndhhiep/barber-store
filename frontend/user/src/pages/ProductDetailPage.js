@@ -88,12 +88,12 @@ const ProductDetailPage = () => {
 
       <div className="card border-0 shadow-sm">
         <div className="row g-0">
-          <div className="col-md-6">
+          <div className="col-md-6" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <img 
-              src={product?.image || '/assets/placeholder.png'} 
+              src={product?.imgURL || '/assets/placeholder.png'} 
               alt={product?.name}
               className="img-fluid rounded-start product-detail-image" 
-              style={{ maxHeight: '500px', objectFit: 'cover', width: '100%' }}
+              style={{ maxHeight: '500px', objectFit: 'contain', width: '70%' }}
             />
           </div>
           <div className="col-md-6">

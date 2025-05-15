@@ -54,6 +54,7 @@
   overflow: auto; /* Add scrolling if content overflows */
   display: flex;
   flex-direction: column;
+  
 }
 
 /* Fixed height for order summary card */
@@ -122,7 +123,7 @@
 .checkout-btn {
   background-color: #2B2A2A;
   color: #fff;
-  border-radius: 0;
+  border-radius: 5px;
   padding: 10px 0;
 }
 
@@ -184,4 +185,41 @@
 
 .payment-option {
   margin: 10px 0;
+}
+
+.paypal-button-container {
+  margin: 0 auto;
+  max-width: 400px;
+}
+
+.payment-divider {
+  position: relative;
+  text-align: center;
+  height: 20px;
+  line-height: 20px;
+}
+
+.payment-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  border-top: 1px solid #e0e0e0;
+  z-index: 1;
+}
+
+.payment-divider span {
+  background-color: white;
+  padding: 0 15px;
+  position: relative;
+  z-index: 2;
+  color: #888;
+  font-weight: 500;
+}
+
+label{
+  font-weight: 900;
+  margin-bottom: 5px;
+  color: #333;
 }

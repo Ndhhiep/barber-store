@@ -82,7 +82,7 @@ const BookingConfirmedPage = () => {
         <div className="row justify-content-center">
           <div className="col-md-8 col-lg-6">
             <div className="card booking-card shadow">
-              <div className="card-body p-4 p-md-5">
+              <div className="card-body p-4 p-md-5" >
                 {isValidatingToken ? (
                   <div className="py-5 text-center">
                     <div className="spinner-border text-primary" role="status">
@@ -150,7 +150,7 @@ const BookingConfirmedPage = () => {
                     </div>
                     <div className="alert alert-info mb-4">
                       <i className="bi bi-info-circle me-2"></i>
-                      You can now close this page. A confirmation email has also been sent to your email address.
+                      Your booking have been confirmed ! Now you can close this page. 
                     </div>
                     <div className="d-grid gap-2 d-md-flex justify-content-md-center">
                       <button

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import PayPalCheckoutButton from '../components/PayPalCheckoutButton';
 import '../css/CartPage.css';
 
 const CartPage = () => {
@@ -13,8 +14,7 @@ const CartPage = () => {
   } = useCart();
   
   const navigate = useNavigate();
-  
-  const [showModal, setShowModal] = useState(false);
+    const [showModal, setShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderError, setOrderError] = useState(null);
   const [serverStatus, setServerStatus] = useState('checking');
@@ -23,9 +23,10 @@ const CartPage = () => {
     phone: '',
     email: '',
     address: '',
-    paymentMethod: 'credit',
+    paymentMethod: '',
     notes: ''
   });
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   // Check server connectivity when component mounts
   useEffect(() => {
@@ -55,11 +56,10 @@ const CartPage = () => {
     
     checkServerStatus();
   }, []);
-
   const handleQuantityChange = (productId, newQuantity) => {
     updateQuantity(productId, parseInt(newQuantity));
   };
-
+  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setCheckoutInfo(prev => ({
@@ -67,23 +67,134 @@ const CartPage = () => {
       [name]: value
     }));
   };
-
+  
+  // Function removed - payment buttons are now displayed directly
   const handleCheckout = () => {
     // Only show modal if server is connected
     if (serverStatus === 'error') {
       alert('Cannot connect to the server. Please try again later.');
       return;
     }
-    setShowModal(true);
-  };
-
+    
+    // Try to prefill the form with user data
+    const fetchUserData = async () => {
+      try {
+        // First try to get data from localStorage for basic fields
+        const userDataStr = localStorage.getItem('user');
+        const token = localStorage.getItem('token');
+        
+        if (userDataStr) {
+          const userData = JSON.parse(userDataStr);
+          
+          // Prefill with basic data from localStorage
+          setCheckoutInfo(prev => ({
+            ...prev,
+            name: userData.name || prev.name,
+            email: userData.email || prev.email,
+            phone: userData.phone || prev.phone
+          }));
+          
+          // Try to get more detailed user info from the API
+          if (token) {
+            // Fetch user profile data
+            try {
+              const profileResponse = await fetch('http://localhost:5000/api/auth/me', {
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+              
+              if (profileResponse.ok) {
+                const { data } = await profileResponse.json();
+                
+                // Update with the most recent user data from API
+                setCheckoutInfo(prev => ({
+                  ...prev,
+                  name: data.user.name || prev.name,
+                  email: data.user.email || prev.email,
+                  phone: data.user.phone || prev.phone
+                }));
+              }
+            } catch (profileError) {
+              console.warn('Error fetching user profile:', profileError);
+            }
+            
+            // Try to fetch most recent order for address info
+            try {
+              const ordersResponse = await fetch('http://localhost:5000/api/orders/user/my-orders', {
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+              
+              if (ordersResponse.ok) {
+                const orders = await ordersResponse.json();
+                
+                if (orders && orders.data && orders.data.length > 0) {
+                  // Get the most recent order
+                  const latestOrder = orders.data[0];
+                  
+                  // Use address from most recent order if available
+                  setCheckoutInfo(prev => ({
+                    ...prev,
+                    address: latestOrder.shippingAddress || prev.address
+                  }));
+                }
+              }
+            } catch (ordersError) {
+              console.warn('Error fetching order history:', ordersError);
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Error fetching user data:', error);
+      }
+    };
+    
+    // Execute the user data fetch
+    fetchUserData();
+    
+    // Show modal immediately (the data will populate as it loads)
+    setShowModal(true);  };
+  
   const handleCloseModal = () => {
     setShowModal(false);
     setOrderError(null);
   };
-
+  
   const handleSubmitOrder = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
+    
+    // Validate required fields
+    const { name, email, phone, address } = checkoutInfo;
+    if (!name || !email || !phone || !address) {
+      setOrderError('Please fill in all required fields (Name, Email, Phone, and Address).');
+      return;
+    }
+    
+    // Make sure we have an up-to-date checkout info object to work with
+    let currentCheckoutInfo = {...checkoutInfo};
+    
+    // Set payment method to COD if submitting the form directly
+    if (!paymentProcessing) {
+      currentCheckoutInfo = {
+        ...currentCheckoutInfo,
+        paymentMethod: 'cod'
+      };
+      
+      setCheckoutInfo(currentCheckoutInfo);
+    } else {
+      // Ensure payment method is set to paypal if processing PayPal payment
+      currentCheckoutInfo = {
+        ...currentCheckoutInfo,
+        paymentMethod: 'paypal'
+      };
+      
+      setCheckoutInfo(currentCheckoutInfo);
+    }
+    
     setIsSubmitting(true);
     setOrderError(null);
 
@@ -100,14 +211,16 @@ const CartPage = () => {
         } catch (error) {
           console.warn('Error parsing user data:', error);
         }
-      }
-
+      }      // Use the updated current checkout info
+      // For debugging
+      console.log("Processing order with payment method:", currentCheckoutInfo.paymentMethod);
+      
       // Prepare order data with userId if available
       const orderData = {
         customerInfo: {
-          name: checkoutInfo.name,
-          email: checkoutInfo.email,
-          phone: checkoutInfo.phone
+          name: currentCheckoutInfo.name,
+          email: currentCheckoutInfo.email,
+          phone: currentCheckoutInfo.phone
         },
         items: cartItems.map(item => ({
           productId: item.product._id,
@@ -115,14 +228,21 @@ const CartPage = () => {
           priceAtPurchase: item.product.price
         })),
         totalAmount: totalCost,
-        shippingAddress: checkoutInfo.address,
-        paymentMethod: checkoutInfo.paymentMethod,
-        notes: checkoutInfo.notes
+        shippingAddress: currentCheckoutInfo.address,
+        paymentMethod: currentCheckoutInfo.paymentMethod || (paymentProcessing ? 'paypal' : 'cod'), // Fallback
+        notes: currentCheckoutInfo.notes
       };
 
       // Thêm userId vào dữ liệu đơn hàng nếu có
       if (userId) {
         orderData.userId = userId;
+      }
+      
+      // If payment was processed by PayPal, add transaction details
+      if (paymentProcessing) {
+        orderData.paymentStatus = 'paid';
+        orderData.transactionId = paymentProcessing.id;
+        orderData.paymentDetails = paymentProcessing;
       }
 
       // Use a hardcoded URL for testing
@@ -169,8 +289,7 @@ const CartPage = () => {
   
         // Show success message
         alert('Order submitted successfully! Your order ID is: ' + result.orderId);
-        
-        // Clear cart and close modal
+          // Clear cart and close modal
         clearCart();
         setShowModal(false);
         
@@ -180,7 +299,7 @@ const CartPage = () => {
           phone: '',
           email: '',
           address: '',
-          paymentMethod: 'credit',
+          paymentMethod: '',
           notes: ''
         });
   
@@ -240,7 +359,8 @@ const CartPage = () => {
                         <th scope="col" className="py-3">Total</th>
                         <th scope="col" className="py-3"></th>
                       </tr>
-                    </thead>                    <tbody>
+                    </thead>                    
+                    <tbody>
                       {cartItems.map((item) => (
                         <tr key={item.product._id} className="cart-item-row">
                           <td className="ps-4">
@@ -361,7 +481,7 @@ const CartPage = () => {
           )}
           <form onSubmit={handleSubmitOrder}>
             <div className="form-group">
-              <label htmlFor="name">Full Name</label>
+              <label htmlFor="name">Full Name:</label>
               <input
                 type="text"
                 className="form-control"
@@ -373,7 +493,7 @@ const CartPage = () => {
               />
             </div>
             <div className="form-group">
-              <label htmlFor="phone">Phone Number</label>
+              <label htmlFor="phone">Phone Number:</label>
               <input
                 type="tel"
                 className="form-control"
@@ -385,7 +505,7 @@ const CartPage = () => {
               />
             </div>
             <div className="form-group">
-              <label htmlFor="email">Email</label>
+              <label htmlFor="email">Email:</label>
               <input
                 type="email"
                 className="form-control"
@@ -397,7 +517,7 @@ const CartPage = () => {
               />
             </div>
             <div className="form-group">
-              <label htmlFor="address">Delivery Address</label>
+              <label htmlFor="address">Delivery Address:</label>
               <textarea
                 className="form-control"
                 id="address"
@@ -408,76 +528,83 @@ const CartPage = () => {
                 required
               ></textarea>
             </div>
+            
+            
             <div className="form-group">
-              <label htmlFor="notes">Order Notes (Optional)</label>
-              <textarea
-                className="form-control"
-                id="notes"
-                name="notes"
-                rows="2"
-                value={checkoutInfo.notes}
-                onChange={handleInputChange}
-              ></textarea>
-            </div>
-            <div className="form-group">
-              <label>Payment Method</label>
-              <div className="payment-option">
-                <div className="form-check">
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name="paymentMethod"
-                    id="credit"
-                    value="credit"
-                    checked={checkoutInfo.paymentMethod === 'credit'}
-                    onChange={handleInputChange}
-                  />
-                  <label className="form-check-label" htmlFor="credit">
-                    Credit Card
-                  </label>
+              <div className="mt-5">
+                {/* Form validation message */}
+                {(!checkoutInfo.name || !checkoutInfo.email || !checkoutInfo.phone || !checkoutInfo.address) && (
+                  <div className="alert alert-warning mb-3">
+                    <i className="bi bi-info-circle me-2"></i>
+                    Please fill in all required fields above before selecting a payment method.
+                  </div>
+                )}
+                
+                {/* PayPal Button - only enabled when form is valid */}
+                <div className="paypal-section">
+                  <div className="paypal-button-container" 
+                      style={{ opacity: (!checkoutInfo.name || !checkoutInfo.email || !checkoutInfo.phone || !checkoutInfo.address) ? 0.5 : 1 }}>                    <PayPalCheckoutButton
+                      totalAmount={totalCost}
+                      onSuccess={(details) => {
+                        console.log('PayPal payment successful:', details);
+                          // Check if the form is filled correctly
+                        const { name, email, phone, address } = checkoutInfo;
+                        if (!name || !email || !phone || !address) {
+                          setOrderError('Please fill in all required fields (Name, Email, Phone, and Address) before completing payment.');
+                          return;
+                        }
+                        
+                        // Set payment processing details
+                        setPaymentProcessing(details);
+                        
+                        // Create a complete checkout info object with payment method
+                        const updatedCheckoutInfo = {
+                          ...checkoutInfo,
+                          paymentMethod: 'paypal'
+                        };
+                        
+                        // Update the state
+                        setCheckoutInfo(updatedCheckoutInfo);
+                        
+                        // Wait for state updates to complete before submitting
+                        setTimeout(() => {
+                          // After successful PayPal payment, submit the order with payment details
+                          handleSubmitOrder({preventDefault: () => {}});
+                        }, 300);
+                      }}
+                      onError={(error) => {
+                        console.error('PayPal payment error:', error);
+                        setOrderError('Error ! Please try again.');
+                      }}
+                      onCancel={() => {
+                        console.log('PayPal payment cancelled');
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                {/* Divider with "or" text */}
+                <div className="payment-divider my-4">
+                  <span>OR</span>
+                </div>
+                  {/* Cash on Delivery Button */}
+                <div className="d-grid mt-3" style={{padding: '0 20px', borderRadius: '10px'}}>
+                  <button 
+                    type="submit" 
+                    className="btn checkout-btn"
+                    disabled={isSubmitting || !checkoutInfo.name || !checkoutInfo.email || !checkoutInfo.phone || !checkoutInfo.address}
+                    onClick={() => {
+                      // Check if the form is filled correctly - will be caught by the form validation
+                      setCheckoutInfo(prev => ({
+                        ...prev,
+                        paymentMethod: 'cod'
+                      }));
+                    }}
+                  >
+                    {isSubmitting ? 'Processing...' : 'CASH ON DELIVERY'}
+                  </button>
                 </div>
               </div>
-              <div className="payment-option">
-                <div className="form-check">
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name="paymentMethod"
-                    id="paypal"
-                    value="paypal"
-                    checked={checkoutInfo.paymentMethod === 'paypal'}
-                    onChange={handleInputChange}
-                  />
-                  <label className="form-check-label" htmlFor="paypal">
-                    PayPal
-                  </label>
-                </div>
-              </div>
-              <div className="payment-option">
-                <div className="form-check">
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name="paymentMethod"
-                    id="cod"
-                    value="cod"
-                    checked={checkoutInfo.paymentMethod === 'cod'}
-                    onChange={handleInputChange}
-                  />
-                  <label className="form-check-label" htmlFor="cod">
-                    Cash on Delivery
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div className="d-grid mt-4">
-              <button 
-                type="submit" 
-                className="btn checkout-btn"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Processing...' : 'CONFIRM ORDER'}
-              </button>
             </div>
           </form>
         </div>
