@@ -200,25 +200,17 @@
   box-shadow: 0 4px 8px rgba(139, 119, 92, 0.25);
 }
 
-/* Login button styling */
-.login-btn {
-  display: inline-block;
-  padding: 0.5rem 1.75rem;
-  margin-left: 16px;
-  background-color: transparent;
-  color: #D9D0C7;
-  border: 2px solid #8B775C;
+
+
+#login-btn {
+  border-width: 2px;
   border-radius: 5px;
-  font-family: 'Playfair Display', serif;
-  font-size: 1.1rem;
-  text-decoration: none;
-  transition: all 0.3s ease;
+  height: 44px;
+  font-family: 'Lato', sans-serif;
+  font-weight: 600;
+  padding: 8px 20px;
 }
 
-.login-btn:hover {
-  background-color: #8B775C;
-  color: #FFFFFF;
-}
 
 @media (max-width: 991px) {
   .login-btn {
@@ -400,3 +392,4 @@
   background-color: #8B775C;
   color: white;
 }
+

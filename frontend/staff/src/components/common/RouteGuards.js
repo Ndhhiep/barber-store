@@ -3,8 +3,8 @@ import { Navigate, Outlet } from 'react-router-dom';
 import staffAuthService from '../../services/staffAuthService';
 
 /**
- * Component to protect routes that require user role access
- * Redirects staff users to staff dashboard
+ * Component để bảo vệ các route chỉ cho phép user có vai trò truy cập
+ * Chuyển hướng staff users đến staff dashboard
  */
 export const UserOnlyRoute = () => {
   // Trong ứng dụng staff riêng biệt, chúng ta không cần route này
@@ -12,55 +12,51 @@ export const UserOnlyRoute = () => {
 };
 
 /**
- * Component to protect routes that require staff role access
- * Ensures that all protected staff routes can only be accessed via proper authentication
+ * Component để bảo vệ các route yêu cầu quyền truy cập staff
+ * Đảm bảo tất cả staff routes được bảo vệ chỉ có thể truy cập khi đã xác thực
  */
 export const StaffProtectedRoute = () => {
-  // Check if the current user is authenticated as staff
+  // Kiểm tra xem user hiện tại đã xác thực với vai trò staff chưa
   const isStaffAuthenticated = staffAuthService.isStaffAuthenticated();
   
-  // Check where user came from (if they navigated directly)
-  const referrer = document.referrer;
-  const hasValidReferrer = referrer.includes('/login') || referrer.includes('/');
-  
-  // If staff is authenticated and they either came from login or another staff page, allow access
+  // Nếu đã xác thực là staff và họ đã đến từ trang login hoặc trang staff khác, cho phép truy cập
   if (isStaffAuthenticated) {
     return <Outlet />;
   } else {
-    // If not authenticated as staff, always redirect to staff login
+    // Nếu chưa xác thực là staff, chuyển hướng về trang login
     return <Navigate to="/login" replace />;
   }
 };
 
 /**
- * Component to protect routes that should be accessible only when not logged in
- * (like login and register pages)
+ * Component để bảo vệ các route chỉ truy cập khi chưa đăng nhập
+ * (như trang login và register)
  */
 export const PublicOnlyRoute = () => {
-  // Check for staff authentication
+  // Kiểm tra xác thực staff
   const isStaffAuthenticated = staffAuthService.isStaffAuthenticated();
   
   if (isStaffAuthenticated) {
-    // If authenticated as staff, redirect to staff dashboard
+    // Nếu đã xác thực là staff, chuyển hướng đến staff dashboard
     return <Navigate to="/" replace />;
   } else {
-    // If not authenticated, allow access
+    // Nếu chưa xác thực, cho phép truy cập
     return <Outlet />;
   }
 };
 
 /**
- * Component to protect routes that should be accessible only when not logged in as staff
- * (like staff login page)
+ * Component để bảo vệ các route chỉ truy cập khi chưa đăng nhập với vai trò staff
+ * (như trang staff login)
  */
 export const StaffPublicOnlyRoute = () => {
   const isStaff = staffAuthService.isStaffAuthenticated();
 
   if (isStaff) {
-    // If already logged in as staff, redirect to staff dashboard
+    // Nếu đã đăng nhập là staff, chuyển hướng đến staff dashboard
     return <Navigate to="/" replace />;
   } else {
-    // If not authenticated as staff, allow access
+    // Nếu chưa xác thực là staff, cho phép truy cập
     return <Outlet />;
   }
 };

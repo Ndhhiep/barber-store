@@ -64,16 +64,19 @@ export const SocketProvider = ({ children }) => {
       return () => {
         console.log('Cleaning up socket connection...');
         
+        // Copy handlersRef.current to a variable to avoid stale reference
+        const currentHandlers = handlersRef.current;
+
         // Unregister event handlers
-        if (handlersRef.current.size > 0) {
-          handlersRef.current.forEach((callbacks, eventName) => {
+        if (currentHandlers.size > 0) {
+          currentHandlers.forEach((callbacks, eventName) => {
             callbacks.forEach((wrappedCb, originalCb) => {
               if (socketInstance) {
                 socketInstance.off(eventName, wrappedCb);
               }
             });
           });
-          handlersRef.current.clear();
+          currentHandlers.clear();
         }
         
         // Remove system event handlers

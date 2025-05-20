@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import staffProductService from '../services/staffProductService';
 
 const StaffProducts = () => {
@@ -27,24 +27,25 @@ const StaffProducts = () => {
   const [productDisplayId, setProductDisplayId] = useState(null); // New state for displayed product ID
   const [deleteLoading, setDeleteLoading] = useState(false);
   
-  // Fetch products on initial load and when filters change
-  useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-  }, [selectedCategory, currentPage]);
-  
-  // Auto-hide success message after 3 seconds
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => {
-        setSuccessMessage('');
-      }, 3000);
-      
-      return () => clearTimeout(timer);
+  // Define fetchCategories with useCallback
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await staffProductService.getAllCategories();
+      if (Array.isArray(response)) {
+        setCategories(['All Categories', ...response]);
+      } else {
+        // Fallback với một số danh mục mặc định
+        setCategories(['All Categories', 'Pomade', 'Pre-styling', 'Grooming']);
+      }
+    } catch (err) {
+      console.error('Error fetching categories:', err.message);
+      // Fallback với một số danh mục mặc định nếu có lỗi
+      setCategories(['All Categories', 'Pomade', 'Pre-styling', 'Grooming']);
     }
-  }, [successMessage]);
+  }, []);
   
-  const fetchProducts = async () => {
+  // Define fetchProducts with useCallback
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       // Chỉ truyền category khi không phải "All Categories"
@@ -70,23 +71,24 @@ const StaffProducts = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCategory, currentPage]);
+    
+  // Fetch products on initial load and when filters change
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+  }, [selectedCategory, currentPage, fetchProducts, fetchCategories]);
   
-  const fetchCategories = async () => {
-    try {
-      const response = await staffProductService.getAllCategories();
-      if (Array.isArray(response)) {
-        setCategories(['All Categories', ...response]);
-      } else {
-        // Fallback với một số danh mục mặc định
-        setCategories(['All Categories', 'Pomade', 'Pre-styling', 'Grooming']);
-      }
-    } catch (err) {
-      console.error('Error fetching categories:', err.message);
-      // Fallback với một số danh mục mặc định nếu có lỗi
-      setCategories(['All Categories', 'Pomade', 'Pre-styling', 'Grooming']);
+  // Auto-hide success message after 3 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+      
+      return () => clearTimeout(timer);
     }
-  };
+  }, [successMessage]);
   
   const handleCategoryChange = (e) => {
     setSelectedCategory(e.target.value);
@@ -116,18 +118,17 @@ const StaffProducts = () => {
     resetForm();
     setIsModalOpen(true);
   };
-  
-  const openEditModal = (product) => {
+    const openEditModal = (product) => {
     setCurrentProduct({
       id: product._id,
-      name: product.name,
-      description: product.description,
-      price: product.price.toString(),
-      stock: product.stock.toString(),
-      category: product.category,
+      name: product.name || '',
+      description: product.description || '',
+      price: product.price ? product.price.toString() : '0',
+      stock: product.quantity ? product.quantity.toString() : '0', // Use quantity instead of stock
+      category: product.category || '',
       image: null // Existing image will be kept if not changed
     });
-    setImagePreview(product.imageUrl);
+    setImagePreview(product.imgURL || '');
     setEditMode(true);
     setIsModalOpen(true);
   };
@@ -223,19 +224,17 @@ const StaffProducts = () => {
       closeDeleteModal();
     }
   };
-  
-  return (
-    <div className="container-fluid px-3 mt-4">
-      <h2>Manage Products</h2>
-      
-      {error && <div className="alert alert-danger">{error}</div>}
-      {successMessage && <div className="alert alert-success">{successMessage}</div>}
-      
-      <div className="mb-3">
+    return (
+    <div className="container px-3 mt-4">
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h2>Manage Products</h2>
         <button className="btn btn-success" onClick={openAddModal}>
           <i className="bi bi-plus-circle me-1"></i> Add New Product
         </button>
       </div>
+      
+      {error && <div className="alert alert-danger">{error}</div>}
+      {successMessage && <div className="alert alert-success">{successMessage}</div>}
       
       <div className="row mb-4">
         <div className="col">
@@ -444,36 +443,47 @@ const StaffProducts = () => {
                           onChange={handleInputChange}
                         ></textarea>
                       </div>
-                    </div>
-
-                    {/* Row 4: Image Upload and Preview */}
+                    </div>                    {/* Row 4: Image Upload and Preview */}
                     <div className="row mb-4"> {/* Increased bottom margin */}
                       <div className="col-12">
                         <label htmlFor="image" className="form-label fw-bold">Product Image</label> {/* Added fw-bold */}
-                        <div className="d-flex align-items-start"> {/* Use flexbox for alignment */}
-                          <div className="flex-grow-1 me-3">
+                        <div className="d-flex flex-column align-items-center mb-3">
+                          {/* Image Preview in the middle */}
+                          {imagePreview ? (
+                            <div className="text-center mb-3">
+                              <img 
+                                src={imagePreview} 
+                                alt="Product preview" 
+                                className="img-thumbnail" 
+                                style={{ height: '180px', width: '180px', objectFit: 'contain' }} 
+                              />
+                            </div>
+                          ) : (
+                            <div className="text-center mb-3">
+                              <div className="border rounded p-4 d-flex justify-content-center align-items-center" 
+                                   style={{ height: '180px', width: '180px', backgroundColor: '#f8f9fa' }}>
+                                <i className="bi bi-image" style={{ fontSize: '2.5rem', color: '#adb5bd' }}></i>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Custom file input button */}
+                          <div className="text-center">
                             <input 
-                              type="file" 
-                              className="form-control" 
+                              type="file"
+                              className="d-none" 
                               id="image" 
                               name="image" 
                               onChange={handleImageChange}
                               accept="image/*"
                             />
-                            <small className="form-text text-muted">
-                              {editMode && currentProduct.imageUrl ? 'Leave blank to keep the current image.' : 'Upload a new image.'}
+                            <label htmlFor="image" className="btn btn-outline-primary">
+                              <i className="bi bi-upload me-1"></i> Choose Image
+                            </label>
+                            <small className="d-block form-text text-muted mt-2">
+                              {editMode ? 'Leave blank to keep the current image.' : 'Recommended size: 500x500 pixels'}
                             </small>
                           </div>
-                          {imagePreview && (
-                            <div className="mt-0"> {/* Removed mt-2 */}
-                              <img 
-                                src={imagePreview} 
-                                alt="Product preview" 
-                                className="img-thumbnail" // Use img-thumbnail for border
-                                style={{ maxHeight: '100px', maxWidth: '150px', objectFit: 'contain' }} // Adjusted style
-                              />
-                            </div>
-                          )}
                         </div>
                       </div>
                     </div>

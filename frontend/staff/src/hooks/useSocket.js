@@ -19,9 +19,7 @@ const useSocket = (url = 'http://localhost:5000', options = {}) => {
     error: null,
     lastMessage: null
   });
-  
-  // State hiển thị trong UI - chỉ cập nhật khi cần thiết
-  const [socket, setSocket] = useState(null);
+    // State hiển thị trong UI - chỉ cập nhật khi cần thiết
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -62,10 +60,8 @@ const useSocket = (url = 'http://localhost:5000', options = {}) => {
         withCredentials: true,
         timeout: 10000, // Timeout sau 10 giây nếu không thể kết nối
       });
-      
-      // Lưu trữ socket instance
+        // Lưu trữ socket instance
       socketRef.current = socketInstance;
-      setSocket(socketInstance);
       
       // Xử lý sự kiện kết nối
       const onConnect = () => {
@@ -141,17 +137,21 @@ const useSocket = (url = 'http://localhost:5000', options = {}) => {
       socketInstance.on('connect', onConnect);
       socketInstance.on('disconnect', onDisconnect);
       socketInstance.on('connect_error', onError);
-      socketInstance.on('connect_timeout', onConnectTimeout);
-      socketInstance.on('reconnect_failed', onReconnectFailed);
-      socketInstance.on('reconnecting', onReconnecting);
+      socketInstance.on('connect_timeout', onConnectTimeout);      socketInstance.on('reconnect_failed', onReconnectFailed);
+      socketInstance.on('reconnecting', onReconnecting);        // Cleanup khi component unmount
       
-      // Cleanup khi component unmount
+      // Lưu trữ tham chiếu đến handlersRef.current tại thời điểm này
+      // để tránh sử dụng phiên bản mới của ref trong cleanup function
+      const currentHandlers = handlersRef.current;
+      
       return () => {
         console.log('Đang đóng kết nối Socket.IO...');
         
         // Gỡ bỏ tất cả các handlers đã đăng ký
-        if (handlersRef.current.size > 0) {
-          handlersRef.current.forEach((callbacks, eventName) => {
+        // Sử dụng biến currentHandlers thay vì handlersRef.current để tránh warning
+        const handlers = new Map(currentHandlers);
+        if (handlers.size > 0) {
+          handlers.forEach((callbacks, eventName) => {
             callbacks.forEach((wrappedCb, originalCb) => {
               if (socketInstance) {
                 socketInstance.off(eventName, wrappedCb);
@@ -159,7 +159,7 @@ const useSocket = (url = 'http://localhost:5000', options = {}) => {
             });
           });
           // Reset handlers map
-          handlersRef.current.clear();
+          currentHandlers.clear();
         }
         
         // Gỡ bỏ các sự kiện hệ thống
@@ -313,9 +313,8 @@ const useSocket = (url = 'http://localhost:5000', options = {}) => {
       socketRef.current.connect();
     }
   }, []);
-
   return {
-    socket: socketRef.current,
+    socketRef, // Return the ref instead of the state variable that's not used
     isConnected,
     isLoading,
     error,

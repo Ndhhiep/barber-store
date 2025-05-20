@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../css/BookingPage.css';
@@ -18,33 +18,16 @@ const BookingConfirmedPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const confirmationToken = queryParams.get('token');
-    
-    if (confirmationToken) {
-      validateBookingToken(confirmationToken);
-    } else {
-      setIsValidatingToken(false);
-      setBookingStatus({
-        ...bookingStatus,
-        error: true,
-        errorMessage: 'No confirmation token provided.'
-      });
-    }
-  }, [location.search]);
-  const validateBookingToken = async (token) => {
+  const validateBookingToken = useCallback(async (token) => {
     try {
       setIsValidatingToken(true);
-      
       // Call API to validate the token
       const response = await axios.post(
         'http://localhost:5000/api/bookings/confirm',
         { token }
       );
-        if (response.data.success) {
+      if (response.data.success) {
         const { booking } = response.data;
-        
         // Store confirmation info in booking status
         setBookingStatus({
           submitted: true,
@@ -57,24 +40,39 @@ const BookingConfirmedPage = () => {
           confirmedBarber: booking.barber_name || ''
         });
       } else {
-        setBookingStatus({
-          ...bookingStatus,
+        setBookingStatus((prevStatus) => ({
+          ...prevStatus,
           error: true,
           errorMessage: response.data.message || 'Invalid or expired confirmation link.'
-        });
+        }));
       }
     } catch (error) {
       console.error('Error validating token:', error);
-      
-      setBookingStatus({
-        ...bookingStatus,
+      setBookingStatus((prevStatus) => ({
+        ...prevStatus,
         error: true,
         errorMessage: 'Failed to validate the confirmation link. It may have expired.'
-      });
+      }));
     } finally {
       setIsValidatingToken(false);
     }
-  };
+  }, []); // Wrapped validateBookingToken in useCallback
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const confirmationToken = queryParams.get('token');
+
+    if (confirmationToken) {
+      validateBookingToken(confirmationToken);
+    } else {
+      setIsValidatingToken(false);
+      setBookingStatus((prevStatus) => ({
+        ...prevStatus,
+        error: true,
+        errorMessage: 'No confirmation token provided.'
+      }));
+    }
+  }, [location.search, validateBookingToken]); // Updated to use functional update for setBookingStatus
 
   return (
     <div className="py-5 booking-page-bg">

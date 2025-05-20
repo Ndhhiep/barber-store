@@ -16,22 +16,22 @@ const {
 const { protect } = require('../middleware/authMiddleware');
 const { restrictTo } = require('../controllers/authController');
 
-// Public routes
+// Các route công khai
 router.post('/', createBooking);
 router.post('/confirm', confirmBooking);
 router.get('/time-slots', getAvailableTimeSlots);
 router.get('/time-slots-status', getTimeSlotStatus);
 router.get('/check-availability', checkTimeSlotAvailability);
 
-// Protected routes - require authentication
+// Các route được bảo vệ - yêu cầu xác thực
 router.get('/my-bookings', protect, getUserBookings);
 
-// Staff/Admin routes
+// Các route dành cho staff/admin (yêu cầu quyền)
 router.get('/', protect, restrictTo('admin', 'manager', 'barber', 'staff'), getBookings);
 router.get('/stats', protect, restrictTo('admin', 'manager', 'barber', 'staff'), getBookingStats);
 router.put('/:id/status', protect, restrictTo('admin', 'manager', 'barber', 'staff'), updateBookingStatus);
 
-// Routes with path parameters should come after specific routes
+// Các route với tham số đường dẫn nên đặt sau các route cụ thể
 router.get('/:id', protect, getBookingById);
 router.put('/:id/cancel', protect, cancelBooking);
 

@@ -44,14 +44,53 @@ const getBarberById = async (id) => {
   }
 };
 
+// Upload barber image to Cloudinary
+const uploadBarberImage = async (imageFile) => {
+  try {
+    console.log('Uploading file to Cloudinary:', imageFile.name);
+    
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    
+    // Log form data content for debugging
+    console.log('Form data created with image file');
+    
+    const response = await axios.post(`${API_URL}/barbers/upload-image`, formData, {
+      headers: {
+        ...staffAuthService.authHeader(),
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    
+    console.log('Image upload successful:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    throw error.response?.data || { message: 'Failed to upload image' };
+  }
+};
+
 // Create new barber
 const createBarber = async (barberData) => {
-  try {
-    // Chuyển đổi từ FormData sang JSON
+  try {    
+    // Prepare barber data
+    const { title, expertise, imageFile, ...restData } = barberData;
+    
+    // If there's an image file to upload
+    let image_url = '';
+    if (imageFile) {
+      console.log('Creating barber with image file upload');
+      const uploadResult = await uploadBarberImage(imageFile);
+      
+      if (uploadResult && uploadResult.data) {
+        image_url = uploadResult.data.url;
+        console.log('Image uploaded for new barber:', image_url);
+      }
+    }
+    
     const barberPayload = {
-      ...barberData,
-      // Đảm bảo imageUrl được giữ nguyên
-      image_url: barberData.imageUrl
+      ...restData,
+      image_url: image_url
     };
     
     const response = await axios.post(`${API_URL}/barbers`, barberPayload, {
@@ -69,6 +108,21 @@ const createBarber = async (barberData) => {
 // Update barber
 const updateBarber = async (id, barberData) => {
   try {
+    console.log('Updating barber ID:', id);
+    
+    // If there's an image file to upload
+    let image_url = barberData.imageUrl || '';
+    if (barberData.imageFile) {
+      console.log('Updating with new image file, will replace existing image');
+      const uploadResult = await uploadBarberImage(barberData.imageFile);
+      if (uploadResult && uploadResult.data) {
+        image_url = uploadResult.data.url;
+        console.log('New image uploaded:', image_url);
+      }
+    } else {
+      console.log('Keeping existing image URL:', image_url);
+    }
+
     // Properly format data to match backend expectations
     const barberPayload = {
       name: barberData.name,
@@ -78,14 +132,11 @@ const updateBarber = async (id, barberData) => {
       description: barberData.description,
       specialization: barberData.specialization,
       // Backend expects to save as imgURL but needs image_url in the request
-      image_url: barberData.imageUrl,
+      image_url: image_url,
       is_active: barberData.is_active,
       workingDays: barberData.workingDays,
-      workingHours: barberData.workingHours,
-      // Include any additional fields from frontend
-      expertise: barberData.expertise,
-      // Include title from frontend
-      title: barberData.title
+      workingHours: barberData.workingHours
+      // Title and expertise fields have been removed
     };
     
     // Removed payload logging
@@ -136,7 +187,8 @@ const staffBarberService = {
   createBarber,
   updateBarber,
   deleteBarber,
-  toggleBarberStatus
+  toggleBarberStatus,
+  uploadBarberImage
 };
 
 export default staffBarberService;

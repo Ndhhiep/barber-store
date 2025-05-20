@@ -13,16 +13,16 @@ const StaffLayout = () => {
   
   useEffect(() => {
     const checkAuth = () => {
-      // Check if user is authenticated as staff
+      // Kiểm tra xem user đã xác thực với vai trò staff chưa
       if (staffAuthService.isStaffAuthenticated()) {
-        // Get navigation history from session storage
+        // Lấy lịch sử điều hướng từ sessionStorage
         const staffNavHistory = sessionStorage.getItem('staffNavHistory');
         
-        // Staff must have proper navigation history or be freshly logged in
+        // Staff phải có lịch sử điều hướng hợp lệ hoặc vừa mới đăng nhập
         if (staffNavHistory || sessionStorage.getItem('staffJustLoggedIn')) {
           setAuthorized(true);
           
-          // If just logged in, clear that flag but set navigation history
+          // Nếu vừa mới đăng nhập, xoá flag đó và thiết lập lịch sử điều hướng
           if (sessionStorage.getItem('staffJustLoggedIn')) {
             sessionStorage.removeItem('staffJustLoggedIn');
             sessionStorage.setItem('staffNavHistory', 'true');
@@ -34,7 +34,7 @@ const StaffLayout = () => {
     
     checkAuth();
     
-    // Update navigation history on each staff page access
+    // Cập nhật lịch sử điều hướng mỗi khi truy cập trang staff
     return () => {
       if (staffAuthService.isStaffAuthenticated()) {
         sessionStorage.setItem('staffNavHistory', 'true');
@@ -45,20 +45,24 @@ const StaffLayout = () => {
   if (loading) {
     return <div className="staff-loading">Loading...</div>;
   }
-  
-  if (!authorized) {
-    // If not properly authenticated or didn't enter through login, redirect to staff login
+    if (!authorized) {
+    // Nếu chưa xác thực đúng cách hoặc không vào từ login, chuyển hướng về trang login staff
     return <Navigate to="/login" replace />;
-  }  return (
+  }
+  return (
     <div className="staff-page-container">
       <div className="staff-layout-container">
-        <StaffNavButtons />
-        <main className="staff-main-content">
+        <aside className="staff-sidebar"> {/* Changed from sidebar-container to staff-sidebar */}
+          <StaffNavButtons />
+        </aside>
+        <div className="staff-content-wrapper">
           <StaffHeader />
-          <div className="staff-content-body">
-            <Outlet />
-          </div>
-        </main>
+          <main className="staff-main-content">
+            <div className="staff-content-body">
+              <Outlet />
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   );

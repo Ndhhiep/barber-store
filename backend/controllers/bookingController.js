@@ -8,9 +8,9 @@ const dateUtils = require('../utils/dateUtils');
 const { sendBookingConfirmationEmail } = require('../utils/emailUtils');
 const crypto = require('crypto');
 
-// @desc    Create new booking
+// @desc    Tạo mới booking
 // @route   POST /api/bookings
-// @access  Public
+// @access  Công khai
 const createBooking = asyncHandler(async (req, res) => {
   const {
     service,
@@ -21,27 +21,27 @@ const createBooking = asyncHandler(async (req, res) => {
     email,
     phone,
     notes,
-    user_id, // Added user_id to be saved if the user is logged in
-    requireEmailConfirmation = false // Flag to determine if email confirmation is needed
+    user_id, // Thêm user_id để lưu nếu người dùng đã đăng nhập
+    requireEmailConfirmation = false // Cờ để xác định xem có cần xác nhận email hay không
   } = req.body;
 
   // Xác thực barber_id
   if (!barber_id) {
     res.status(400);
-    throw new Error('Barber ID is required');
+    throw new Error('Barber ID là bắt buộc');
   }
 
   // Kiểm tra barber_id có hợp lệ không
   if (!mongoose.Types.ObjectId.isValid(barber_id)) {
     res.status(400);
-    throw new Error('Invalid Barber ID format');
+    throw new Error('Định dạng Barber ID không hợp lệ');
   }
 
   // Kiểm tra barber có tồn tại không
   const barber = await Barber.findById(barber_id);
   if (!barber) {
     res.status(404);
-    throw new Error('Barber not found');
+    throw new Error('Không tìm thấy Barber');
   }
 
   // Chuyển đổi date sang đúng múi giờ Việt Nam
@@ -56,8 +56,8 @@ const createBooking = asyncHandler(async (req, res) => {
     email,
     phone,
     notes,
-    status: requireEmailConfirmation ? 'pending' : 'confirmed', // Set status based on email confirmation requirement
-    user_id: user_id || (req.user ? req.user._id : null) // Use provided user_id, or get from authenticated user if available
+    status: requireEmailConfirmation ? 'pending' : 'confirmed', // Đặt trạng thái dựa trên yêu cầu xác nhận email
+    user_id: user_id || (req.user ? req.user._id : null) // Sử dụng user_id cung cấp hoặc lấy từ người dùng đã xác thực nếu có
   });
 
   const createdBooking = await booking.save();
@@ -66,13 +66,13 @@ const createBooking = asyncHandler(async (req, res) => {
   const populatedBooking = await Booking.findById(createdBooking._id)
     .populate('barber_id', 'name specialization');
   
-  // Handle email confirmation if required
+  // Xử lý xác nhận email nếu cần
   if (requireEmailConfirmation) {
     try {
-      // Generate random token
+      // Tạo token ngẫu nhiên
       const tokenString = crypto.randomBytes(32).toString('hex');
       
-      // Create token record
+      // Tạo bản ghi token
       const token = new Token({
         bookingId: createdBooking._id,
         token: tokenString,
@@ -80,13 +80,13 @@ const createBooking = asyncHandler(async (req, res) => {
       
       await token.save();
       
-      // Get barber name for email
+      // Lấy tên barber để gửi email
       const barberName = barber ? barber.name : 'Any Available Barber';
       
-      // Determine base URL for confirmation link
+      // Xác định URL cơ sở cho liên kết xác nhận
       const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
       
-      // Send confirmation email
+      // Gửi email xác nhận booking
       await sendBookingConfirmationEmail({
         to: email,
         booking: {
@@ -99,45 +99,45 @@ const createBooking = asyncHandler(async (req, res) => {
       });
       
       res.status(201).json({
-        message: 'Booking created. Please check your email for confirmation.',
+        message: 'Booking đã được tạo. Vui lòng kiểm tra email để xác nhận.',
         bookingId: createdBooking._id,
         requiresConfirmation: true
       });
     } catch (error) {
-      console.error('Error sending confirmation email:', error);
+      console.error('Lỗi khi gửi email xác nhận:', error);
       
-      // If email fails, still return success but note the email issue
+      // Nếu email thất bại, vẫn trả về thành công nhưng ghi chú vấn đề email
       res.status(201).json({
-        message: 'Booking created but confirmation email could not be sent. Please contact support.',
+        message: 'Booking đã được tạo nhưng không thể gửi email xác nhận. Vui lòng liên hệ hỗ trợ.',
         bookingId: createdBooking._id,
         requiresConfirmation: true,
         emailError: true
       });
     }
   } else {
-    // Return regular response if email confirmation not required
+    // Trả về phản hồi thông thường nếu không yêu cầu xác nhận email
     res.status(201).json(populatedBooking);
   }
 });
 
-// @desc    Get all bookings
+// @desc    Lấy tất cả bookings
 // @route   GET /api/bookings
-// @access  Private/Admin
+// @access  Riêng tư/Admin
 const getBookings = asyncHandler(async (req, res) => {
   try {
-    // Handle date filtering if provided
+    // Xử lý lọc theo ngày nếu có
     const filter = {};
     
-    // Filter by user ID if provided
+    // Lọc theo ID người dùng nếu có
     if (req.query.userId) {
       filter.user_id = req.query.userId;
     }
     
     if (req.query.date) {
-      // Filter by specific date
+      // Lọc theo ngày cụ thể
       const date = req.query.date;
       
-      // Sử dụng dateUtils để lấy đầu ngày và cuối ngày
+      // Sử dụng dateUtils để lấy đầu và cuối ngày (VN)
       const startDate = dateUtils.getVNStartOfDay(new Date(date));
       const endDate = dateUtils.getVNEndOfDay(new Date(date));
       
@@ -146,15 +146,15 @@ const getBookings = asyncHandler(async (req, res) => {
         $lte: endDate
       };
       
-      console.log(`Filtering bookings for date: ${date}`);
-      console.log(`Start date: ${startDate.toISOString()}`);
-      console.log(`End date: ${endDate.toISOString()}`);
+      console.log(`Lọc bookings cho ngày: ${date}`);
+      console.log(`Ngày bắt đầu: ${startDate.toISOString()}`);
+      console.log(`Ngày kết thúc: ${endDate.toISOString()}`);
     } else if (req.query.startDate && req.query.endDate) {
-      // Filter by date range
+      // Lọc theo khoảng ngày
       const startDate = req.query.startDate;
       const endDate = req.query.endDate;
       
-      // Sử dụng dateUtils để lấy đầu ngày và cuối ngày
+      // Sử dụng dateUtils để lấy đầu và cuối ngày (VN)
       const start = dateUtils.getVNStartOfDay(new Date(startDate));
       const end = dateUtils.getVNEndOfDay(new Date(endDate));
       
@@ -163,36 +163,50 @@ const getBookings = asyncHandler(async (req, res) => {
         $lte: end
       };
       
-      console.log(`Filtering bookings from ${startDate} to ${endDate}`);
-      console.log(`Start date: ${start.toISOString()}`);
-      console.log(`End date: ${end.toISOString()}`);
+      console.log(`Lọc bookings từ ${startDate} đến ${endDate}`);
+      console.log(`Ngày bắt đầu: ${start.toISOString()}`);
+      console.log(`Ngày kết thúc: ${end.toISOString()}`);
     }
     
-    // Add logging to help debug the filter and query
+    // Ghi log filter để debug
     console.log('Filter:', JSON.stringify(filter));
     
-    // Thay đổi cách truy vấn để tránh lỗi populate
+    // Tham số phân trang
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const skip = (page - 1) * limit;
+    
+    console.log(`Phân trang: page=${page}, limit=${limit}, skip=${skip}`);
+    
+    // Lấy tổng số bản ghi cho phân trang
+    const totalCount = await Booking.countDocuments(filter);
+    const totalPages = Math.ceil(totalCount / limit);
+    
+    // Thay đổi cách truy vấn để tránh lỗi populate và thêm phân trang
     const bookings = await Booking.find(filter)
       .populate('barber_id', 'name specialization')
+      .sort({ date: -1, time: -1 }) // Sắp xếp theo ngày và giờ (mới nhất trước)
+      .skip(skip)
+      .limit(limit)
       .lean();
     
-    console.log(`Found ${bookings.length} bookings`);
+    console.log(`Tìm thấy ${bookings.length} bookings trong tổng số ${totalCount}`);
     
-    // Format bookings to include barber and user names
+    // Định dạng bookings để bao gồm tên barber và khách
     const formattedBookings = await Promise.all(bookings.map(async (booking) => {
       const formattedBooking = { ...booking };
       
-      // Add service name for easier display
+      // Thêm tên dịch vụ cho hiển thị dễ dàng
       formattedBooking.serviceName = booking.service;
       
-      // Add customer name from booking.name
+      // Thêm tên khách hàng từ booking.name
       formattedBooking.userName = booking.name || 'N/A';
       
-      // Format date và time để hiển thị
+      // Định dạng ngày và giờ để hiển thị
       formattedBooking.formattedDate = dateUtils.formatDate(booking.date);
       formattedBooking.formattedTime = booking.time;
       
-      // Nếu có user_id và nó là ObjectId hợp lệ, thử lấy thông tin user
+      // Nếu có user_id và hợp lệ, tìm thông tin user
       if (booking.user_id && mongoose.Types.ObjectId.isValid(booking.user_id)) {
         try {
           const user = await User.findById(booking.user_id).select('name email').lean();
@@ -201,116 +215,119 @@ const getBookings = asyncHandler(async (req, res) => {
             formattedBooking.userEmail = user.email;
           }
         } catch (error) {
-          console.log(`Error fetching user info for ID ${booking.user_id}:`, error.message);
+          console.log(`Lỗi khi lấy thông tin người dùng cho ID ${booking.user_id}:`, error.message);
         }
       }
       
       return formattedBooking;
     }));
     
-    // Return with bookings property as expected by frontend
+    // Trả về với property bookings như frontend mong đợi
     res.json({
       status: 'success',
       count: formattedBookings.length,
+      totalCount: totalCount,
+      totalPages: totalPages,
+      currentPage: page,
       bookings: formattedBookings
     });
   } catch (error) {
-    console.error('Error fetching bookings:', error);
+    console.error('Lỗi khi lấy bookings:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Failed to retrieve bookings',
+      message: 'Không thể lấy bookings',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
 
-// @desc    Get logged-in user's bookings
+// @desc    Lấy bookings của người dùng đang đăng nhập
 // @route   GET /api/bookings/my-bookings
-// @access  Private
+// @access  Riêng tư
 const getUserBookings = asyncHandler(async (req, res) => {
   const bookings = await Booking.find({ user_id: req.user._id })
     .populate('barber_id', 'name specialization')
-    .sort({ date: -1, createdAt: -1 }); // Sort by date (newest first)
+    .sort({ date: -1, createdAt: -1 }); // Sắp xếp theo ngày (mới nhất trước)
   
   res.json(bookings);
 });
 
-// @desc    Get booking by ID
+// @desc    Lấy booking theo ID
 // @route   GET /api/bookings/:id
-// @access  Private
+// @access  Riêng tư
 const getBookingById = asyncHandler(async (req, res) => {
   const booking = await Booking.findById(req.params.id)
     .populate('barber_id', 'name specialization');
 
-  // Check if booking exists
+  // Kiểm tra nếu booking không tồn tại
   if (!booking) {
     res.status(404);
-    throw new Error('Booking not found');
+    throw new Error('Không tìm thấy booking');
   }
 
-  // Check if the booking belongs to the logged-in user or user is admin
+  // Kiểm tra nếu booking không thuộc người dùng hoặc không phải admin
   if (booking.user_id && booking.user_id.toString() !== req.user._id.toString() && 
       req.user.role !== 'admin' && req.user.role !== 'manager') {
     res.status(403);
-    throw new Error('Not authorized to view this booking');
+    throw new Error('Không có quyền xem booking này');
   }
 
   res.json(booking);
 });
 
-// @desc    Cancel a booking
+// @desc    Hủy booking
 // @route   PUT /api/bookings/:id/cancel
-// @access  Private
+// @access  Riêng tư
 const cancelBooking = asyncHandler(async (req, res) => {
   const booking = await Booking.findById(req.params.id);
 
-  // Check if booking exists
+  // Kiểm tra nếu booking không tồn tại
   if (!booking) {
     res.status(404);
-    throw new Error('Booking not found');
+    throw new Error('Không tìm thấy booking');
   }
 
-  // Check if the booking belongs to the logged-in user or user is admin
+  // Kiểm tra nếu booking không thuộc người dùng hoặc không phải admin
   if (booking.user_id && booking.user_id.toString() !== req.user._id.toString() && 
       req.user.role !== 'admin' && req.user.role !== 'manager') {
     res.status(403);
-    throw new Error('Not authorized to cancel this booking');
+    throw new Error('Không có quyền hủy booking này');
   }
 
-  // Check if booking can be cancelled (not completed)
+  // Kiểm tra nếu booking đã hoàn thành
   if (booking.status === 'completed') {
     res.status(400);
-    throw new Error('Cannot cancel a completed booking');
+    throw new Error('Không thể hủy booking đã hoàn thành');
   }
 
-  // Update booking status to cancelled
+  // Cập nhật trạng thái booking thành cancelled
   booking.status = 'cancelled';
   const updatedBooking = await booking.save();
 
   res.json(updatedBooking);
 });
 
-// @desc    Update booking status (for admins)
+// @desc    Cập nhật trạng thái booking (dành cho admins)
 // @route   PUT /api/bookings/:id/status
-// @access  Private/Admin
+// @access  Riêng tư/Admin
 const updateBookingStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
   
-  // Validate status
+  // Xác thực giá trị status
   if (!['pending', 'confirmed', 'completed', 'cancelled'].includes(status)) {
     res.status(400);
-    throw new Error('Invalid status');
+    throw new Error('Trạng thái không hợp lệ');
   }
 
   const booking = await Booking.findById(req.params.id);
 
-  // Check if booking exists
+  // Kiểm tra nếu booking không tồn tại
   if (!booking) {
     res.status(404);
-    throw new Error('Booking not found');
+    throw new Error('Không tìm thấy booking');
   }
 
-  // Update booking status
+  // Cập nhật trạng thái booking
   booking.status = status;
   const updatedBooking = await booking.save();
 
@@ -318,9 +335,9 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
 });
 
 /**
- * Get available time slots for a barber on a specific date
+ * Lấy các khung giờ còn trống cho barber vào ngày cụ thể
  * @route GET /api/bookings/time-slots
- * @access Public
+ * @access Công khai
  */
 const getAvailableTimeSlots = async (req, res) => {
   try {
@@ -329,66 +346,66 @@ const getAvailableTimeSlots = async (req, res) => {
     if (!date) {
       return res.status(400).json({
         status: 'fail',
-        message: 'Please provide a date for checking time slots'
+        message: 'Vui lòng cung cấp ngày để kiểm tra khung giờ'
       });
     }
     
     if (!barberId) {
       return res.status(400).json({
         status: 'fail',
-        message: 'Please provide a barber ID for checking time slots'
+        message: 'Vui lòng cung cấp ID barber để kiểm tra khung giờ'
       });
     }
 
-    // Validate date format (YYYY-MM-DD)
+    // Kiểm tra định dạng ngày (YYYY-MM-DD)
     const datePattern = /^\d{4}-\d{2}-\d{2}$/;
     if (!datePattern.test(date)) {
       return res.status(400).json({
         status: 'fail',
-        message: 'Invalid date format. Please use YYYY-MM-DD'
+        message: 'Định dạng ngày không hợp lệ. Vui lòng sử dụng YYYY-MM-DD'
       });
     }
 
-    // Find barber by ID
+    // Tìm barber theo ID
     const barber = await Barber.findById(barberId);
     if (!barber) {
       return res.status(404).json({
         status: 'fail',
-        message: 'Barber not found'
+        message: 'Không tìm thấy Barber'
       });
     }
     
-    // Changed from isActive to is_active to match the model property name
+    // Kiểm tra nếu barber không hoạt động
     if (!barber.is_active) {
       return res.status(400).json({
         status: 'fail',
-        message: 'This barber is not currently active'
+        message: 'Barber này hiện không hoạt động'
       });
     }
 
-    // Get day of week from date
+    // Lấy ngày trong tuần từ date
     const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     
-    // Check if barber works on this day
+    // Kiểm tra nếu barber không làm việc ngày đó
     if (barber.workingDays && !barber.workingDays[dayOfWeek]) {
       return res.status(200).json({
         status: 'success',
-        message: `Barber does not work on ${dayOfWeek}`,
+        message: `Barber không làm việc vào ${dayOfWeek}`,
         data: {
           timeSlots: []
         }
       });
     }
 
-    // Generate all possible time slots based on barber's working hours
-    // If workingHours is not defined, use default hours
+    // Sinh tất cả khung giờ dựa trên giờ làm việc
+    // Nếu workingHours không được định nghĩa, sử dụng giờ mặc định
     const start = barber.workingHours?.start || '09:00';
     const end = barber.workingHours?.end || '19:00';
     
     // Sử dụng dateUtils.generateTimeSlots thay vì hàm local
     const allTimeSlots = dateUtils.generateTimeSlots(new Date(date), 30, { open: start, close: end });
 
-    // Find all bookings for this barber on the specified date
+    // Tìm tất cả booking cho barber ngày đó
     const bookings = await Booking.find({
       barber_id: barberId,
       date: {
@@ -398,21 +415,21 @@ const getAvailableTimeSlots = async (req, res) => {
       status: { $in: ['pending', 'confirmed'] }
     });
 
-    // Mark time slots as available or not
+    // Đánh dấu khung giờ là có sẵn hay không
     const bookedTimes = bookings.map(booking => booking.time);
     const timeSlots = allTimeSlots.map(slot => ({
       start_time: slot,
       is_available: !bookedTimes.includes(slot)
     }));
 
-    // If the date is today, filter out past time slots
+    // Nếu ngày là hôm nay, lọc bỏ khung giờ đã qua hoặc trong 30 phút tới
     const today = new Date().toISOString().split('T')[0];
     if (date === today) {
       const now = new Date();
       const currentHour = now.getHours();
       const currentMinute = now.getMinutes();
       
-      // Filter out time slots that have already passed or are within 30 minutes from now
+      // Lọc bỏ khung giờ đã qua hoặc trong 30 phút tới
       return res.status(200).json({
         status: 'success',
         data: {
@@ -421,13 +438,14 @@ const getAvailableTimeSlots = async (req, res) => {
             const slotTotalMinutes = slotHour * 60 + slotMinute;
             const currentTotalMinutes = currentHour * 60 + currentMinute;
             
-            // Keep slots that are at least 30 minutes in the future
+            // Giữ lại các khung giờ ít nhất 30 phút trong tương lai
             return slotTotalMinutes > currentTotalMinutes + 30;
           })
         }
       });
     }
 
+    // Trả về dữ liệu timeSlots
     res.status(200).json({
       status: 'success',
       data: {
@@ -435,18 +453,18 @@ const getAvailableTimeSlots = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching available time slots:', error);
+    console.error('Lỗi khi lấy khung giờ còn trống:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Failed to retrieve available time slots',
+      message: 'Không thể lấy khung giờ còn trống',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// @desc    Check if a specific time slot is available
+// @desc    Kiểm tra xem một khung giờ cụ thể có còn trống không
 // @route   GET /api/bookings/check-availability
-// @access  Public
+// @access  Công khai
 const checkTimeSlotAvailability = async (req, res) => {
   try {
     const { date, timeSlot, barberId } = req.query;
@@ -454,20 +472,20 @@ const checkTimeSlotAvailability = async (req, res) => {
     if (!date || !timeSlot || !barberId) {
       return res.status(400).json({
         status: 'fail',
-        message: 'Please provide date, timeSlot, and barberId'
+        message: 'Vui lòng cung cấp date, timeSlot và barberId'
       });
     }
 
-    // Find barber by ID
+    // Tìm barber theo ID
     const barber = await Barber.findById(barberId);
     if (!barber) {
       return res.status(404).json({
         status: 'fail',
-        message: 'Barber not found'
+        message: 'Không tìm thấy Barber'
       });
     }
 
-    // Check if the barber is available for this time slot
+    // Kiểm tra tình trạng khả dụng của barber cho khung giờ
     const isAvailable = await barber.isAvailable(date, timeSlot);
 
     res.status(200).json({
@@ -477,19 +495,19 @@ const checkTimeSlotAvailability = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error checking time slot availability:', error);
+    console.error('Lỗi khi kiểm tra tình trạng khả dụng của khung giờ:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Failed to check time slot availability',
+      message: 'Không thể kiểm tra tình trạng khả dụng của khung giờ',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
 /**
- * Get status for all time slots for a barber on a specific date
+ * Lấy trạng thái của tất cả khung giờ cho barber vào ngày cụ thể
  * @route GET /api/bookings/time-slots-status
- * @access Public
+ * @access Công khai
  */
 const getTimeSlotStatus = async (req, res) => {
   try {
@@ -498,64 +516,64 @@ const getTimeSlotStatus = async (req, res) => {
     if (!date) {
       return res.status(400).json({
         status: 'fail',
-        message: 'Please provide a date for checking time slots'
+        message: 'Vui lòng cung cấp ngày để kiểm tra khung giờ'
       });
     }
     
     if (!barberId) {
       return res.status(400).json({
         status: 'fail',
-        message: 'Please provide a barber ID for checking time slots'
+        message: 'Vui lòng cung cấp ID barber để kiểm tra khung giờ'
       });
     }
 
-    // Validate date format (YYYY-MM-DD)
+    // Kiểm tra định dạng ngày (YYYY-MM-DD)
     const datePattern = /^\d{4}-\d{2}-\d{2}$/;
     if (!datePattern.test(date)) {
       return res.status(400).json({
         status: 'fail',
-        message: 'Invalid date format. Please use YYYY-MM-DD'
+        message: 'Định dạng ngày không hợp lệ. Vui lòng sử dụng YYYY-MM-DD'
       });
     }
 
-    // Find barber by ID
+    // Tìm barber theo ID
     const barber = await Barber.findById(barberId);
     if (!barber) {
       return res.status(404).json({
         status: 'fail',
-        message: 'Barber not found'
+        message: 'Không tìm thấy Barber'
       });
     }
     
-    // Changed from isActive to is_active to match the model property name
+    // Kiểm tra nếu barber không hoạt động
     if (!barber.is_active) {
       return res.status(400).json({
         status: 'fail',
-        message: 'This barber is not currently active'
+        message: 'Barber này hiện không hoạt động'
       });
     }
 
-    // Get day of week from date
+    // Lấy ngày trong tuần từ date
     const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     
-    // Check if barber works on this day
+    // Kiểm tra nếu barber không làm việc ngày đó
     if (barber.workingDays && !barber.workingDays[dayOfWeek]) {
       return res.status(200).json({
         status: 'success',
-        message: `Barber does not work on ${dayOfWeek}`,
+        message: `Barber không làm việc vào ${dayOfWeek}`,
         data: {
           timeSlots: []
         }
       });
     }
 
-    // Generate all possible time slots based on barber's working hours
-    // If workingHours is not defined, use default hours
+    // Sinh tất cả khung giờ dựa trên giờ làm việc
+    // Nếu workingHours không được định nghĩa, sử dụng giờ mặc định
     const start = barber.workingHours?.start || '09:00';
     const end = barber.workingHours?.end || '19:00';
     const allTimeSlots = dateUtils.generateTimeSlots(new Date(date), 30, { open: start, close: end });
 
-    // Find all bookings for this barber on the specified date
+    // Tìm tất cả booking cho barber ngày đó
     const bookings = await Booking.find({
       barber_id: barberId,
       date: {
@@ -565,25 +583,25 @@ const getTimeSlotStatus = async (req, res) => {
       status: { $in: ['pending', 'confirmed'] }
     });
 
-    // Mark time slots as available or not
+    // Đánh dấu khung giờ là có sẵn hay không
     const bookedTimes = bookings.map(booking => booking.time);
     
-    // Determine if slot is in the past for today
+    // Xác định nếu khung giờ đã qua cho hôm nay
     const today = new Date().toISOString().split('T')[0];
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
     const currentTotalMinutes = currentHour * 60 + currentMinute;
 
-    // Create timeslot objects with availability and past status
+    // Tạo đối tượng khung giờ với thông tin availability và quá khứ
     const timeSlots = allTimeSlots.map(slot => {
-      // Check if slot is in the past if today
+      // Kiểm tra nếu khung giờ đã qua nếu là hôm nay
       let isPast = false;
       if (date === today) {
         const [slotHour, slotMinute] = slot.split(':').map(Number);
         const slotTotalMinutes = slotHour * 60 + slotMinute;
         
-        // Slot is considered "past" if it's less than 30 minutes from now
+        // Khung giờ được coi là "quá khứ" nếu ít hơn 30 phút từ bây giờ
         isPast = slotTotalMinutes < currentTotalMinutes + 30;
       }
 
@@ -594,6 +612,7 @@ const getTimeSlotStatus = async (req, res) => {
       };
     });
 
+    // Trả về dữ liệu timeSlots
     res.status(200).json({
       status: 'success',
       data: {
@@ -601,31 +620,31 @@ const getTimeSlotStatus = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching time slot status:', error);
+    console.error('Lỗi khi lấy trạng thái khung giờ:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Failed to retrieve time slot status',
+      message: 'Không thể lấy trạng thái khung giờ',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
 /**
- * Get booking statistics for dashboard
+ * Lấy thống kê booking cho dashboard
  * @route GET /api/bookings/stats
- * @access Private/Admin/Staff
+ * @access Riêng tư/Admin/Staff
  */
 const getBookingStats = async (req, res) => {
   try {
-    // Calculate overall booking statistics
+    // Tính toán thống kê booking tổng thể
     const totalBookings = await Booking.countDocuments();
     
-    // Count bookings by status
+    // Đếm bookings theo trạng thái
     const bookingsByStatus = await Booking.aggregate([
       { $group: { _id: "$status", count: { $sum: 1 } } }
     ]);
 
-    // Format the results
+    // Định dạng kết quả
     const statusCounts = {
       pending: 0,
       confirmed: 0,
@@ -639,7 +658,7 @@ const getBookingStats = async (req, res) => {
       }
     });
 
-    // Get current month's bookings
+    // Lấy bookings của tháng hiện tại
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     
@@ -647,7 +666,7 @@ const getBookingStats = async (req, res) => {
       date: { $gte: startOfMonth }
     });
 
-    // Get today's bookings
+    // Lấy bookings của hôm nay
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -660,7 +679,7 @@ const getBookingStats = async (req, res) => {
       }
     });
 
-    // Get upcoming bookings (next 7 days)
+    // Lấy bookings sắp tới (7 ngày tới)
     const nextWeek = new Date(today);
     nextWeek.setDate(nextWeek.getDate() + 7);
 
@@ -672,7 +691,7 @@ const getBookingStats = async (req, res) => {
       status: { $nin: ['cancelled', 'completed'] }
     });
 
-    // Get popular barbers
+    // Lấy barbers phổ biến
     const popularBarbers = await Booking.aggregate([
       { $match: { status: { $nin: ['cancelled'] } } },
       { $group: { _id: "$barber_id", count: { $sum: 1 } } },
@@ -711,57 +730,57 @@ const getBookingStats = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching booking statistics:', error);
+    console.error('Lỗi khi lấy thống kê booking:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Failed to retrieve booking statistics',
+      message: 'Không thể lấy thống kê booking',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// @desc    Confirm booking with token
+// @desc    Xác nhận booking với token
 // @route   POST /api/bookings/confirm
-// @access  Public
+// @access  Công khai
 const confirmBooking = asyncHandler(async (req, res) => {
   const { token } = req.body;
   
   if (!token) {
     res.status(400);
-    throw new Error('Token is required');
+    throw new Error('Token là bắt buộc');
   }
   
-  // Find the token document
+  // Tìm tài liệu token
   const tokenDoc = await Token.findOne({ token });
   
   if (!tokenDoc) {
     res.status(404);
-    throw new Error('Invalid or expired confirmation token');
+    throw new Error('Token xác nhận không hợp lệ hoặc đã hết hạn');
   }
   
-  // Check if token is expired
+  // Kiểm tra nếu token hết hạn
   if (new Date() > new Date(tokenDoc.expiresAt)) {
     await Token.deleteOne({ _id: tokenDoc._id });
     res.status(400);
-    throw new Error('Confirmation token has expired');
+    throw new Error('Token xác nhận đã hết hạn');
   }
   
-  // Find and update the booking
+  // Tìm và cập nhật booking
   const booking = await Booking.findById(tokenDoc.bookingId);
   
   if (!booking) {
     res.status(404);
-    throw new Error('Booking not found');
+    throw new Error('Không tìm thấy booking');
   }
   
-  // Update booking status to confirmed
+  // Cập nhật trạng thái booking thành confirmed
   booking.status = 'confirmed';
   await booking.save();
   
-  // Delete the used token
+  // Xóa token đã sử dụng
   await Token.deleteOne({ _id: tokenDoc._id });
   
-  // Get barber name if applicable
+  // Lấy tên barber nếu có
   let barberName = null;
   if (booking.barber_id) {
     const barber = await Barber.findById(booking.barber_id);
@@ -770,10 +789,10 @@ const confirmBooking = asyncHandler(async (req, res) => {
     }
   }
   
-  // Return confirmed booking details
+  // Trả về chi tiết booking đã xác nhận
   res.json({
     success: true,
-    message: 'Booking confirmed successfully',
+    message: 'Booking đã được xác nhận thành công',
     booking: {
       ...booking.toObject(),
       barber_name: barberName

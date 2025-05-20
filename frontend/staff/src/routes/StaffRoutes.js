@@ -11,6 +11,7 @@ import StaffServices from '../pages/StaffServices';
 import StaffBarbers from '../pages/StaffBarbers';
 import StaffLayout from '../components/StaffLayout';
 import StaffLoginPage from '../pages/StaffLoginPage';
+import StaffContacts from '../pages/StaffContacts';
 
 // Import staff route guards
 import { StaffProtectedRoute, StaffPublicOnlyRoute } from '../components/common/RouteGuards';
@@ -33,6 +34,7 @@ const StaffRoutes = () => {
           <Route path="/customers" element={<StaffCustomers />} />
           <Route path="/services" element={<StaffServices />} />
           <Route path="/barbers" element={<StaffBarbers />} />
+          <Route path="/contacts" element={<StaffContacts />} />
         </Route>
       </Route>
     </Routes>

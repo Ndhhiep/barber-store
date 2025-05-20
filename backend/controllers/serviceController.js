@@ -1,9 +1,9 @@
 const Service = require('../models/Service');
 const asyncHandler = require('express-async-handler');
 
-// @desc    Get all services
+// @desc    Lấy tất cả dịch vụ
 // @route   GET /api/services
-// @access  Public
+// @access  Công khai
 const getServices = asyncHandler(async (req, res) => {
   try {
     const services = await Service.find({}).sort({ name: 1 });
@@ -22,9 +22,9 @@ const getServices = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get service by ID
+// @desc    Lấy dịch vụ theo ID
 // @route   GET /api/services/:id
-// @access  Public
+// @access  Công khai
 const getServiceById = asyncHandler(async (req, res) => {
   try {
     const service = await Service.findById(req.params.id);
@@ -50,14 +50,14 @@ const getServiceById = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Create new service
+// @desc    Tạo dịch vụ mới
 // @route   POST /api/services
-// @access  Private/Admin/Staff
+// @access  Riêng tư/Admin/Staff
 const createService = asyncHandler(async (req, res) => {
   try {
     const { name, price, description } = req.body;
 
-    // Check if service with this name already exists
+    // Kiểm tra dịch vụ với tên này đã tồn tại
     const existingService = await Service.findOne({ name });
     if (existingService) {
       return res.status(400).json({
@@ -86,9 +86,9 @@ const createService = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Update service
+// @desc    Cập nhật dịch vụ
 // @route   PUT /api/services/:id
-// @access  Private/Admin/Staff
+// @access  Riêng tư/Admin/Staff
 const updateService = asyncHandler(async (req, res) => {
   try {
     const { name, price, description, isActive } = req.body;
@@ -101,7 +101,7 @@ const updateService = asyncHandler(async (req, res) => {
       });
     }
 
-    // Check for name uniqueness only if name is being changed
+    // Kiểm tra tên duy nhất nếu có thay đổi tên
     if (name && name !== service.name) {
       const existingService = await Service.findOne({ name });
       if (existingService) {
@@ -133,9 +133,9 @@ const updateService = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Delete service
+// @desc    Xóa dịch vụ
 // @route   DELETE /api/services/:id
-// @access  Private/Admin/Staff
+// @access  Riêng tư/Admin/Staff
 const deleteService = asyncHandler(async (req, res) => {
   try {
     const service = await Service.findById(req.params.id);

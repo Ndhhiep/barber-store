@@ -3,11 +3,11 @@ const Order = require('../models/Order');
 const OrderDetail = require('../models/OrderDetail');
 const Product = require('../models/Product');
 
-// @desc    Create a new order
+// @desc    Tạo đơn hàng mới
 // @route   POST /api/orders
-// @access  Public
+// @access  Công khai
 const createOrder = async (req, res) => {
-  // Start a new session for transaction
+  // Khởi tạo session mới cho transaction
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -22,16 +22,16 @@ const createOrder = async (req, res) => {
       userId // Thêm userId từ request body (nếu có)
     } = req.body;
 
-    // Validate request body
+    // Xác thực yêu cầu đầu vào
     if (!customerInfo || !items || !Array.isArray(items) || items.length === 0 || !totalAmount || !shippingAddress || !paymentMethod) {
       return res.status(400).json({ 
         error: 'Invalid request. Missing required fields.' 
       });
     }
 
-    // Validate each item in the order
+    // Xác thực mỗi mục trong đơn hàng
     for (const item of items) {
-      // Check if the product exists and has sufficient quantity
+      // Kiểm tra sản phẩm có tồn tại và số lượng đủ
       const product = await Product.findById(item.productId).session(session);
       
       if (!product) {
@@ -51,7 +51,7 @@ const createOrder = async (req, res) => {
       }
     }
 
-    // Create new order with userId (nếu có)
+    // Tạo dữ liệu đơn hàng mới (bao gồm userId nếu có)
     const orderData = {
       customerInfo,
       totalAmount,
@@ -70,7 +70,7 @@ const createOrder = async (req, res) => {
 
     const savedOrder = await newOrder.save({ session });
 
-    // Create order details for each item
+    // Tạo chi tiết đơn hàng cho mỗi mục
     for (const item of items) {
       const orderDetail = new OrderDetail({
         orderId: savedOrder._id,
@@ -81,7 +81,7 @@ const createOrder = async (req, res) => {
 
       await orderDetail.save({ session });
 
-      // Update product inventory (decrement quantity)
+      // Cập nhật tồn kho sản phẩm (giảm số lượng)
       await Product.findByIdAndUpdate(
         item.productId,
         { $inc: { quantity: -item.quantity } },
@@ -93,11 +93,11 @@ const createOrder = async (req, res) => {
       );
     }
 
-    // Commit the transaction
+    // Xác nhận transaction
     await session.commitTransaction();
     session.endSession();
 
-    // Return success response
+    // Trả về phản hồi thành công
     return res.status(201).json({ 
       success: true, 
       orderId: savedOrder._id,
@@ -105,7 +105,7 @@ const createOrder = async (req, res) => {
     });
 
   } catch (error) {
-    // Abort transaction in case of error
+    // Hủy transaction nếu có lỗi
     await session.abortTransaction();
     session.endSession();
 
@@ -117,12 +117,12 @@ const createOrder = async (req, res) => {
   }
 };
 
-// @desc    Get orders for logged-in user
+// @desc    Lấy đơn hàng cho user đã đăng nhập
 // @route   GET /api/orders/user/my-orders
-// @access  Private
+// @access  Riêng tư
 const getMyOrders = async (req, res) => {
   try {
-    // User is available from the protect middleware
+    // Thông tin user có sẵn từ middleware protect
     if (!req.user || !req.user._id) {
       return res.status(400).json({
         success: false,
@@ -139,7 +139,7 @@ const getMyOrders = async (req, res) => {
       .sort({ createdAt: -1 }) // Đơn hàng mới nhất trước
       .lean();
     
-    // Nếu không tìm thấy đơn hàng theo ID, thử tìm theo email (cho khả năng tương thích ngược)
+    // Nếu không tìm thấy đơn hàng theo userId, thử tìm theo email (tương thích ngược)
     if (orders.length === 0 && req.user.email) {
       orders = await Order.find({ 'customerInfo.email': req.user.email })
         .sort({ createdAt: -1 })
@@ -148,7 +148,7 @@ const getMyOrders = async (req, res) => {
     
     console.log(`Found ${orders.length} orders for user`);
 
-    // Get order details for each order
+    // Lấy chi tiết đơn hàng cho mỗi đơn hàng
     const ordersWithDetails = await Promise.all(orders.map(async (order) => {
       const orderDetails = await OrderDetail.find({ orderId: order._id })
         .populate('productId', 'name price imageUrl') // Get product details
@@ -176,9 +176,9 @@ const getMyOrders = async (req, res) => {
   }
 };
 
-// @desc    Get orders by user ID
+// @desc    Lấy đơn hàng theo user ID
 // @route   GET /api/orders/user/:userId
-// @access  Public
+// @access  Công khai
 const getOrdersByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -190,7 +190,7 @@ const getOrdersByUserId = async (req, res) => {
       });
     }
 
-    // Kiểm tra xem userId có phải là một MongoDB ObjectId hợp lệ không
+    // Kiểm tra định dạng userId (ObjectId hợp lệ)
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({
         success: false,
@@ -232,9 +232,9 @@ const getOrdersByUserId = async (req, res) => {
   }
 };
 
-// @desc    Get order by ID
+// @desc    Lấy đơn hàng theo ID
 // @route   GET /api/orders/:id
-// @access  Public
+// @access  Công khai
 const getOrderById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -281,9 +281,9 @@ const getOrderById = async (req, res) => {
   }
 };
 
-// @desc    Get all orders with pagination
+// @desc    Lấy tất cả đơn hàng với phân trang
 // @route   GET /api/orders
-// @access  Private/Admin
+// @access  Riêng tư/Quản trị viên
 const getAllOrders = async (req, res) => {
   try {
     // Extract pagination parameters from the query string
@@ -291,11 +291,17 @@ const getAllOrders = async (req, res) => {
     const limit = parseInt(req.query.limit, 10) || 10;
     const skip = (page - 1) * limit;
 
+    // Build filter for status if provided
+    const filter = {};
+    if (req.query.status) {
+      filter.status = req.query.status;
+    }
+
     // Get total count of orders for pagination info
-    const totalOrders = await Order.countDocuments();
+    const totalOrders = await Order.countDocuments(filter);
 
     // Fetch orders with pagination
-    const orders = await Order.find()
+    const orders = await Order.find(filter)
       .sort({ createdAt: -1 }) // Most recent orders first
       .skip(skip)
       .limit(limit)
@@ -333,13 +339,13 @@ const getAllOrders = async (req, res) => {
 };
 
 /**
- * Get order statistics for dashboard
+ * Lấy thống kê đơn hàng cho dashboard
  * @route GET /api/orders/stats
- * @access Private/Admin/Staff
+ * @access Riêng tư/Quản trị viên/Nhân viên
  */
 const getOrderStats = async (req, res) => {
   try {
-    // Calculate total revenue
+    // Tính tổng doanh thu
     const revenue = await Order.aggregate([
       { $match: { status: { $nin: ['cancelled'] } } },
       { $group: { _id: null, total: { $sum: "$totalAmount" } } }
@@ -347,12 +353,12 @@ const getOrderStats = async (req, res) => {
     
     const totalRevenue = revenue.length > 0 ? revenue[0].total : 0;
 
-    // Count orders by status
+    // Đếm đơn hàng theo trạng thái
     const ordersByStatus = await Order.aggregate([
       { $group: { _id: "$status", count: { $sum: 1 } } }
     ]);
 
-    // Format the results
+    // Định dạng kết quả
     const statusCounts = {
       pending: 0,
       processing: 0,
@@ -367,7 +373,7 @@ const getOrderStats = async (req, res) => {
       }
     });
 
-    // Get current month orders
+    // Lấy đơn hàng trong tháng hiện tại
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     
@@ -399,21 +405,21 @@ const getOrderStats = async (req, res) => {
 };
 
 /**
- * Get recent orders for dashboard
+ * Lấy đơn hàng gần đây cho dashboard
  * @route GET /api/orders/recent
- * @access Private/Admin/Staff
+ * @access Riêng tư/Quản trị viên/Nhân viên
  */
 const getRecentOrders = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit, 10) || 5;
     
-    // Get most recent orders
+    // Lấy đơn hàng gần đây nhất
     const orders = await Order.find()
       .sort({ createdAt: -1 })
       .limit(limit)
       .lean();
 
-    // Get order details for each order
+    // Lấy chi tiết đơn hàng cho mỗi đơn hàng
     const ordersWithDetails = await Promise.all(orders.map(async (order) => {
       const orderDetails = await OrderDetail.find({ orderId: order._id })
         .populate('productId', 'name price imageUrl')
@@ -440,6 +446,51 @@ const getRecentOrders = async (req, res) => {
   }
 };
 
+// @desc    Cập nhật trạng thái đơn hàng
+// @route   PATCH /api/orders/:id/status
+// @access  Riêng tư/Quản trị viên/Nhân viên
+const updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    // Xác thực trạng thái
+    if (!status || !['processing', 'shipped', 'delivered', 'cancelled'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status value'
+      });
+    }
+    
+    const order = await Order.findById(id);
+    
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+    
+    // Cập nhật trạng thái đơn hàng
+    order.status = status;
+    await order.save();
+    
+    return res.status(200).json({
+      success: true,
+      message: `Order status updated to ${status}`,
+      data: order
+    });
+    
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error updating order status',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getOrdersByUserId,
@@ -447,5 +498,6 @@ module.exports = {
   getMyOrders,
   getAllOrders,
   getOrderStats,
-  getRecentOrders
+  getRecentOrders,
+  updateOrderStatus
 };

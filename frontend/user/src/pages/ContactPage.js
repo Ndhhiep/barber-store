@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../css/ContactPage.css';
+import { getUserProfile, isAuthenticated } from '../services/authService';
+import { submitContactForm } from '../services/contactService';
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -11,8 +13,39 @@ const ContactPage = () => {
 
   const [formStatus, setFormStatus] = useState({
     submitted: false,
-    error: false
+    error: false,
+    message: ''
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  // Kiểm tra trạng thái đăng nhập
+  const isLoggedIn = isAuthenticated();
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      if (isLoggedIn) {
+        try {
+          const userInfo = await getUserProfile();
+          console.log("User info fetched:", userInfo); // For debugging
+          
+          if (userInfo) {
+            setFormData(prev => ({
+              ...prev,
+              name: userInfo.name || '',
+              email: userInfo.email || '',
+              phone: userInfo.phone || ''
+            }));
+          }
+        } catch (error) {
+          console.error('Failed to fetch user info:', error);
+        }
+      }
+    };
+
+    fetchUserInfo();
+  }, [isLoggedIn]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,26 +55,73 @@ const ContactPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate form submission success
-    // In a real app, you would send this data to a backend
-    setFormStatus({
-      submitted: true,
-      error: false
-    });
-    console.log("Form submitted:", formData);
-  };  return (
-    <div className="contact-page-bg">      {/* Page Title Section */}      <section className="page-title-section">
+    setIsSubmitting(true);
+    
+    try {
+      const response = await submitContactForm(formData);
+      
+      setFormStatus({
+        submitted: true,
+        error: false,
+        message: 'Your message has been sent successfully. We will contact you as soon as possible.'
+      });
+      setShowModal(true);
+      
+      console.log("Form submitted successfully:", response);
+    } catch (error) {
+      setFormStatus({
+        submitted: false,
+        error: true,
+        message: error.response?.data?.message || 'An error occurred while sending the message. Please try again later.'
+      });
+      
+      console.error("Error submitting form:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  return (
+    <div className="contact-page-bg">
+      {/* Modal for submission status */}
+      {showModal && (
+        <>
+          <div className="modal-backdrop fade show"></div> {/* Backdrop */}
+          <div className="modal fade show d-block" tabIndex="-1" role="dialog">
+            <div className="modal-dialog modal-dialog-centered" role="document">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Thank You!</h5>
+                  <button type="button" className="btn-close" onClick={handleCloseModal} aria-label="Close"></button>
+                </div>
+                <div className="modal-body">
+                  <p>{formStatus.message}</p>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-primary" onClick={handleCloseModal}>Done</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Page Title Section */}
+      <section className="page-title-section">
         <div className="container py-4">
           <h1 className="display-4 mb-3 page-title">Contact Us</h1>
           <hr />
           <p className="page-subtitle">We're here to assist with your questions and appointment needs</p>
         </div>
       </section>
-      
-      <div className="container py-5">
 
+      <div className="container py-5">
         <div className="row g-5">
           {/* Contact Form */}
           <div className="col-lg-6 mb-5 mb-lg-0">
@@ -49,78 +129,86 @@ const ContactPage = () => {
               <div className="card-body p-4 p-md-5">
                 <h2 className="h3 mb-4 contact-card-title">Send Us a Message</h2>
                 
-                {formStatus.submitted ? (
-                  <div className="alert alert-success contact-alert" role="alert">
-                    <h4 className="alert-heading">Thank You!</h4>
-                    <p>Your message has been sent successfully. We'll get back to you as soon as possible.</p>
+                <form onSubmit={handleSubmit}>
+                  {formStatus.error && (
+                    <div className="alert alert-danger mb-4" role="alert">
+                      {formStatus.message}
+                    </div>
+                  )}
+                  <div className="mb-3">
+                    <label htmlFor="name" className="form-label form-label-custom">Full Name</label>
+                    <input
+                      type="text"
+                      className="form-control contact-form-control"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      disabled={isSubmitting}
+                    />
                   </div>
-                ) : (
-                  <form onSubmit={handleSubmit}>
-                    <div className="mb-3">
-                      <label htmlFor="name" className="form-label form-label-custom">Full Name</label>
-                      <input
-                        type="text"
-                        className="form-control contact-form-control"
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="email" className="form-label form-label-custom">Email Address</label>
-                      <input
-                        type="email"
-                        className="form-control contact-form-control"
-                        id="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-                    <div className="mb-3">
-                      <label htmlFor="phone" className="form-label form-label-custom">Phone Number</label>
-                      <input
-                        type="tel"
-                        className="form-control contact-form-control"
-                        id="phone"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                      />
-                    </div>
-                    <div className="mb-4">
-                      <label htmlFor="message" className="form-label form-label-custom">Message</label>
-                      <textarea
-                        className="form-control contact-form-control"
-                        id="message"
-                        name="message"
-                        value={formData.message}
-                        onChange={handleChange}
-                        rows={5}
-                        required
-                      ></textarea>
-                    </div>
-                    <button
-                      type="submit"
-                      className="btn btn-lg w-100 contact-submit-btn"
-                    >
-                      Send Message
-                    </button>
-                  </form>
-                )}
+                  <div className="mb-3">
+                    <label htmlFor="email" className="form-label form-label-custom">Email Address</label>
+                    <input
+                      type="email"
+                      className="form-control contact-form-control"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="phone" className="form-label form-label-custom">Phone Number</label>
+                    <input
+                      type="tel"
+                      className="form-control contact-form-control"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="message" className="form-label form-label-custom">Message</label>
+                    <textarea
+                      className="form-control contact-form-control"
+                      id="message"
+                      name="message"
+                      value={formData.message}
+                      onChange={handleChange}
+                      rows={5}
+                      required
+                      disabled={isSubmitting}
+                    ></textarea>
+                  </div>
+                  <button
+                    type="submit"
+                    className="btn btn-lg w-100 contact-submit-btn"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Sending...
+                      </>
+                    ) : 'Send Message'}
+                  </button>
+                </form>
               </div>
             </div>
           </div>
-          
+
           {/* Contact Information */}
           <div className="col-lg-6">
             {/* Map */}
             <div className="mb-5">
               <div className="ratio ratio-4x3 shadow border map-container">
-                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.6175894047037!2d-73.98784992379569!3d40.74844627138319!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b30eac9f%3A0xaca8b8855e681b70!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1682185886343!5m2!1sen!2sus" 
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.6175894047037!2d-73.98784992379569!3d40.74844627138319!2m3!1f0!2f0!3f0!3m2!1i1024!1i768!4f13.1!3m3!1m2!1s0x89c259a9b30eac9f%3A0xaca8b8855e681b70!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1682185886343!5m2!1sen!2sus" 
                   allowFullScreen="" 
                   loading="lazy" 
                   referrerPolicy="no-referrer-when-downgrade"
@@ -129,7 +217,7 @@ const ContactPage = () => {
                 ></iframe>
               </div>
             </div>
-            
+
             {/* Info Card */}
             <div className="card shadow-sm contact-info-card">
               <div className="card-body p-4 p-md-5">
@@ -198,7 +286,8 @@ const ContactPage = () => {
                 </div>
               </div>
             </div>
-          </div>      </div>
+          </div>
+        </div>
       </div>
     </div>
   );

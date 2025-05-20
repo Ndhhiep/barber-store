@@ -15,7 +15,7 @@ const tokenSchema = mongoose.Schema({
     type: Date,
     required: true,
     default: function() {
-      // Set expiration to 24 hours from now
+      // Đặt thời gian hết hạn là 24 giờ kể từ bây giờ
       const now = new Date();
       now.setHours(now.getHours() + 24);
       return now;
@@ -27,9 +27,10 @@ const tokenSchema = mongoose.Schema({
   }
 });
 
-// Set indexes
+// Thiết lập chỉ mục
 tokenSchema.index({ token: 1 }, { unique: true });
-tokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL index for automatic cleanup
+// Chỉ mục TTL để tự động xoá bản ghi
+tokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); 
 
 const Token = mongoose.model('Token', tokenSchema);
 

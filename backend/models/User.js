@@ -44,28 +44,28 @@ const userSchema = new mongoose.Schema(
     passwordResetExpires: Date
   },
   {
-    timestamps: true // Automatically adds createdAt and updatedAt fields
+    timestamps: true // Tự động thêm các trường createdAt và updatedAt
   }
 );
 
-// Pre-save middleware to hash password
+// Middleware trước khi lưu để băm mật khẩu
 userSchema.pre('save', async function(next) {
-  // Only run this function if password was modified
+  // Chỉ chạy hàm này nếu mật khẩu đã được chỉnh sửa
   if (!this.isModified('password')) return next();
   
-  // Hash the password with cost of 12
+  // Băm mật khẩu với độ phức tạp 12
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
   
   next();
 });
 
-// Method to compare password
+// Phương thức so sánh mật khẩu
 userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Method to generate password reset token
+// Phương thức tạo token đặt lại mật khẩu
 userSchema.methods.createPasswordResetToken = function() {
   const resetToken = crypto.randomBytes(32).toString('hex');
 
@@ -74,7 +74,7 @@ userSchema.methods.createPasswordResetToken = function() {
     .update(resetToken)
     .digest('hex');
 
-  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 phút
 
   return resetToken;
 };

@@ -28,9 +28,9 @@ const UserRoutes = () => {
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/team" element={<TeamPage />} />
-      <Route path="/products" element={<ProductsPage />} />      <Route path="/products/:id" element={<ProductDetailPage />} />
-      <Route path="/cart" element={<CartPage />} />
+      <Route path="/products" element={<ProductsPage />} />      <Route path="/products/:id" element={<ProductDetailPage />} />      <Route path="/cart" element={<CartPage />} />
       <Route path="/booking-confirmed" element={<BookingConfirmedPage />} />
+      <Route path="/booking" element={<BookingPage />} />
       
       {/* Routes accessible only when not logged in */}
       <Route element={<PublicOnlyRoute />}>
@@ -40,7 +40,6 @@ const UserRoutes = () => {
       
       {/* Routes requiring user role */}
       <Route element={<UserOnlyRoute />}>
-        <Route path="/booking" element={<BookingPage />} />
         <Route path="/my-bookings" element={<MyBookingsPage />} />
         <Route path="/my-orders" element={<MyOrdersPage />} />
         <Route path="/user-profile" element={<UserProfile />} />

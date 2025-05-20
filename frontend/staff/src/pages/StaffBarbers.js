@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import staffBarberService from '../services/staffBarberService';
 
 const StaffBarbers = () => {
@@ -10,14 +9,12 @@ const StaffBarbers = () => {
   const [editingBarber, setEditingBarber] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
-  
   const [formData, setFormData] = useState({
     name: '',
-    title: '',
     description: '',
     specialization: '',
-    expertise: [],
-    imageUrl: '',
+    imageUrl: '', // Vẫn giữ để hiển thị hình ảnh có sẵn
+    imageFile: null, // Trường mới để tải lên tệp
     email: '',
     phone: '',
     is_active: true,
@@ -35,9 +32,7 @@ const StaffBarbers = () => {
       end: '18:00'
     }
   });
-  
   const [formErrors, setFormErrors] = useState({});
-  const [expertiseInput, setExpertiseInput] = useState('');
 
   useEffect(() => {
     fetchBarbers();
@@ -48,7 +43,7 @@ const StaffBarbers = () => {
       setLoading(true);
       const response = await staffBarberService.getAllBarbersForStaff();
       
-      // Simplified data handling with minimal logging
+      // Xử lý dữ liệu đơn giản với ghi log tối thiểu
       if (response && response.success && response.data && Array.isArray(response.data.barbers)) {
         setBarbers(response.data.barbers);
       } else if (response && Array.isArray(response.data)) {
@@ -63,33 +58,39 @@ const StaffBarbers = () => {
     } catch (err) {
       console.error('Error fetching barbers:', err.message);
       setError('Failed to load barbers. Please try again later.');
-      setBarbers([]); // Đảm bảo barbers luôn là mảng, ngay cả khi có lỗi
+      setBarbers([]); // Đảm bảo barbers luôn là mảng, kể cả khi có lỗi
     } finally {
       setLoading(false);
     }
   };
-
-  const handleImageUrlChange = (e) => {
-    const { value } = e.target;
-    setFormData(prev => ({ ...prev, imageUrl: value }));
-    
-    // Nếu URL hợp lệ thì hiển thị preview
-    if (value.trim()) {
-      setImagePreview(value);
-    } else {
-      setImagePreview(null);
+  
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      console.log('Selected file:', file.name, 'Size:', (file.size / 1024).toFixed(2), 'KB');
+      
+      // Lưu tệp vào formData
+      setFormData(prev => ({ 
+        ...prev, 
+        imageFile: file,
+        // Xóa imageUrl vì đang tải lên tệp mới
+        imageUrl: '' 
+      }));
+      
+      // Tạo URL xem trước cho ảnh được chọn
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
     }
   };
-
+  
   const openAddModal = () => {
     setEditingBarber(null);
     setFormData({
       name: '',
-      title: '',
       description: '',
       specialization: '',
-      expertise: [],
       imageUrl: '',
+      imageFile: null,
       email: '',
       phone: '',
       is_active: true,
@@ -108,19 +109,17 @@ const StaffBarbers = () => {
       }
     });
     setImagePreview(null);
-    setFormErrors({});
-    setIsModalOpen(true);
+    setFormErrors({});    setIsModalOpen(true);
   };
-
+  
   const openEditModal = (barber) => {
     setEditingBarber(barber);
     setFormData({
       name: barber.name || '',
-      title: barber.title || '',
       description: barber.description || '',
       specialization: barber.specialization || '',
-      expertise: barber.expertise || [],
-      imageUrl: barber.image_url || '',
+      imageUrl: barber.imgURL || barber.image_url || '',
+      imageFile: null, // Reset image file khi chỉnh sửa
       email: barber.email || '',
       phone: barber.phone || '',
       is_active: barber.is_active !== undefined ? barber.is_active : true,
@@ -140,8 +139,8 @@ const StaffBarbers = () => {
     });
     
     // Nếu barber có ảnh, hiển thị nó làm preview
-    if (barber.image_url) {
-      setImagePreview(barber.image_url);
+    if (barber.imgURL || barber.image_url) {
+      setImagePreview(barber.imgURL || barber.image_url);
     } else {
       setImagePreview(null);
     }
@@ -159,7 +158,7 @@ const StaffBarbers = () => {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
-    // For working days checkbox handling
+    // Xử lý checkbox ngày làm việc
     if (name.startsWith('workingDay_')) {
       const day = name.split('_')[1];
       setFormData(prev => ({
@@ -172,7 +171,7 @@ const StaffBarbers = () => {
       return;
     }
 
-    // For working hours
+    // Xử lý giờ làm việc
     if (name === 'startTime' || name === 'endTime') {
       const hourType = name === 'startTime' ? 'start' : 'end';
       setFormData(prev => ({
@@ -185,99 +184,60 @@ const StaffBarbers = () => {
       return;
     }
 
-    // For regular inputs
+    // Xử lý các input thông thường
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    
-    // Clear errors when user fixes them
+      // Xóa lỗi khi user sửa lại
     if (formErrors[name]) {
       setFormErrors(prev => ({ ...prev, [name]: null }));
     }
   };
-
-  const handleAddExpertise = () => {
-    if (expertiseInput.trim()) {
-      const newExpertise = expertiseInput.trim();
-      if (!formData.expertise.includes(newExpertise)) {
-        setFormData({
-          ...formData,
-          expertise: [...formData.expertise, newExpertise]
-        });
-      }
-      setExpertiseInput('');
-    }
-  };
-
-  const handleRemoveExpertise = (index) => {
-    const updatedExpertise = formData.expertise.filter((_, i) => i !== index);
-    setFormData({ ...formData, expertise: updatedExpertise });
-  };
-
+  
+  // Các hàm thêm/bớt chuyên môn đã bị loại bỏ
   const validateForm = () => {
     const errors = {};
     
     if (!formData.name.trim()) errors.name = 'Barber name is required';
-    if (!formData.title.trim()) errors.title = 'Title is required';
     if (!formData.description.trim()) errors.description = 'Description is required';
-    if (formData.expertise.length === 0) errors.expertise = 'At least one expertise is required';
     
-    // Thay đổi validation cho imageUrl
-    if (!formData.imageUrl.trim()) errors.imageUrl = 'Profile image URL is required';
+    // Xác thực ảnh: cần imageFile hoặc imageUrl hiện có
+    if (!formData.imageFile && !formData.imageUrl.trim()) {
+      errors.image = 'Barber image is required';
+    }
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
+  };  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) return;
     
     try {
       let response;
-      let message;
+      
+      // Hiển thị chỉ báo tải
+      setFormErrors({ ...formErrors});
       
       if (editingBarber) {
         response = await staffBarberService.updateBarber(editingBarber._id, formData);
-        message = 'Barber updated successfully';
-        
-        // Update barbers list
+        // Cập nhật danh sách barbers
         setBarbers(barbers.map(barber => 
           barber._id === editingBarber._id ? response.data : barber
         ));
       } else {
         response = await staffBarberService.createBarber(formData);
-        message = 'Barber created successfully';
-        
-        // Add new barber to list
+        // Thêm barber mới vào danh sách
         setBarbers([...barbers, response.data]);
       }
       
-      alert(message);
       closeModal();
     } catch (err) {
       console.error('Error saving barber:', err);
       setFormErrors({ submit: err.message || 'Failed to save barber data' });
     }
   };
-
-  const handleToggleStatus = async (barber) => {
-    try {
-      const newStatus = !barber.is_active;
-      await staffBarberService.toggleBarberStatus(barber._id, newStatus);
-      
-      // Update barbers list with new status
-      setBarbers(barbers.map(b => 
-        b._id === barber._id ? { ...b, is_active: newStatus } : b
-      ));
-    } catch (err) {
-      console.error('Error toggling barber status:', err);
-      alert('Failed to update barber status. Please try again.');
-    }
-  };
-
   const handleDeleteBarber = async (id) => {
     if (window.confirm('Are you sure you want to delete this barber? This action cannot be undone.')) {
       try {
@@ -288,10 +248,7 @@ const StaffBarbers = () => {
         console.error('Error deleting barber:', err);
         alert('Failed to delete barber. Please try again.');
       }
-    }
-  };
-
-  const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    }  };
 
   return (
     <div className="container mt-4">
@@ -316,10 +273,10 @@ const StaffBarbers = () => {
         <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
           {barbers.map(barber => (
             <div key={barber._id} className="col">
-              <div className="card h-100">
+              <div className="card h-100">                
                 <div className="position-relative">
                   <img
-                    src={barber.imgURL || 'https://via.placeholder.com/300x300?text=No+Image'}
+                    src={barber.imgURL || barber.image_url || 'https://via.placeholder.com/300x300?text=No+Image'}
                     className="card-img-top"
                     alt={barber.name}
                     style={{ height: '250px', objectFit: 'contain' }}
@@ -330,50 +287,37 @@ const StaffBarbers = () => {
                     {barber.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </div>
-                <div className="card-body">
-                  <h5 className="card-title">{barber.name}</h5>
-                  <h6 className="card-subtitle mb-2 text-muted">
-                    {barber.title || barber.specialization || 'Barber'}
-                  </h6>
+                <div className="card-body">                  
+                  <h5 className="card-title">{barber.name}</h5>                  
+                  {barber.specialization && (
+                    <>
+                      <div className="mb-3 mt-2">
+                        {barber.specialization.split(',').map((specialty, i) => (
+                          <span key={i} className="me-1 mb-1 px-2 py-0 rounded-pill d-inline-block border" style={{ fontSize: '0.7rem' }}>{specialty.trim()}</span>
+                        ))}
+                      </div>
+                    </>
+                  )}
                   <p className="card-text small mb-2">
                     {barber.description?.substring(0, 100)}
                     {barber.description?.length > 100 ? '...' : ''}
                   </p>
                   
-                  {barber.expertise && barber.expertise.length > 0 && (
-                    <>
-                      <small className="text-muted d-block mb-1">Expertise:</small>
-                      <div className="mb-3">
-                        {barber.expertise.slice(0, 3).map((skill, i) => (
-                          <span key={i} className="badge bg-light text-dark me-1 mb-1">{skill}</span>
-                        ))}
-                        {barber.expertise.length > 3 && (
-                          <span className="badge bg-light text-dark">+{barber.expertise.length - 3} more</span>
-                        )}
-                      </div>
-                    </>
-                  )}
+
                 </div>
                 <div className="card-footer bg-transparent">
                   <div className="btn-group btn-group-sm w-100">
                     <button 
-                      className="btn btn-outline-primary" 
+                      className="btn btn-primary" 
                       onClick={() => openEditModal(barber)}
                     >
                       <i className="fas fa-edit"></i> Edit
                     </button>
                     <button 
-                      className="btn btn-outline-danger" 
+                      className="btn btn-danger" 
                       onClick={() => handleDeleteBarber(barber._id)}
                     >
                       <i className="fas fa-trash"></i> Delete
-                    </button>
-                    <button 
-                      className={`btn ${barber.is_active ? 'btn-outline-warning' : 'btn-outline-success'}`} 
-                      onClick={() => handleToggleStatus(barber)}
-                      title={barber.is_active ? 'Deactivate barber' : 'Activate barber'}
-                    >
-                      <i className={`fas fa-${barber.is_active ? 'power-off' : 'check'}`}></i>
                     </button>
                   </div>
                 </div>
@@ -385,22 +329,22 @@ const StaffBarbers = () => {
 
       {/* Barber Form Modal */}
       {isModalOpen && (
-        <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
-          <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" style={{zIndex: 1050}}> 
+        <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1" >
+          <div className="modal-dialog modal-dialog-centered" style={{zIndex: 1050, maxWidth: '600px'}}> 
             <div className="modal-content">
-              <div className="modal-header">
+              <div className="modal-header border-0">
                 <h5 className="modal-title">{editingBarber ? 'Edit Barber' : 'Add New Barber'}</h5>
                 <button type="button" className="btn-close" onClick={closeModal}></button>
               </div>
               <form onSubmit={handleSubmit}>
-                <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                <div className="modal-body pt-0" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
                   {formErrors.submit && (
                     <div className="alert alert-danger">{formErrors.submit}</div>
                   )}
                   
-                  <div className="row">
-                    <div className="col-md-6 mb-3">
-                      <label htmlFor="name" className="form-label">Name *</label>
+                  <div className="row mb-3">
+                    <div className="col-md-6">
+                      <label htmlFor="name" className="form-label mb-1 fw-medium">Full Name</label>
                       <input
                         type="text"
                         className={`form-control ${formErrors.name ? 'is-invalid' : ''}`}
@@ -408,29 +352,13 @@ const StaffBarbers = () => {
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
+                        placeholder="Enter barber's full name"
                         required
                       />
                       {formErrors.name && <div className="invalid-feedback">{formErrors.name}</div>}
                     </div>
-                    
-                    <div className="col-md-6 mb-3">
-                      <label htmlFor="title" className="form-label">Title *</label>
-                      <input
-                        type="text"
-                        className={`form-control ${formErrors.title ? 'is-invalid' : ''}`}
-                        id="title"
-                        name="title"
-                        value={formData.title}
-                        onChange={handleChange}
-                        required
-                      />
-                      {formErrors.title && <div className="invalid-feedback">{formErrors.title}</div>}
-                    </div>
-                  </div>
-                  
-                  <div className="row">
-                    <div className="col-md-6 mb-3">
-                      <label htmlFor="email" className="form-label">Email *</label>
+                    <div className="col-md-6">
+                      <label htmlFor="email" className="form-label mb-1 fw-medium">Email</label>
                       <input
                         type="email"
                         className={`form-control ${formErrors.email ? 'is-invalid' : ''}`}
@@ -438,13 +366,16 @@ const StaffBarbers = () => {
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
+                        placeholder="Enter email address"
                         required
                       />
                       {formErrors.email && <div className="invalid-feedback">{formErrors.email}</div>}
                     </div>
-                    
-                    <div className="col-md-6 mb-3">
-                      <label htmlFor="phone" className="form-label">Phone *</label>
+                  </div>
+
+                  <div className="row mb-3">
+                    <div className="col-md-6">
+                      <label htmlFor="phone" className="form-label mb-1 fw-medium">Phone Number</label>
                       <input
                         type="tel"
                         className={`form-control ${formErrors.phone ? 'is-invalid' : ''}`}
@@ -452,27 +383,224 @@ const StaffBarbers = () => {
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
+                        placeholder="Enter phone number"
                         required
                       />
                       {formErrors.phone && <div className="invalid-feedback">{formErrors.phone}</div>}
                     </div>
+                    <div className="col-md-6">
+                      <label className="form-label mb-1 fw-medium">Status</label>
+                      <select 
+                        className="form-select" 
+                        name="is_active"
+                        value={formData.is_active ? "Active" : "Inactive"}
+                        onChange={(e) => setFormData({...formData, is_active: e.target.value === "Active" })}
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                      </select>
+                    </div>
                   </div>
                   
                   <div className="mb-3">
-                    <label htmlFor="specialization" className="form-label">Specialization</label>
+                    <label htmlFor="email" className="form-label mb-1 fw-medium">Email</label>
                     <input
-                      type="text"
-                      className="form-control"
-                      id="specialization"
-                      name="specialization"
-                      value={formData.specialization}
+                      type="email"
+                      className={`form-control ${formErrors.email ? 'is-invalid' : ''}`}
+                      id="email"
+                      name="email"
+                      value={formData.email}
                       onChange={handleChange}
-                      placeholder="E.g., Beard Specialist, Color Expert, etc."
+                      placeholder="Enter email address"
+                      required
                     />
+                    {formErrors.email && <div className="invalid-feedback">{formErrors.email}</div>}
+                  </div>
+                  
+                  <div className="mb-3">
+                    <label htmlFor="phone" className="form-label mb-1 fw-medium">Phone Number</label>
+                    <input
+                      type="tel"
+                      className={`form-control ${formErrors.phone ? 'is-invalid' : ''}`}
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="Enter phone number"
+                      required
+                    />
+                    {formErrors.phone && <div className="invalid-feedback">{formErrors.phone}</div>}
+                  </div>
+                    <div className="mb-3">
+                    <label className="form-label mb-2 fw-medium">Specialties</label>
+                    <div className="d-flex flex-wrap gap-2">
+                      <div className="form-check form-check-inline mb-2">
+                        <input 
+                          className="form-check-input" 
+                          type="checkbox" 
+                          id="haircuts" 
+                          name="haircuts" 
+                          checked={formData.specialization?.includes('Haircuts')}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            const current = formData.specialization || '';
+                            const specialties = current.split(',').map(s => s.trim()).filter(s => s !== '');
+                            
+                            if (checked && !specialties.includes('Haircuts')) {
+                              specialties.push('Haircuts');
+                            } else if (!checked) {
+                              const index = specialties.indexOf('Haircuts');
+                              if (index !== -1) specialties.splice(index, 1);
+                            }
+                            
+                            setFormData({
+                              ...formData,
+                              specialization: specialties.join(', ')
+                            });
+                          }}
+                        />
+                        <label className="form-check-label" htmlFor="haircuts">Haircuts</label>
+                      </div>
+                      <div className="form-check form-check-inline mb-2">
+                        <input 
+                          className="form-check-input" 
+                          type="checkbox" 
+                          id="beardTrim" 
+                          name="beardTrim" 
+                          checked={formData.specialization?.includes('Beard Trim')}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            const current = formData.specialization || '';
+                            const specialties = current.split(',').map(s => s.trim()).filter(s => s !== '');
+                            
+                            if (checked && !specialties.includes('Beard Trim')) {
+                              specialties.push('Beard Trim');
+                            } else if (!checked) {
+                              const index = specialties.indexOf('Beard Trim');
+                              if (index !== -1) specialties.splice(index, 1);
+                            }
+                            
+                            setFormData({
+                              ...formData,
+                              specialization: specialties.join(', ')
+                            });
+                          }}
+                        />
+                        <label className="form-check-label" htmlFor="beardTrim">Beard Trim</label>
+                      </div>
+                      <div className="form-check form-check-inline mb-2">
+                        <input 
+                          className="form-check-input" 
+                          type="checkbox" 
+                          id="shaving" 
+                          name="shaving" 
+                          checked={formData.specialization?.includes('Shaving')}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            const current = formData.specialization || '';
+                            const specialties = current.split(',').map(s => s.trim()).filter(s => s !== '');
+                            
+                            if (checked && !specialties.includes('Shaving')) {
+                              specialties.push('Shaving');
+                            } else if (!checked) {
+                              const index = specialties.indexOf('Shaving');
+                              if (index !== -1) specialties.splice(index, 1);
+                            }
+                            
+                            setFormData({
+                              ...formData,
+                              specialization: specialties.join(', ')
+                            });
+                          }}
+                        />
+                        <label className="form-check-label" htmlFor="shaving">Shaving</label>
+                      </div>
+                      <div className="form-check form-check-inline mb-2">
+                        <input 
+                          className="form-check-input" 
+                          type="checkbox" 
+                          id="hairColoring" 
+                          name="hairColoring" 
+                          checked={formData.specialization?.includes('Hair Coloring')}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            const current = formData.specialization || '';
+                            const specialties = current.split(',').map(s => s.trim()).filter(s => s !== '');
+                            
+                            if (checked && !specialties.includes('Hair Coloring')) {
+                              specialties.push('Hair Coloring');
+                            } else if (!checked) {
+                              const index = specialties.indexOf('Hair Coloring');
+                              if (index !== -1) specialties.splice(index, 1);
+                            }
+                            
+                            setFormData({
+                              ...formData,
+                              specialization: specialties.join(', ')
+                            });
+                          }}
+                        />
+                        <label className="form-check-label" htmlFor="hairColoring">Hair Coloring</label>
+                      </div>
+                      <div className="form-check form-check-inline mb-2">
+                        <input 
+                          className="form-check-input" 
+                          type="checkbox" 
+                          id="styling" 
+                          name="styling" 
+                          checked={formData.specialization?.includes('Styling')}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            const current = formData.specialization || '';
+                            const specialties = current.split(',').map(s => s.trim()).filter(s => s !== '');
+                            
+                            if (checked && !specialties.includes('Styling')) {
+                              specialties.push('Styling');
+                            } else if (!checked) {
+                              const index = specialties.indexOf('Styling');
+                              if (index !== -1) specialties.splice(index, 1);
+                            }
+                            
+                            setFormData({
+                              ...formData,
+                              specialization: specialties.join(', ')
+                            });
+                          }}
+                        />
+                        <label className="form-check-label" htmlFor="styling">Styling</label>
+                      </div>
+                      <div className="form-check form-check-inline mb-2">
+                        <input 
+                          className="form-check-input" 
+                          type="checkbox" 
+                          id="skinFade" 
+                          name="skinFade" 
+                          checked={formData.specialization?.includes('Skin Fade')}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            const current = formData.specialization || '';
+                            const specialties = current.split(',').map(s => s.trim()).filter(s => s !== '');
+                            
+                            if (checked && !specialties.includes('Skin Fade')) {
+                              specialties.push('Skin Fade');
+                            } else if (!checked) {
+                              const index = specialties.indexOf('Skin Fade');
+                              if (index !== -1) specialties.splice(index, 1);
+                            }
+                            
+                            setFormData({
+                              ...formData,
+                              specialization: specialties.join(', ')
+                            });
+                          }}
+                        />
+                        <label className="form-check-label" htmlFor="skinFade">Skin Fade</label>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="mb-3">
-                    <label htmlFor="description" className="form-label">Description *</label>
+                    <label htmlFor="description" className="form-label mb-1 fw-medium">Bio/Description</label>
                     <textarea
                       className={`form-control ${formErrors.description ? 'is-invalid' : ''}`}
                       id="description"
@@ -480,154 +608,58 @@ const StaffBarbers = () => {
                       rows="3"
                       value={formData.description}
                       onChange={handleChange}
+                      placeholder="Enter barber's bio, experience, and specialties"
                       required
                     ></textarea>
                     {formErrors.description && <div className="invalid-feedback">{formErrors.description}</div>}
                   </div>
-                  
-                  {/* Expertise Section */}
-                  <div className="mb-3">
-                    <label className="form-label">Expertise *</label>
-                    <div className="input-group mb-2">
-                      <input
-                        type="text"
-                        className={`form-control ${formErrors.expertise ? 'is-invalid' : ''}`}
-                        placeholder="Add expertise (e.g., Classic Cuts, Beard Trim)"
-                        value={expertiseInput}
-                        onChange={(e) => setExpertiseInput(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddExpertise();
-                          }
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-outline-secondary"
-                        onClick={handleAddExpertise}
-                      >
-                        <i className="fas fa-plus"></i> Add
-                      </button>
-                    </div>
-                    {formErrors.expertise && <div className="text-danger small">{formErrors.expertise}</div>}
-                    
-                    <div className="mb-3">
-                      {formData.expertise.map((skill, index) => (
-                        <div key={index} className="badge bg-primary me-2 mb-2 py-2 px-3">
-                          {skill}
-                          <button
-                            type="button"
-                            className="btn-close btn-close-white ms-2"
-                            style={{ fontSize: '0.5rem' }}
-                            onClick={() => handleRemoveExpertise(index)}
-                          ></button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
 
                   {/* Image Upload */}
                   <div className="mb-3">
-                    <label htmlFor="imageUrl" className="form-label">
-                      Profile Image URL *
-                    </label>
-                    <input
-                      type="text"
-                      className={`form-control ${formErrors.imageUrl ? 'is-invalid' : ''}`}
-                      id="imageUrl"
-                      name="imageUrl"
-                      value={formData.imageUrl}
-                      onChange={handleImageUrlChange}
-                      required
-                    />
-                    {formErrors.imageUrl && <div className="invalid-feedback">{formErrors.imageUrl}</div>}
+                    <label htmlFor="imageFile" className="form-label mb-1 fw-medium">Profile Photo</label>
                     
-                    <div className="mt-2" style={{ maxHeight: '200px', overflow: 'hidden' }}>
-                      {imagePreview && (
+                    <div className="border border-1 border-dashed rounded-3 p-3 text-center position-relative" style={{ cursor: 'pointer' }}>
+                      {imagePreview ? (
                         <img
                           src={imagePreview}
                           alt="Barber preview"
-                          className="img-thumbnail"
-                          style={{ maxHeight: '150px', objectFit: 'cover' }}
+                          className="img-fluid"
+                          style={{ maxHeight: '150px', objectFit: 'contain' }}
                           onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = 'https://via.placeholder.com/150x150?text=Invalid+Image+URL';
+                            e.target.src = 'https://via.placeholder.com/150x150?text=Invalid+Image';
                           }}
                         />
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Working Days & Hours */}
-                  <div className="row">
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">Working Days</label>
-                      {weekdays.map((day) => (
-                        <div key={day} className="form-check">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            id={`workingDay_${day}`}
-                            name={`workingDay_${day}`}
-                            checked={formData.workingDays[day]}
-                            onChange={handleChange}
-                          />
-                          <label className="form-check-label" htmlFor={`workingDay_${day}`}>
-                            {day.charAt(0).toUpperCase() + day.slice(1)}
-                          </label>
+                      ) : (
+                        <div className="py-4 text-muted">
+                          <div className="mb-2">
+                            <i className="fas fa-cloud-upload-alt fa-2x"></i>
+                          </div>
+                          <div>Drag and drop an image, or click to browse</div>
+                          <div className="small text-secondary mt-1">PNG, JPG or WEBP (max. 2MB)</div>
                         </div>
-                      ))}
-                    </div>
-                    
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">Working Hours</label>
-                      <div className="input-group mb-2">
-                        <span className="input-group-text">Start</span>
-                        <input
-                          type="time"
-                          className="form-control"
-                          name="startTime"
-                          value={formData.workingHours.start}
-                          onChange={handleChange}
-                        />
-                      </div>
-                      <div className="input-group">
-                        <span className="input-group-text">End</span>
-                        <input
-                          type="time"
-                          className="form-control"
-                          name="endTime"
-                          value={formData.workingHours.end}
-                          onChange={handleChange}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Active Status */}
-                  {editingBarber && (
-                    <div className="form-check mb-3">
+                      )}
+                      
                       <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="is_active"
-                        name="is_active"
-                        checked={formData.is_active}
-                        onChange={handleChange}
+                        type="file"
+                        className="position-absolute top-0 start-0 w-100 h-100 opacity-0"
+                        style={{ cursor: 'pointer' }}
+                        id="imageFile"
+                        name="imageFile"
+                        onChange={handleImageChange}
+                        accept="image/*"
                       />
-                      <label className="form-check-label" htmlFor="is_active">
-                        Active
-                      </label>
                     </div>
-                  )}
+                    {formErrors.image && <div className="text-danger small mt-1">{formErrors.image}</div>}
+                  </div>
                 </div>
-                <div className="modal-footer" style={{ position: 'sticky', bottom: 0, backgroundColor: '#fff' }}>
-                  <button type="button" className="btn btn-secondary" onClick={closeModal}>
+                
+                <div className="modal-footer border-0 justify-content-end pt-1">
+                  <button type="button" className="btn btn-sm btn-light" onClick={closeModal}>
                     Cancel
                   </button>
-                  <button type="submit" className="btn btn-primary">
-                    {editingBarber ? 'Update Barber' : 'Add Barber'}
+                  <button type="submit" className="btn btn-sm btn-primary">
+                    {editingBarber ? 'Save Barber' : 'Add Barber'}
                   </button>
                 </div>
               </form>

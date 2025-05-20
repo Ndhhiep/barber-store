@@ -22,7 +22,14 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: (req, file) => {
-      // Lấy category từ body request
+      // Check URL path to determine folder
+      const url = req.originalUrl;
+      
+      if (url.includes('/barbers/upload-image')) {
+        return 'barber-store/barbers';
+      }
+      
+      // Lấy category từ body request (for products)
       const { category } = req.body;
       // Nếu có category, lưu vào folder tương ứng
       if (category) {

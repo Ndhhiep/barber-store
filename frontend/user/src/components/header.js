@@ -8,7 +8,6 @@ const Header = () => {
   const [isNavCollapsed, setIsNavCollapsed] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState('');
   const { itemCount } = useCart();
   const navigate = useNavigate();
 
@@ -20,9 +19,7 @@ const Header = () => {
       try {
         // Check if the current user has 'user' role (not staff)
         if (hasRoleAccess('user')) {
-          const userData = JSON.parse(localStorage.getItem('user'));
           setIsLoggedIn(true);
-          setUserName(userData.name.split(' ')[0]); // Just use first name
         } else {
           setIsLoggedIn(false);
         }
@@ -187,9 +184,10 @@ const Header = () => {
               ) : (
                 <NavLink 
                   to="/login" 
-                  className="user-icon-btn me-3"
+                  className="btn btn-outline-dark me-3 d-none d-lg-block"
+                  id="login-btn"
                 >
-                  <i className="bi bi-person-circle fs-5"></i>
+                  Login
                 </NavLink>
               )}
               

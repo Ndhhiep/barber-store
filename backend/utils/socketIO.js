@@ -3,13 +3,13 @@ const socketIO = require('socket.io');
 let io;
 
 /**
- * Initialize Socket.IO server and attach it to the HTTP server
- * @param {Object} server - HTTP server from Express
- * @param {Object} corsOptions - CORS options từ Express
- * @returns {Object} - Socket.IO server instance
+ * Khởi tạo Socket.IO server và gắn vào HTTP server
+ * @param {Object} server - HTTP server từ Express
+ * @param {Object} corsOptions - Tuỳ chọn CORS từ Express
+ * @returns {Object} - instance của Socket.IO server
  */
 const initSocketIO = (server, corsOptions = {}) => {
-  // Create Socket.IO server with CORS configuration
+  // Tạo Socket.IO server với cấu hình CORS
   io = socketIO(server, {
     cors: {
       origin: corsOptions.origin || ['http://localhost:3000', 'http://localhost:3001'],
@@ -18,25 +18,25 @@ const initSocketIO = (server, corsOptions = {}) => {
       credentials: corsOptions.credentials !== undefined ? corsOptions.credentials : true
     },
     transports: ['polling', 'websocket'], // Cho phép cả polling và websocket
-    pingTimeout: 60000, // Tăng thời gian đợi ping timeout
+    pingTimeout: 60000, // Tăng thời gian chờ ping
     pingInterval: 25000 // Giảm khoảng thời gian giữa các ping
   });
 
-  // Handle connection event
+  // Xử lý sự kiện kết nối
   io.on('connection', (socket) => {
     console.log(`Socket connected: ${socket.id}`);
 
-    // Handle disconnect event
+    // Xử lý sự kiện ngắt kết nối
     socket.on('disconnect', (reason) => {
       console.log(`Socket disconnected: ${socket.id}, reason: ${reason}`);
     });
     
-    // Handle error event
+    // Xử lý sự kiện lỗi
     socket.on('error', (error) => {
       console.error(`Socket error on ${socket.id}:`, error);
     });
     
-    // Handle connect_error event
+    // Xử lý sự kiện connect_error
     socket.on('connect_error', (err) => {
       console.error(`Socket connect_error on ${socket.id}:`, err);
     });
@@ -47,9 +47,9 @@ const initSocketIO = (server, corsOptions = {}) => {
 };
 
 /**
- * Broadcast a change event to all connected clients
- * @param {string} event - Event name
- * @param {any} data - Event data
+ * Phát sự kiện thay đổi tới tất cả các client đã kết nối
+ * @param {string} event - Tên sự kiện
+ * @param {any} data - Dữ liệu sự kiện
  */
 const broadcastChange = (event, data) => {
   if (io) {
@@ -61,8 +61,8 @@ const broadcastChange = (event, data) => {
 };
 
 /**
- * Get the Socket.IO server instance
- * @returns {Object} - Socket.IO server instance
+ * Lấy instance của Socket.IO server
+ * @returns {Object} - instance của Socket.IO server
  */
 const getIO = () => {
   if (!io) {

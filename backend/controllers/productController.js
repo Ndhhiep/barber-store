@@ -1,9 +1,9 @@
 const Product = require('../models/Product');
 const cloudinary = require('../config/cloudinary');
 
-// @desc    Fetch all products with optional filters and pagination
+// @desc    Lấy tất cả sản phẩm với bộ lọc và phân trang tùy chọn
 // @route   GET /api/products
-// @access  Public
+// @access  Công khai
 const getProducts = async (req, res) => {
   try {
     // Xử lý filter và phân trang
@@ -40,9 +40,9 @@ const getProducts = async (req, res) => {
   }
 };
 
-// @desc    Fetch a single product by ID
+// @desc    Lấy một sản phẩm theo ID
 // @route   GET /api/products/:id
-// @access  Public
+// @access  Công khai
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -57,15 +57,15 @@ const getProductById = async (req, res) => {
   }
 };
 
-// @desc    Create a new product
+// @desc    Tạo sản phẩm mới
 // @route   POST /api/products
-// @access  Private/Staff
+// @access  Riêng tư/Staff
 const createProduct = async (req, res) => {
   try {
     const { name, description, price, category, stock } = req.body;
     
-    // Handle image upload from Cloudinary
-    let imgURL = '/assets/product-default.jpg'; // Default image
+    // Xử lý tải ảnh lên Cloudinary
+    let imgURL = '/assets/product-default.jpg'; // Hình mặc định
     if (req.file) {
       // Sử dụng URL từ Cloudinary
       imgURL = req.file.path;
@@ -88,9 +88,9 @@ const createProduct = async (req, res) => {
   }
 };
 
-// @desc    Update a product
+// @desc    Cập nhật thông tin sản phẩm
 // @route   PUT /api/products/:id
-// @access  Private/Staff
+// @access  Riêng tư/Staff
 const updateProduct = async (req, res) => {
   try {
     const { name, description, price, category, stock } = req.body;
@@ -122,9 +122,9 @@ const updateProduct = async (req, res) => {
   }
 };
 
-// @desc    Delete a product
+// @desc    Xóa sản phẩm
 // @route   DELETE /api/products/:id
-// @access  Private/Staff
+// @access  Riêng tư/Staff
 const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -133,7 +133,7 @@ const deleteProduct = async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
     
-    // Extract Cloudinary public ID from the URL if exists
+    // Trích xuất public ID từ URL Cloudinary nếu tồn tại
     if (product.imgURL && product.imgURL.includes('cloudinary.com')) {
       try {
         // Extract the public ID from Cloudinary URL
@@ -165,15 +165,15 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-// @desc    Get products grouped by category
+// @desc    Lấy sản phẩm nhóm theo category
 // @route   GET /api/products/categories
-// @access  Public
+// @access  Công khai
 const getProductsByCategory = async (req, res) => {
   try {
-    // Get all products
+    // Lấy tất cả sản phẩm
     const products = await Product.find();
     
-    // Group products by category
+    // Nhóm sản phẩm theo category
     const productsByCategory = {};
     
     // Process each product
@@ -197,37 +197,37 @@ const getProductsByCategory = async (req, res) => {
   }
 };
 
-// @desc    Get max 3 products per category for showcase
+// @desc    Lấy tối đa 3 sản phẩm cho mỗi category để hiển thị
 // @route   GET /api/products/showcase-by-category
-// @access  Public
+// @access  Công khai
 const getProductsByCategoryShowcase = async (req, res) => {
   try {
     const productsShowcase = await Product.aggregate([
       {
-        $match: { category: { $exists: true, $ne: null } } // Only include products with valid category
+        $match: { category: { $exists: true, $ne: null } } // Chỉ bao gồm sản phẩm có category hợp lệ
       },
       {
-        $sort: { createdAt: -1 } // Sort products first (newest first)
+        $sort: { createdAt: -1 } // Sắp xếp sản phẩm (mới nhất trước)
       },
       {
         $group: {
-          _id: '$category', // Group by category
-          products: { $push: '$$ROOT' } // Collect products for each category
+          _id: '$category', // Nhóm theo category
+          products: { $push: '$$ROOT' } // Gom các sản phẩm cho mỗi category
         }
       },
       {
         $project: {
-          category: '$_id', // The category name is already in _id since it's a string
-          products: { $slice: ['$products', 3] }, // Get top 3 products
-          _id: 0 // Exclude the default _id field from output
+          category: '$_id',
+          products: { $slice: ['$products', 3] }, // Lấy tối đa 3 sản phẩm
+          _id: 0 // Loại bỏ trường _id mặc định khỏi kết quả
         }
       },
       {
-        $sort: { category: 1 } // Sort the results by category name
+        $sort: { category: 1 } // Sắp xếp kết quả theo tên category
       }
     ]);
     
-    // Return empty array instead of null if no results
+    // Trả về mảng rỗng nếu không có kết quả
     res.json(productsShowcase || []);
 
   } catch (error) {
@@ -239,9 +239,9 @@ const getProductsByCategoryShowcase = async (req, res) => {
   }
 };
 
-// @desc    Get product statistics for dashboard
+// @desc    Lấy thống kê sản phẩm cho dashboard
 // @route   GET /api/products/stats
-// @access  Private/Staff
+// @access  Riêng tư/Staff
 const getProductStats = async (req, res) => {
   try {
     const totalProducts = await Product.countDocuments();

@@ -103,19 +103,20 @@ const BookingConfirmedModal = ({
                 type="button"
                 className="btn booking-btn px-4"
                 onClick={() => {
-                  setShowBookingConfirmedModal(false);
-                  setBookingData({
+                  setShowBookingConfirmedModal(false);                  setBookingData({
                     service: '',
                     barber_id: '',
                     date: '',
                     time: '',
-                    name: isLoggedIn ? userData.name : '',
-                    email: isLoggedIn ? userData.email : '',
-                    phone: isLoggedIn ? userData.phone : '',
+                    name: isLoggedIn && userData ? userData.name : '',
+                    email: isLoggedIn && userData ? userData.email : '',
+                    phone: isLoggedIn && userData ? userData.phone : '',
                     notes: '',
-                    user_id: isLoggedIn ? userData._id : null
+                    user_id: isLoggedIn && userData ? userData._id : null
                   });
-                  setSelectedBarberName('');
+                  if (setSelectedBarberName) {
+                    setSelectedBarberName('');
+                  }
                   setBookingStatus({
                     submitted: false,
                     error: false,

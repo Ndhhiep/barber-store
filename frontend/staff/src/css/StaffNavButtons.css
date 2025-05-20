@@ -1,0 +1,38 @@
+/* Các style tuỳ chỉnh cho StaffNavButtons */
+.active-nav-link {
+  background-color: #2c3347 !important;
+  border-left: 4px solid #007bff;
+  color: white !important;
+}
+
+.active-nav-link i {
+  color: #007bff;
+}
+
+.staff-sidebar .nav-link {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.staff-sidebar {
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  padding-top: 20px; /* Example: Add some padding if needed */
+}
+
+/* Hiệu ứng hover cho các nav links */
+.sidebar-nav a:hover {
+  background-color: #272d3d;
+  color: white !important;
+}
+
+/* Animation cho badge thông báo */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.staff-sidebar .nav-item span {
+  animation: pulse 2s infinite;
+}

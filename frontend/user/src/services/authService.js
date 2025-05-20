@@ -91,14 +91,21 @@ export const register = async (userData) => {
  */
 export const getUserProfile = async () => {
   try {
-    const result = await api.get('/auth/me');
-    
-    // Cập nhật thông tin user trong localStorage
-    if (result.success && result.data && result.data.user) {
-      localStorage.setItem('user', JSON.stringify(result.data.user));
+    // Thử lấy thông tin từ localStorage trước
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      return JSON.parse(userStr);
     }
     
-    return result;
+    // Nếu không có trong localStorage, lấy từ API
+    const response = await api.get('/auth/me');
+    
+    if (response.data && response.data.user) {
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      return response.data.user;
+    }
+    
+    return null;
   } catch (error) {
     console.error('Get user profile error:', error);
     throw error;

@@ -1,12 +1,12 @@
 const nodemailer = require('nodemailer');
 
 /**
- * Configure the email transport (SMTP settings)
- * In production, you should use real credentials. For development, we use
- * a test account that logs emails to the console.
+ * Cấu hình transporter email (cài đặt SMTP)
+ * Trong production, bạn nên sử dụng thông tin thật. Với development, chúng ta sử dụng
+ * tài khoản test để ghi email ra console.
  */
 const configureTransporter = async () => {
-  // Use Gmail SMTP for sending emails
+  // Sử dụng Gmail SMTP để gửi email
   if (process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
     console.log('Using configured email provider:', process.env.EMAIL_HOST);
     return {
@@ -23,17 +23,17 @@ const configureTransporter = async () => {
     };
   }
   
-  // Default to Gmail if no specific configuration is provided
+  // Sử dụng cấu hình Gmail mặc định nếu không có cấu hình cụ thể
   console.log('Using default Gmail SMTP configuration');
   return {
     transporter: nodemailer.createTransport({
       service: 'gmail',
       host: 'smtp.gmail.com',
       port: 587,
-      secure: false, // true for 465, false for other ports
+      secure: false, // true cho cổng 465, false cho các cổng khác
       auth: {
-        user: process.env.GMAIL_USER || 'your_gmail@gmail.com', // replace in .env file
-        pass: process.env.GMAIL_APP_PASSWORD || 'your_app_password' // replace in .env file with Gmail App Password
+        user: process.env.GMAIL_USER || 'your_gmail@gmail.com', // thay đổi trong file .env
+        pass: process.env.GMAIL_APP_PASSWORD || 'your_app_password' // thay đổi trong file .env với Gmail App Password
       }
     }),
     isTestAccount: false
@@ -41,13 +41,13 @@ const configureTransporter = async () => {
 };
 
 /**
- * Send a booking confirmation email
- * @param {Object} options - Email options
- * @param {string} options.to - Recipient email
- * @param {string} options.subject - Email subject
- * @param {Object} options.booking - Booking details
- * @param {string} options.token - Confirmation token
- * @param {string} options.baseUrl - Base URL for the frontend
+ * Gửi email xác nhận đặt lịch
+ * @param {Object} options - Tùy chọn email
+ * @param {string} options.to - Email người nhận
+ * @param {string} options.subject - Tiêu đề email
+ * @param {Object} options.booking - Thông tin booking
+ * @param {string} options.token - Token xác nhận
+ * @param {string} options.baseUrl - URL cơ sở của frontend
  */
 const sendBookingConfirmationEmail = async (options) => {
   try {
@@ -100,14 +100,14 @@ const sendBookingConfirmationEmail = async (options) => {
       success: true
     };
     
-    // For test emails, include the preview URL
+    // Với email test, bao gồm URL xem trước
     if (isTestAccount) {
       const previewURL = nodemailer.getTestMessageUrl(info);
       console.log('Test email sent: %s', info.messageId);
       console.log('Preview URL: %s', previewURL);
       result.testEmailUrl = previewURL;
     } else {
-      // For real emails (like Gmail)
+      // Với email thật (ví dụ Gmail)
       console.log('Email sent successfully. Message ID:', info.messageId);
       console.log('Email sent to:', to);
     }

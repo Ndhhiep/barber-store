@@ -7,7 +7,7 @@ const API_URL = 'http://localhost:5000/api'; // Adjust to your backend URL
 const getAllOrders = async (status = '', page = 1, limit = 10) => {
   try {
     const query = new URLSearchParams();
-    if (status && status !== 'All Orders') query.append('status', status);
+    if (status) query.append('status', status);
     query.append('page', page);
     query.append('limit', limit);
     
@@ -35,13 +35,37 @@ const getOrderById = async (id) => {
 // Update order status
 const updateOrderStatus = async (id, status) => {
   try {
+    // Add debug logging
+    console.log(`Updating order ${id} status to ${status}`);
+    
+    // Ensure the API URL has proper formatting
+    const endpoint = `${API_URL}/orders/${id}/status`;
+    console.log(`API endpoint: ${endpoint}`);
+    
+    // Log auth header for debugging
+    const headers = staffAuthService.authHeader();
+    console.log('Auth headers:', JSON.stringify(headers));
+    
     const response = await axios.patch(
-      `${API_URL}/orders/${id}/status`,
+      endpoint,
       { status },
-      { headers: staffAuthService.authHeader() }
+      { headers }
     );
+    
+    console.log('Success Response:', response.data);
     return response.data;
   } catch (error) {
+    console.error('Error details:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+      headers: error.response?.headers,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers
+      }
+    });
     throw error.response?.data || { message: 'Failed to update order status' };
   }
 };
@@ -70,12 +94,55 @@ const getOrderStats = async () => {
   }
 };
 
+// Search orders by short ID (6 ký tự cuối của ID)
+const searchOrders = async (searchTerm) => {
+  try {
+    // Kiểm tra xem searchTerm có phải là 6 ký tự hay không
+    if (!searchTerm || searchTerm.trim().length !== 6) {
+      console.log('Search term must be exactly 6 characters');
+      return { success: false, data: [], totalPages: 0 };
+    }
+    
+    console.log('Searching by short ID:', searchTerm);
+    
+    // Chuẩn hóa searchTerm (chuyển thành chữ hoa)
+    const normalizedSearchTerm = searchTerm.trim().toUpperCase();
+    
+    // Lấy tất cả đơn hàng gần đây (tối đa 100 đơn)
+    const allOrders = await getAllOrders('', 1, 100);
+    
+    if (allOrders.data && Array.isArray(allOrders.data)) {
+      // Lọc đơn hàng có 6 ký tự cuối của ID trùng khớp với searchTerm
+      const filteredOrders = allOrders.data.filter(order => {
+        const fullId = order._id || '';
+        const shortId = fullId.slice(-6).toUpperCase();
+        const match = shortId === normalizedSearchTerm;
+        if (match) console.log('Tìm thấy đơn hàng có short ID:', shortId);
+        return match;
+      });
+      
+      console.log(`Tìm thấy ${filteredOrders.length} đơn hàng với short ID "${normalizedSearchTerm}"`);
+      return {
+        success: true,
+        data: filteredOrders,
+        totalPages: 1
+      };
+    }
+    
+    return { success: false, data: [], totalPages: 0 };
+  } catch (error) {
+    console.error('Search order error:', error);
+    throw error.response?.data || { message: 'Failed to search orders' };
+  }
+};
+
 const staffOrderService = {
   getAllOrders,
   getOrderById,
   updateOrderStatus,
   getRecentOrders,
-  getOrderStats
+  getOrderStats,
+  searchOrders
 };
 
 export default staffOrderService;

@@ -1,24 +1,28 @@
 const express = require('express');
 const router = express.Router();
-const { getAllBarbers, getAllBarbersForStaff, getBarberById, createBarber, updateBarber, deleteBarber, toggleBarberStatus } = require('../controllers/barberController');
+const { getAllBarbers, getAllBarbersForStaff, getBarberById, createBarber, updateBarber, deleteBarber, toggleBarberStatus, uploadBarberImage } = require('../controllers/barberController');
 const { protect, staffOnly } = require('../middleware/authMiddleware');
+const upload = require('../middleware/uploadMiddleware');
 
-// Public routes
-// Get all active barbers (public)
+// Các route công khai
+// Lấy tất cả barber đang hoạt động (công khai)
 router.get('/', getAllBarbers);
 
-// Staff routes (protected)
+// Các route dành cho nhân viên (yêu cầu xác thực)
 router.get('/staff', protect, staffOnly, getAllBarbersForStaff);
 
-// CRUD operations for barbers (staff only)
+// Các thao tác CRUD cho barber (chỉ nhân viên)
 router.post('/', protect, staffOnly, createBarber);
 router.put('/:id', protect, staffOnly, updateBarber);
 router.delete('/:id', protect, staffOnly, deleteBarber);
 
-// Toggle barber active status (staff only)
+// Tải ảnh barber lên (chỉ nhân viên)
+router.post('/upload-image', protect, staffOnly, upload.single('image'), uploadBarberImage);
+
+// Chuyển đổi trạng thái hoạt động của barber (chỉ nhân viên)
 router.patch('/:id/toggle-status', protect, staffOnly, toggleBarberStatus);
 
-// Get barber by id (public) - Phải đặt sau các route có pattern cụ thể
+// Lấy barber theo id (công khai) - Phải để sau các route có đường dẫn cụ thể
 router.get('/:id', getBarberById);
 
 module.exports = router;

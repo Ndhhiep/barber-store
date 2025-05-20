@@ -1,11 +1,11 @@
-/* Dashboard table containers */
+/* Container bảng dashboard */
 .dashboard-table-container {
   height: 350px;
   overflow-y: auto;
   margin-bottom: 0;
 }
 
-/* Ensure proper table headers and scrolling */
+/* Đảm bảo header bảng và cuộn đúng */
 .dashboard-table-container table {
   width: 100%;
 }
@@ -17,19 +17,19 @@
   z-index: 1;
 }
 
-/* Card body containing tables should have no padding bottom */
+/* Phần thân card chứa bảng không có padding dưới */
 .dashboard-card .card-body {
   padding-bottom: 0;
 }
 
-/* Make card have fixed height */
+/* Thiết lập chiều cao cố định cho card */
 .dashboard-card {
   height: 450px;
   display: flex;
   flex-direction: column;
 }
 
-/* Message for empty tables */
+/* Thông báo khi bảng trống */
 .dashboard-card .text-center {
   margin-top: 140px;
 }

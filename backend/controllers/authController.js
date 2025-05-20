@@ -3,21 +3,21 @@ const jwt = require('jsonwebtoken');
 const { promisify } = require('util');
 const crypto = require('crypto');
 
-// Create JWT token
+// Tạo JWT token
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '30d'
   });
 };
 
-// Send token response
+// Gửi phản hồi token
 const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
   
-  // Remove password from output
+  // Loại bỏ mật khẩu khỏi dữ liệu
   user.password = undefined;
 
-  // Determine redirection path based on user role
+  // Xác định đường dẫn chuyển hướng dựa trên vai trò người dùng
   const redirectPath = user.role === 'staff' ? '/staff' : '/';
 
   res.status(statusCode).json({
@@ -30,12 +30,12 @@ const createSendToken = (user, statusCode, res) => {
   });
 };
 
-// Register user
+// Đăng ký user
 exports.register = async (req, res) => {
   try {
     const { name, email, password, phone, role } = req.body;
     
-    // Enhanced validation
+    // Tăng cường xác thực
     if (!name || !email || !password) {
       return res.status(400).json({
         status: 'fail',
@@ -43,7 +43,7 @@ exports.register = async (req, res) => {
       });
     }
     
-    // Check if user with this email already exists
+    // Kiểm tra xem người dùng với email này đã tồn tại chưa
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -52,10 +52,10 @@ exports.register = async (req, res) => {
       });
     }
 
-    // For security, only allow 'user' role to be set directly - admin roles must be set manually
+    // Vì lý do bảo mật, chỉ cho phép vai trò 'user' được đặt trực tiếp - vai trò admin phải được đặt thủ công
     const userRole = role === 'staff' ? 'staff' : 'user';
     
-    // Create user with all validated fields
+    // Tạo người dùng với tất cả các trường đã được xác thực
     const userData = {
       name,
       email,
@@ -63,19 +63,19 @@ exports.register = async (req, res) => {
       role: userRole
     };
     
-    // Add phone if provided
+    // Thêm số điện thoại nếu có
     if (phone) {
       userData.phone = phone;
     }
     
-    // Create user
+    // Tạo người dùng
     const user = await User.create(userData);
 
     createSendToken(user, 201, res);
   } catch (error) {
     console.error('Registration error:', error);
     
-    // Send more descriptive error messages
+    // Gửi thông báo lỗi chi tiết hơn
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(err => err.message);
       return res.status(400).json({
@@ -91,12 +91,12 @@ exports.register = async (req, res) => {
   }
 };
 
-// Login user
+// Đăng nhập người dùng
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check if email and password exist
+    // Kiểm tra xem email và mật khẩu có tồn tại không
     if (!email || !password) {
       return res.status(400).json({
         status: 'fail',
@@ -104,10 +104,10 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Find user by email
+    // Tìm người dùng theo email
     const user = await User.findOne({ email }).select('+password');
 
-    // Check if user exists & password is correct
+    // Kiểm tra xem người dùng có tồn tại và mật khẩu có đúng không
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({
         status: 'fail',
@@ -115,7 +115,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Check if user is active
+    // Kiểm tra xem người dùng có đang hoạt động không
     if (!user.isActive) {
       return res.status(401).json({
         status: 'fail',
@@ -132,12 +132,12 @@ exports.login = async (req, res) => {
   }
 };
 
-// Protect routes - middleware
+// Bảo vệ các route - middleware
 exports.protect = async (req, res, next) => {
   try {
     let token;
     
-    // Get token from header
+    // Lấy token từ header
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
     }
@@ -149,10 +149,10 @@ exports.protect = async (req, res, next) => {
       });
     }
 
-    // Verify token
+    // Xác minh token
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-    // Check if user still exists
+    // Kiểm tra xem người dùng vẫn còn tồn tại không
     const currentUser = await User.findById(decoded.id);
     if (!currentUser) {
       return res.status(401).json({
@@ -161,7 +161,7 @@ exports.protect = async (req, res, next) => {
       });
     }
 
-    // Check if user is active
+    // Kiểm tra xem người dùng có đang hoạt động không
     if (!currentUser.isActive) {
       return res.status(401).json({
         status: 'fail',
@@ -169,7 +169,7 @@ exports.protect = async (req, res, next) => {
       });
     }
 
-    // Grant access to protected route
+    // Cấp quyền truy cập route được bảo vệ
     req.user = currentUser;
     next();
   } catch (error) {
@@ -180,7 +180,7 @@ exports.protect = async (req, res, next) => {
   }
 };
 
-// Restrict to certain roles
+// Hạn chế theo vai trò
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
@@ -193,10 +193,10 @@ exports.restrictTo = (...roles) => {
   };
 };
 
-// Get current user information
+// Lấy thông tin người dùng hiện tại
 exports.getMe = async (req, res) => {
   try {
-    // req.user is already available from the protect middleware
+    // req.user đã có sẵn từ middleware protect
     res.status(200).json({
       status: 'success',
       data: {
@@ -211,15 +211,15 @@ exports.getMe = async (req, res) => {
   }
 };
 
-// Update user password
+// Cập nhật mật khẩu người dùng
 exports.updatePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     
-    // Get user from collection with password field
+    // Lấy người dùng từ collection kèm trường mật khẩu
     const user = await User.findById(req.user.id).select('+password');
     
-    // Check if current password is correct
+    // Kiểm tra xem mật khẩu hiện tại có đúng không
     if (!(await user.comparePassword(currentPassword))) {
       return res.status(401).json({
         status: 'fail',
@@ -227,11 +227,11 @@ exports.updatePassword = async (req, res) => {
       });
     }
     
-    // Update password
+    // Cập nhật mật khẩu
     user.password = newPassword;
     await user.save();
     
-    // Log user in, send JWT
+    // Đăng nhập người dùng, gửi JWT
     createSendToken(user, 200, res);
   } catch (error) {
     res.status(400).json({
@@ -241,9 +241,9 @@ exports.updatePassword = async (req, res) => {
   }
 };
 
-// Forgot password
+// Quên mật khẩu
 exports.forgotPassword = async (req, res) => {
-  // 1) Get user based on POSTed email
+  // 1) Lấy người dùng dựa trên email gửi lên
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
     return res.status(404).json({
@@ -252,19 +252,19 @@ exports.forgotPassword = async (req, res) => {
     });
   }
 
-  // 2) Generate the random reset token
+  // 2) Tạo token đặt lại mật khẩu ngẫu nhiên
   const resetToken = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
 
-  // 3) Send it to user's email
+  // 3) Gửi token đến email người dùng
   try {
-    // In a real application, you would send an email with the token
-    // For this example, we'll just return the token in the response
+    // Trong ứng dụng thực, bạn sẽ gửi email chứa token
+    // Trong ví dụ này, chúng tôi chỉ trả token trong phản hồi
     
     res.status(200).json({
       status: 'success',
       message: 'Token sent to email',
-      resetToken // In production, remove this line and send token via email
+      resetToken // Trong sản phẩm, loại bỏ dòng này và gửi token qua email
     });
   } catch (err) {
     user.passwordResetToken = undefined;
@@ -278,10 +278,10 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-// Reset password
+// Đặt lại mật khẩu
 exports.resetPassword = async (req, res) => {
   try {
-    // 1) Get user based on the token
+    // 1) Lấy người dùng dựa trên token
     const hashedToken = crypto
       .createHash('sha256')
       .update(req.params.token)
@@ -292,7 +292,7 @@ exports.resetPassword = async (req, res) => {
       passwordResetExpires: { $gt: Date.now() }
     });
 
-    // 2) If token has not expired, and there is a user, set the new password
+    // 2) Nếu token chưa hết hạn và có người dùng, đặt mật khẩu mới
     if (!user) {
       return res.status(400).json({
         status: 'fail',
@@ -304,10 +304,10 @@ exports.resetPassword = async (req, res) => {
     user.passwordResetExpires = undefined;
     await user.save();
 
-    // 3) Update changedPasswordAt property for the user
-    // This is handled automatically if using timestamps option
+    // 3) Cập nhật thuộc tính changedPasswordAt cho người dùng
+    // Điều này được xử lý tự động nếu sử dụng tùy chọn timestamps
 
-    // 4) Log the user in, send JWT
+    // 4) Đăng nhập người dùng, gửi JWT
     createSendToken(user, 200, res);
   } catch (error) {
     res.status(400).json({
@@ -317,16 +317,16 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-// Get all users with pagination and search - for staff access
+// Lấy tất cả người dùng với phân trang và tìm kiếm - cho quyền truy cập nhân viên
 exports.getAllUsers = async (req, res) => {
   try {
-    // Extract pagination and search parameters from query
+    // Trích xuất tham số phân trang và tìm kiếm từ query
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const skip = (page - 1) * limit;
     const search = req.query.search || '';
     
-    // Create search filter if search term is provided
+    // Tạo filter tìm kiếm nếu có từ khóa tìm kiếm
     const filter = {};
     if (search) {
       filter.$or = [
@@ -336,13 +336,13 @@ exports.getAllUsers = async (req, res) => {
       ];
     }
     
-    // Only get regular users (not staff/admin/etc)
+    // Chỉ lấy người dùng thường (không bao gồm staff/admin...)
     filter.role = 'user';
 
-    // Count total users matching the filter
+    // Đếm tổng số người dùng khớp filter
     const totalUsers = await User.countDocuments(filter);
     
-    // Find users with pagination
+    // Tìm người dùng với phân trang
     const users = await User.find(filter)
       .select('-password -passwordResetToken -passwordResetExpires')
       .sort({ createdAt: -1 })

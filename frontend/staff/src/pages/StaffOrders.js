@@ -6,21 +6,17 @@ import { useNotifications } from '../context/NotificationContext';
 const StaffOrders = () => {
   // State cho dữ liệu và UI
   const [orders, setOrders] = useState([]);
-  const [bookings, setBookings] = useState([]); 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedFilter, setSelectedFilter] = useState('All Orders');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [viewOrder, setViewOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [socketErrors, setSocketErrors] = useState([]);
   // Thêm state mới để theo dõi đơn hàng mới
   const [newOrderIds, setNewOrderIds] = useState(new Set());
-  
-  // Sử dụng Socket.IO context với các trạng thái mở rộng
-  const { isConnected, isLoading, error: socketError, registerHandler, unregisterHandler, reconnect } = useSocketContext();
+  const [searchId, setSearchId] = useState('');
+    // Sử dụng Socket.IO context với các trạng thái cần thiết
+  const { isConnected, registerHandler, unregisterHandler } = useSocketContext();
   
   // Sử dụng NotificationContext để xóa thông báo khi đến trang orders
   const { clearOrderNotifications } = useNotifications();
@@ -31,7 +27,7 @@ const StaffOrders = () => {
   }, [clearOrderNotifications]);
   
   // Status options cho filter
-  const statusOptions = ['All Orders', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+  const statusOptions = ['All Orders', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
   
   // Handler cho sự kiện newOrder - được tối ưu bằng useCallback
   const handleNewOrder = useCallback((data) => {
@@ -45,9 +41,6 @@ const StaffOrders = () => {
         
         // Đánh dấu đơn hàng này là mới trong Set
         setNewOrderIds(prev => new Set(prev).add(data.fullDocument._id));
-        
-        // Hiển thị phần thông báo nếu chưa hiển thị
-        setShowNotifications(true);
         
         // Sau 60 giây, bỏ đánh dấu "NEW" cho đơn hàng này
         setTimeout(() => {
@@ -71,11 +64,6 @@ const StaffOrders = () => {
       }
     } catch (err) {
       console.error('Error processing order data:', err);
-      setSocketErrors(prev => [...prev, {
-        time: new Date().toISOString(),
-        message: `Lỗi xử lý dữ liệu đơn hàng: ${err.message}`,
-        event: 'newOrder'
-      }]);
     }
   }, []);
   
@@ -86,19 +74,11 @@ const StaffOrders = () => {
       
       // Kiểm tra nếu là sự kiện 'insert' (thêm mới booking)
       if (data.operationType === 'insert' && data.fullDocument) {
-        // Thêm booking mới vào đầu mảng bookings
-        setBookings(prevBookings => [data.fullDocument, ...prevBookings]);
-        
-        // Hiển thị phần thông báo nếu chưa hiển thị
-        setShowNotifications(true);
+        // Không cần lưu trữ đặt lịch mới trong StaffOrders
+        console.log('New booking received but not processed in StaffOrders');
       }
     } catch (err) {
       console.error('Error processing booking data:', err);
-      setSocketErrors(prev => [...prev, {
-        time: new Date().toISOString(),
-        message: `Lỗi xử lý dữ liệu đặt lịch: ${err.message}`,
-        event: 'newBooking'
-      }]);
     }
   }, []);
   
@@ -120,33 +100,31 @@ const StaffOrders = () => {
     };
   }, [isConnected, registerHandler, unregisterHandler, handleNewOrder, handleNewBooking]);
   
-  // Fetch orders khi filter hoặc trang thay đổi
-  useEffect(() => {
-    fetchOrders();
-  }, [selectedFilter, currentPage]);
-  
-  // Hàm fetch orders từ API - được tối ưu hóa với try-catch
-  const fetchOrders = async () => {
+  // Hàm fetch orders từ API - được tối ưu hóa với useCallback
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
-      const status = selectedFilter === 'All Orders' ? '' : selectedFilter.toLowerCase();
-      const response = await staffOrderService.getAllOrders(status, currentPage, 10);
-      
-      if (!response || (!response.data && !response.orders)) {
-        throw new Error('Invalid response format from server');
-      }
-      
-      setOrders(response.data || response.orders || []);
-      setTotalPages(response.totalPages || response.total_pages || Math.ceil(response.total / 10) || 1);
-      setError(null);
+      // Prepare status query parameter
+      const statusParam = selectedFilter === 'All Orders' ? '' : selectedFilter.toLowerCase();
+      const res = await staffOrderService.getAllOrders(statusParam, currentPage, 10);
+      // `res` structure: { success, count, total, totalPages, currentPage, data }
+      const fetched = res.data || [];
+      setOrders(fetched);
+      // Determine total pages from response
+      const pages = res.totalPages ?? Math.ceil(res.total / 10) ?? 1;
+      setTotalPages(pages);
     } catch (err) {
       console.error('Error fetching orders:', err);
-      setError(`Failed to load orders: ${err.message}. Please try again later.`);
       setOrders([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedFilter, currentPage]);
+  
+  // Fetch orders khi filter hoặc trang thay đổi
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
   
   // Handler cho thay đổi filter - tối ưu hóa
   const handleFilterChange = useCallback((e) => {
@@ -208,197 +186,94 @@ const StaffOrders = () => {
     setViewOrder(null);
   }, []);
   
-  // Xóa thông báo lỗi socket
-  const dismissSocketError = useCallback((index) => {
-    setSocketErrors(prev => prev.filter((_, i) => i !== index));
-  }, []);
-  
-  // Thử kết nối lại khi có lỗi
-  const handleReconnect = useCallback(() => {
-    reconnect();
-  }, [reconnect]);
-  
   // Format date helper
   const formatDate = useCallback((dateString) => {
     const options = { day: '2-digit', month: 'short', year: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
   }, []);
-  
+    // Search order by ID (chỉ tìm kiếm khi đúng 6 ký tự)
+  const handleSearch = useCallback(async () => {
+    const trimmedSearch = searchId.trim();
+    
+    // Nếu không đúng 6 ký tự, không thực hiện tìm kiếm
+    if (trimmedSearch.length !== 6) {
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      console.log('Tìm kiếm với ID ngắn (6 ký tự):', trimmedSearch);
+      
+      // Sử dụng hàm searchOrders chỉ với ID ngắn
+      const response = await staffOrderService.searchOrders(trimmedSearch);
+      
+      if (response.success && response.data.length > 0) {
+        console.log(`Tìm thấy ${response.data.length} đơn hàng`);
+        setOrders(response.data);
+        setTotalPages(1);
+        setCurrentPage(1);
+      } else {
+        console.log('Không tìm thấy đơn hàng nào với ID:', trimmedSearch);
+        setOrders([]);
+        setTotalPages(1);
+        setCurrentPage(1);
+      }
+    } catch (err) {
+      console.error('Error searching order by ID:', err);
+      setOrders([]);
+      setTotalPages(1);
+      setCurrentPage(1);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchId]);
+
   return (
     <div className="container mt-4">
       <h2>Manage Orders</h2>
       
-      {/* Hiển thị lỗi chính */}
-      {error && <div className="alert alert-danger">{error}</div>}
-      
-      {/* Hiển thị lỗi socket nếu có */}
-      {socketError && (
-        <div className="alert alert-warning alert-dismissible fade show" role="alert">
-          <strong>Socket Error:</strong> {socketError}
-          <button 
-            type="button" 
-            className="btn-close" 
-            data-bs-dismiss="alert" 
-            aria-label="Close"
-            onClick={handleReconnect}
-          ></button>
-        </div>
-      )}
-      
-      {/* Hiển thị danh sách lỗi xử lý socket events */}
-      {socketErrors.length > 0 && (
-        <div className="alert alert-danger">
-          <h6>Lỗi xử lý dữ liệu real-time:</h6>
-          <ul className="mb-0">
-            {socketErrors.map((error, index) => (
-              <li key={`socket-error-${index}`} className="d-flex justify-content-between align-items-center">
-                <span>
-                  <strong>{error.event}:</strong> {error.message}
-                  <small className="ms-2 text-muted">
-                    {new Date(error.time).toLocaleTimeString()}
-                  </small>
-                </span>
-                <button 
-                  className="btn btn-sm btn-close" 
-                  onClick={() => dismissSocketError(index)}
-                ></button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      
-      {/* Hiển thị trạng thái kết nối Socket.IO */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <div>
-          {isLoading ? (
-            <span className="badge bg-warning me-2">
-              Socket.IO: Connecting...
-            </span>
-          ) : (
-            <span className={`badge ${isConnected ? 'bg-success' : 'bg-danger'} me-2`}>
-              Socket.IO: {isConnected ? 'Connected' : 'Disconnected'}
-            </span>
-          )}
-          
-          <button 
-            className="btn btn-sm btn-primary me-2" 
-            onClick={() => setShowNotifications(!showNotifications)}
-            disabled={isLoading}
-          >
-            {showNotifications ? 'Hide' : 'Show'} Real-time Notifications
-          </button>
-          
-          {!isConnected && !isLoading && (
-            <button 
-              className="btn btn-sm btn-warning" 
-              onClick={handleReconnect}
-            >
-              Reconnect
-            </button>
-          )}
-        </div>
-      </div>
-      
-      {/* Real-time Notifications Panel */}
-      {showNotifications && (
-        <div className="row mb-4">
-          <div className="col-12">
-            <div className="card border-primary">
-              <div className="card-header bg-primary text-white">
-                <h5 className="mb-0">Real-time Notifications</h5>
-              </div>
-              <div className="card-body">
-                {isLoading ? (
-                  <div className="text-center py-4">
-                    <div className="spinner-border text-primary" role="status">
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                    <p className="mt-2">Establishing connection to real-time server...</p>
-                  </div>
-                ) : (
-                  <div className="row">
-                    {/* New Orders Column */}
-                    <div className="col-md-6">
-                      <h6>New Orders</h6>
-                      {orders.length > 0 ? (
-                        <ul className="list-group">
-                          {orders.slice(0, 5).map(order => (
-                            <li 
-                              key={`order-${order._id}`}
-                              className="list-group-item d-flex justify-content-between align-items-center"
-                            >
-                              <div>
-                                <span className="badge bg-success me-2">Order</span>
-                                #{order._id.slice(-6).toUpperCase()} - {order.customerInfo?.name || 'N/A'}
-                                <small className="ms-2 text-muted">
-                                  {order.createdAt && new Date(order.createdAt).toLocaleTimeString()}
-                                </small>
-                              </div>
-                              <button 
-                                className="btn btn-sm btn-info"
-                                onClick={() => handleViewOrder(order._id)}
-                              >
-                                View
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p>No new orders received.</p>
-                      )}
-                    </div>
-                    
-                    {/* New Bookings Column */}
-                    <div className="col-md-6">
-                      <h6>New Bookings</h6>
-                      {bookings.length > 0 ? (
-                        <ul className="list-group">
-                          {bookings.slice(0, 5).map(booking => (
-                            <li 
-                              key={`booking-${booking._id}`}
-                              className="list-group-item d-flex justify-content-between align-items-center"
-                            >
-                              <div>
-                                <span className="badge bg-primary me-2">Booking</span>
-                                {booking.userName || 'N/A'} - {booking.serviceName || 'Service'}
-                                <small className="ms-2 text-muted">
-                                  {booking.date && new Date(booking.date).toLocaleDateString()} {booking.time}
-                                </small>
-                              </div>
-                              <span className={`badge bg-${
-                                booking.status === 'pending' ? 'warning' : 
-                                booking.status === 'confirmed' ? 'success' : 
-                                booking.status === 'cancelled' ? 'danger' : 
-                                booking.status === 'completed' ? 'info' : 'secondary'
-                              }`}>
-                                {booking.status?.charAt(0).toUpperCase() + booking.status?.slice(1)}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p>No new bookings received.</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      
       {/* Main Orders Table */}
-      <div className="row mb-4">
+      <div className="row mb-4 mt-4">
         <div className="col">
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <span>All Orders</span>
-              <div>
-                <select 
-                  className="form-select form-select-sm" 
-                  style={{width: '150px'}}
+              <div className="d-flex align-items-center">                <input
+                  type="text"
+                  className="form-control form-control-sm"
+                  placeholder="Search by Order ID"
+                  value={searchId}
+                  style={{ width: '200px' }}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setSearchId(val);
+                    
+                    // Handle different input scenarios
+                    const trimmed = val.trim();
+                    
+                    // If empty, reset to original listing
+                    if (!trimmed) {
+                      setSearchId('');
+                      fetchOrders();
+                    }
+                    // If exactly 6 chars, execute search
+                    else if (trimmed.length === 6) {
+                      handleSearch();
+                    }
+                    // If user deletes characters and length is no longer 6, reset to original listing
+                    else if (trimmed.length < 6 && searchId.trim().length >= 6) {
+                      fetchOrders();
+                    }
+                    // For other cases, do nothing (don't search until exactly 6 chars)
+                  }}
+                  onKeyDown={e => {
+                    // Also handle Enter key for convenience
+                    if (e.key === 'Enter' && searchId.trim().length === 6) handleSearch();
+                  }}
+                />
+                <select
+                  className="form-select form-select-sm ms-3"
+                  style={{ width: '150px' }}
                   value={selectedFilter}
                   onChange={handleFilterChange}
                 >
@@ -427,12 +302,12 @@ const StaffOrders = () => {
                     <tbody>
                       {orders.map(order => (
                         <tr key={order._id} className={newOrderIds.has(order._id) ? 'table-warning' : ''}>
-                          <td>#{order.orderNumber || order._id.slice(-6).toUpperCase()}
+                          <td>{order.orderNumber || order._id.slice(-6).toUpperCase()}
                             {newOrderIds.has(order._id) && (
                               <span className="badge bg-danger ms-2 animate__animated animate__fadeIn animate__pulse animate__infinite">NEW</span>
                             )}
                           </td>
-                          <td>{order.userName || 'N/A'}</td>
+                          <td>{order.customerInfo.name || 'N/A'}</td>
                           <td>{formatDate(order.createdAt)}</td>
                           <td>${order.totalAmount?.toFixed(2)}</td>
                           <td>
@@ -446,62 +321,12 @@ const StaffOrders = () => {
                             </span>
                           </td>
                           <td>
-                            <div className="dropdown">
-                              <button 
-                                className="btn btn-sm btn-primary me-1" 
-                                type="button" 
-                                id={`updateStatus-${order._id}`} 
-                                data-bs-toggle="dropdown" 
-                                aria-expanded="false"
-                              >
-                                Update
-                              </button>
-                              <ul className="dropdown-menu" aria-labelledby={`updateStatus-${order._id}`}>
-                                <li>
-                                  <button 
-                                    className="dropdown-item" 
-                                    onClick={() => handleStatusUpdate(order._id, 'processing')}
-                                    disabled={order.status === 'processing'}
-                                  >
-                                    Processing
-                                  </button>
-                                </li>
-                                <li>
-                                  <button 
-                                    className="dropdown-item" 
-                                    onClick={() => handleStatusUpdate(order._id, 'shipped')}
-                                    disabled={order.status === 'shipped' || order.status === 'delivered' || order.status === 'cancelled'}
-                                  >
-                                    Shipped
-                                  </button>
-                                </li>
-                                <li>
-                                  <button 
-                                    className="dropdown-item" 
-                                    onClick={() => handleStatusUpdate(order._id, 'delivered')}
-                                    disabled={order.status === 'delivered' || order.status === 'cancelled'}
-                                  >
-                                    Delivered
-                                  </button>
-                                </li>
-                                <li><hr className="dropdown-divider" /></li>
-                                <li>
-                                  <button 
-                                    className="dropdown-item text-danger" 
-                                    onClick={() => handleStatusUpdate(order._id, 'cancelled')}
-                                    disabled={order.status === 'delivered' || order.status === 'cancelled'}
-                                  >
-                                    Cancel
-                                  </button>
-                                </li>
-                              </ul>
-                              <button 
-                                className="btn btn-sm btn-info me-1" 
-                                onClick={() => handleViewOrder(order._id)}
-                              >
-                                View
-                              </button>
-                            </div>
+                            <button 
+                              className="btn btn-sm btn-info" 
+                              onClick={() => handleViewOrder(order._id)}
+                            >
+                              View
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -560,92 +385,129 @@ const StaffOrders = () => {
       {/* Order Details Modal */}
       {isModalOpen && viewOrder && (
         <div className="modal show d-block" tabIndex="1">
-          <div className="modal-dialog modal-lg" style={{zIndex: 1050}}>
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Order #{viewOrder.orderNumber || viewOrder._id?.slice(-6).toUpperCase()}</h5>
-                <button type="button" className="btn-close" onClick={closeModal}></button>
+          <div className="modal-dialog mx-auto" style={{ zIndex: 1050, maxHeight: '70vh', marginTop: '10vh' }}>
+            <div className="modal-content" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 20vh)' }}>
+              <div className="modal-header" style={{ flexShrink: 0 }}>
+                <h5 className="modal-title">Order Details</h5>
               </div>
-              <div className="modal-body">
-                <div className="row mb-3">
-                  <div className="col-md-6">
-                    <h6>Customer Information</h6>
-                    <p><strong>Name:</strong> {viewOrder.customerInfo?.name || 'N/A'}</p>
-                    <p><strong>Email:</strong> {viewOrder.customerInfo?.email || 'N/A'}</p>
-                    <p><strong>Phone:</strong> {viewOrder.customerInfo?.phone || 'N/A'}</p>
-                  </div>
-                  <div className="col-md-6">
-                    <h6>Order Information</h6>
-                    <p><strong>Date:</strong> {formatDate(viewOrder.createdAt)}</p>
-                    <p><strong>Status:</strong> 
-                      <span className={`badge ms-2 bg-${
-                        viewOrder.status === 'processing' ? 'info' : 
-                        viewOrder.status === 'shipped' ? 'primary' : 
-                        viewOrder.status === 'delivered' ? 'success' : 
-                        viewOrder.status === 'cancelled' ? 'danger' : 'secondary'
-                      }`}>
-                        {viewOrder.status?.charAt(0).toUpperCase() + viewOrder.status?.slice(1)}
-                      </span>
-                    </p>
-                    <p><strong>Payment Method:</strong> {viewOrder.paymentMethod || 'N/A'}</p>
+              <div className="modal-body" style={{ overflowY: 'auto', flexGrow: 1 }}>
+                <h6>Customer Information</h6>
+                <div className="card mb-3">
+                  <div className="card-body">
+                    <div className="row">
+                      <div className="col-4 fw-bold">Name:</div>
+                      <div className="col-8 ps-3">{viewOrder.customerInfo?.name || 'N/A'}</div>
+                    </div>
+                    <div className="row">
+                      <div className="col-4 fw-bold">Email:</div>
+                      <div className="col-8 ps-3">{viewOrder.customerInfo?.email || 'N/A'}</div>
+                    </div>
+                    <div className="row">
+                      <div className="col-4 fw-bold">Phone:</div>
+                      <div className="col-8 ps-3">{viewOrder.customerInfo?.phone || 'N/A'}</div>
+                    </div>
                   </div>
                 </div>
-                
+
+                <h6>Order Information</h6>
+                <div className="card mb-3">
+                  <div className="card-body">
+                    <div className="row">
+                      <div className="col-4 fw-bold">Date:</div>
+                      <div className="col-8 ps-3">{formatDate(viewOrder.createdAt)}</div>
+                    </div>
+                    
+                    <div className="row">
+                      <div className="col-4 fw-bold">Payment:</div>
+                      <div className="col-8 ps-3">{viewOrder.paymentMethod || 'N/A'}</div>
+                    </div>
+
+                    <div className="row">
+                      <div className="col-4 fw-bold">Status:</div>                      
+                      <div className="col-8 ps-3">
+                        <span className={`badge bg-${
+                          viewOrder.status === 'processing' ? 'info' : 
+                          viewOrder.status === 'shipped' ? 'primary' : 
+                          viewOrder.status === 'delivered' ? 'success' : 
+                          viewOrder.status === 'cancelled' ? 'danger' : 'secondary'}`}
+                        > 
+                          {viewOrder.status?.charAt(0).toUpperCase() + viewOrder.status?.slice(1)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <h6>Shipping Address</h6>
-                <p>
-                  {viewOrder.shippingAddress || 'Address not provided'}
-                </p>
-                
-                <h6>Order Items</h6>
-                <div className="table-responsive">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Product</th>
-                        <th>Price</th>
-                        <th>Quantity</th>
-                        <th>Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {viewOrder.items && viewOrder.items.length > 0 ? (
-                        viewOrder.items.map((item, index) => (
-                          <tr key={index}>
-                            <td>{item.productId?.name || 'Product'}</td>
-                            <td>${item.priceAtPurchase?.toFixed(2) || '0.00'}</td>
-                            <td>{item.quantity || 1}</td>
-                            <td>${((item.priceAtPurchase || 0) * (item.quantity || 1)).toFixed(2)}</td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan="4" className="text-center">No items found</td>
-                        </tr>
-                      )}
-                    </tbody>
-                    <tfoot>
-                      <tr>
-                        <td colSpan="3" className="text-end"><strong>Subtotal</strong></td>
-                        <td>${viewOrder.totalAmount?.toFixed(2) || '0.00'}</td>
-                      </tr>
-                      <tr>
-                        <td colSpan="3" className="text-end"><strong>Shipping</strong></td>
-                        <td>${'0.00'}</td>
-                      </tr>
-                      <tr>
-                        <td colSpan="3" className="text-end"><strong>Total</strong></td>
-                        <td><strong>${viewOrder.totalAmount?.toFixed(2) || '0.00'}</strong></td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                <div className="card mb-3">
+                  <div className="card-body">
+                    <div className="row">
+                      <div className="col-8 ps-3">{viewOrder.shippingAddress || 'Address not provided'}</div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="modal-footer">
-                <div className="me-auto">
-                  <div className="btn-group" role="group">
+
+                <h6>Order Items</h6>
+                <div className="card">
+                  <div className="card-body">
+                    <div className="table-responsive">
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {viewOrder.items && viewOrder.items.length > 0 ? (
+                            viewOrder.items.map((item, index) => (
+                              <tr key={index}>
+                                <td>{item.productId?.name || 'Product'}</td>
+                                <td>${item.priceAtPurchase?.toFixed(2) || '0.00'}</td>
+                                <td>{item.quantity || 1}</td>
+                                <td>${((item.priceAtPurchase || 0) * (item.quantity || 1)).toFixed(2)}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan="4" className="text-center">No items found</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <div className="row">
+                    <div className="col-8 text-end fw-bold">Subtotal:</div>
+                    <div className="col-4 text-end" style={{ paddingLeft: '0.5rem' }}>${viewOrder.totalAmount?.toFixed(2) || '0.00'}</div>
+                  </div>
+                  <div className="row">
+                    <div className="col-8 text-end fw-bold">Shipping:</div>
+                    <div className="col-4 text-end" style={{ paddingLeft: '0.5rem' }}>${'0.00'}</div>
+                  </div>
+                  <div className="row">
+                    <div className="col-8 text-end fw-bold">Total:</div>
+                    <div className="col-4 text-end" style={{ paddingLeft: '0.5rem' }}><strong>${viewOrder.totalAmount?.toFixed(2) || '0.00'}</strong></div>
+                  </div>
+                </div>
+
+                {['delivered', 'cancelled'].includes(viewOrder.status) ? (
+                  <div 
+                    className={`alert ${viewOrder.status === 'delivered' ? 'alert-success' : 'alert-danger'} mt-4`}
+                    role="alert"
+                  >
+                    This order has been {viewOrder.status}.
+                  </div>
+                ) : (
+                  <div className="mt-4 d-flex justify-content-around">
                     <button 
                       type="button" 
-                      className="btn btn-outline-primary" 
+                      className="btn btn-primary" 
                       onClick={() => handleStatusUpdate(viewOrder._id, 'processing')}
                       disabled={viewOrder.status === 'processing' || viewOrder.status === 'delivered' || viewOrder.status === 'cancelled'}
                     >
@@ -653,15 +515,7 @@ const StaffOrders = () => {
                     </button>
                     <button 
                       type="button" 
-                      className="btn btn-outline-primary" 
-                      onClick={() => handleStatusUpdate(viewOrder._id, 'shipped')}
-                      disabled={viewOrder.status === 'shipped' || viewOrder.status === 'delivered' || viewOrder.status === 'cancelled'}
-                    >
-                      Mark as Shipped
-                    </button>
-                    <button 
-                      type="button" 
-                      className="btn btn-outline-success" 
+                      className="btn btn-success" 
                       onClick={() => handleStatusUpdate(viewOrder._id, 'delivered')}
                       disabled={viewOrder.status === 'delivered' || viewOrder.status === 'cancelled'}
                     >
@@ -669,14 +523,17 @@ const StaffOrders = () => {
                     </button>
                     <button 
                       type="button" 
-                      className="btn btn-outline-danger" 
+                      className="btn btn-danger" 
                       onClick={() => handleStatusUpdate(viewOrder._id, 'cancelled')}
                       disabled={viewOrder.status === 'delivered' || viewOrder.status === 'cancelled'}
                     >
                       Cancel Order
                     </button>
                   </div>
-                </div>
+                )}
+              </div>
+              <div className="modal-footer" style={{ flexShrink: 0 }}>
+                <button type="button" className="btn btn-secondary" onClick={closeModal}>Close</button>
               </div>
             </div>
           </div>

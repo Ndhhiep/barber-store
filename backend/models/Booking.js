@@ -8,12 +8,12 @@ const bookingSchema = mongoose.Schema({
   barber_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Barber',
-    required: true // Thay đổi từ false thành true vì giờ bắt buộc phải có
+    required: true // Trường bắt buộc vì giờ không thể thiếu barber
   },
   date: {
     type: Date,
     required: true,
-    // Getter để đảm bảo ngày được hiển thị đúng theo múi giờ Việt Nam
+    // Getter để hiện thị ngày đúng theo múi giờ Việt Nam
     get: function(date) {
       return date;
     }
@@ -22,7 +22,7 @@ const bookingSchema = mongoose.Schema({
     type: String,
     required: true
   },
-  // Thêm trường fullDateTime để tính toán thời gian chính xác
+  // Trường fullDateTime để tính toán thời gian chính xác
   fullDateTime: {
     type: Date,
     required: false
@@ -51,7 +51,7 @@ const bookingSchema = mongoose.Schema({
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    // Can be null if booking is made without logging in
+    // Có thể null nếu booking được tạo mà không cần đăng nhập
   },
   createdAt: {
     type: Date,
@@ -59,8 +59,8 @@ const bookingSchema = mongoose.Schema({
   }
 }, {
   timestamps: true,
-  toJSON: { getters: true }, // Kích hoạt getters khi chuyển đổi sang JSON
-  toObject: { getters: true } // Kích hoạt getters khi chuyển đổi sang object
+  toJSON: { getters: true }, // Kích hoạt getter khi chuyển sang JSON
+  toObject: { getters: true } // Kích hoạt getter khi chuyển sang object
 });
 
 // Middleware trước khi lưu để tạo fullDateTime từ date và time

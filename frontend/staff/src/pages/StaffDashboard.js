@@ -5,6 +5,7 @@ import staffAppointmentService from '../services/staffAppointmentService';
 import staffOrderService from '../services/staffOrderService';
 import { useSocketContext } from '../context/SocketContext';
 import '../css/StaffDashboard.css';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const StaffDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -18,9 +19,19 @@ const StaffDashboard = () => {
   });
   const [error, setError] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [chartData, setChartData] = useState([]);
+  const [monthlyRevenue, setMonthlyRevenue] = useState({
+    appointmentRevenue: 0,
+    orderRevenue: 0,
+    totalRevenue: 0,
+    month: '',
+    year: new Date().getFullYear()
+  });
+  const [selectedChart, setSelectedChart] = useState('appointments');
   
   // Sử dụng Socket.IO context
   const { isConnected, registerHandler, unregisterHandler } = useSocketContext();
+  // Today's date is displayed directly in the component
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -68,6 +79,53 @@ const StaffDashboard = () => {
     };
 
     fetchDashboardData();
+  }, []);
+  
+  useEffect(() => {
+    const fetchChartData = async () => {
+      try {
+        const response = await staffDashboardService.getChartData();
+        if (response.status === 'success') {
+          setChartData(response.data);
+        } else {
+          throw new Error('Failed to fetch chart data');
+        }
+      } catch (error) {
+        console.error('Error fetching chart data:', error);
+      }
+    };
+
+    fetchChartData();
+  }, []);
+    useEffect(() => {
+    const fetchMonthlyRevenue = async () => {
+      try {
+        const response = await staffDashboardService.getMonthlyRevenue();
+        if (response.status === 'success' && response.data) {
+          // Kiểm tra và truy cập đúng cấu trúc dữ liệu
+          console.log('Monthly revenue response:', response.data);
+          setMonthlyRevenue({
+            appointmentRevenue: response.data.appointmentRevenue || 0,
+            orderRevenue: response.data.orderRevenue || 0,
+            totalRevenue: response.data.totalRevenue || 0,
+          });
+        } else {
+          throw new Error('Failed to fetch monthly revenue');
+        }
+      } catch (error) {
+        console.error('Error fetching monthly revenue:', error);
+        // Set default values to prevent undefined errors
+        setMonthlyRevenue({
+          appointmentRevenue: 0,
+          orderRevenue: 0,
+          totalRevenue: 0,
+          month: new Date().toLocaleString('default', { month: 'long' }),
+          year: new Date().getFullYear()
+        });
+      }
+    };
+
+    fetchMonthlyRevenue();
   }, []);
   
   // Thiết lập lắng nghe sự kiện Socket.IO khi component được mount
@@ -153,13 +211,6 @@ const StaffDashboard = () => {
       unregisterHandler('newBooking', handleNewBooking);
     };
   }, [isConnected, registerHandler, unregisterHandler]);
-
-  // Format date to display in a readable format
-  const formatDate = (dateString) => {
-    const options = { day: '2-digit', month: 'short', year: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
-
   // Format time to display in a readable format
   const formatTime = (timeString) => {
     return new Date(`2000-01-01T${timeString}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -176,21 +227,16 @@ const StaffDashboard = () => {
 
   return (
     <div className="container mt-4">
-      <h2>Staff Dashboard</h2>
-      
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h2>Staff Dashboard</h2>
+        <span><b>Today's date:</b> {new Date().toLocaleDateString('en-GB')}</span>
+      </div>
       {error && (
         <div className="alert alert-warning alert-dismissible fade show" role="alert">
           <strong>Note:</strong> {error}
           <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
       )}
-      
-      {/* Hiển thị trạng thái kết nối Socket.IO */}
-      <div className="mb-3">
-        <span className={`badge ${isConnected ? 'bg-success' : 'bg-danger'}`}>
-          Socket.IO: {isConnected ? 'Connected' : 'Disconnected'}
-        </span>
-      </div>
       
       {/* Hiển thị thông báo real-time */}
       {notifications.length > 0 && (
@@ -239,34 +285,62 @@ const StaffDashboard = () => {
       
       <div className="row mt-4">
         <div className="col-md-3 mb-4">
-          <div className="card bg-primary text-white">
+          <div className="card border-top border-primary border-3 shadow-sm">
             <div className="card-body">
-              <h5 className="card-title">Appointments</h5>
-              <p className="card-text display-4">{dashboardData.appointments}</p>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <div className="d-flex align-items-center">
+                  <i className="bi bi-calendar2-event fs-3 text-primary me-2"></i>
+                  <h6 className="mb-0">Appointments</h6>
+                </div>
+                
+              </div>
+              <h3 className="fw-bold">{dashboardData.appointments}</h3>
+              
             </div>
           </div>
         </div>
         <div className="col-md-3 mb-4">
-          <div className="card bg-success text-white">
+          <div className="card border-top border-success border-3 shadow-sm">
             <div className="card-body">
-              <h5 className="card-title">Orders</h5>
-              <p className="card-text display-4">{dashboardData.orders}</p>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <div className="d-flex align-items-center">
+                  <i className="bi bi-bag-check fs-3 text-success me-2"></i>
+                  <h6 className="mb-0">Orders</h6>
+                </div>
+                
+              </div>
+              <h3 className="fw-bold">{dashboardData.orders}</h3>
+              
             </div>
           </div>
         </div>
         <div className="col-md-3 mb-4">
-          <div className="card bg-info text-white">
+          <div className="card border-top border-warning border-3 shadow-sm">
             <div className="card-body">
-              <h5 className="card-title">Products</h5>
-              <p className="card-text display-4">{dashboardData.products}</p>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <div className="d-flex align-items-center">
+                  <i className="bi bi-people fs-3 text-warning me-2"></i>
+                  <h6 className="mb-0">Customers</h6>
+                </div>
+                
+              </div>
+              <h3 className="fw-bold">{dashboardData.customers}</h3>
+              
             </div>
           </div>
         </div>
         <div className="col-md-3 mb-4">
-          <div className="card bg-warning text-white">
+          <div className="card border-top border-info border-3 shadow-sm">
             <div className="card-body">
-              <h5 className="card-title">Customers</h5>
-              <p className="card-text display-4">{dashboardData.customers}</p>
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <div className="d-flex align-items-center">
+                  <i className="bi bi-currency-dollar fs-3 text-info me-2"></i>
+                  <h6 className="mb-0">Total Revenue</h6>
+                </div>
+                
+              </div>
+              <h3 className="fw-bold">${monthlyRevenue.totalRevenue.toFixed(2)}</h3>
+              
             </div>
           </div>
         </div>
@@ -275,7 +349,7 @@ const StaffDashboard = () => {
         <div className="col-md-6 mb-4">
           <div className="card dashboard-card">
             <div className="card-header d-flex justify-content-between align-items-center">
-              <span>Today's Appointments</span>
+              <div className="d-flex align-items-center"><i className="bi bi-calendar2-event fs-4 text-primary me-2"></i><span>Today's Appointments</span></div>
               <Link to="/appointments" className="btn btn-sm btn-outline-primary">View All</Link>
             </div>
             <div className="card-body">
@@ -318,7 +392,7 @@ const StaffDashboard = () => {
         </div>        <div className="col-md-6 mb-4">
           <div className="card dashboard-card">
             <div className="card-header d-flex justify-content-between align-items-center">
-              <span>Recent Orders</span>
+              <div className="d-flex align-items-center"><i className="bi bi-bag-check fs-4 text-success me-2"></i><span>Recent Orders</span></div>
               <Link to="/orders" className="btn btn-sm btn-outline-primary">View All</Link>
             </div>
             <div className="card-body">
@@ -361,6 +435,48 @@ const StaffDashboard = () => {
           </div>
         </div>
       </div>
+      <div className="row mt-4">
+        <div className="col-12 mb-4">
+          <div className="card dashboard-card">
+            <div className="card-header d-flex justify-content-between align-items-center">
+              <div className="d-flex align-items-center"><i className="bi bi-graph-up fs-4 text-primary me-2"></i><span>Performance</span></div>
+              <div className="btn-group" role="group">
+                <button
+                  type="button"
+                  className={`btn btn-sm btn-outline-primary ${selectedChart === 'appointments' ? 'active' : ''}`}
+                  onClick={() => setSelectedChart('appointments')}
+                >
+                  Appointments
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm btn-outline-primary ${selectedChart === 'orders' ? 'active' : ''}`}
+                  onClick={() => setSelectedChart('orders')}
+                >
+                  Orders
+                </button>
+              </div>
+            </div>
+            <div className="card-body">
+              <ResponsiveContainer width="100%" height={350}>
+                <LineChart data={chartData.length > 0 ? chartData : []} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip labelFormatter={(label) => new Date(label).toLocaleDateString()} />
+                  <Legend />
+                  {selectedChart === 'appointments' ? (
+                    <Line type="monotone" dataKey="appointments" stroke="#82ca9d" activeDot={{ r: 8 }} />
+                  ) : (
+                    <Line type="monotone" dataKey="orders" stroke="#8884d8" activeDot={{ r: 8 }} />
+                  )}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 };

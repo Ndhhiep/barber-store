@@ -25,7 +25,7 @@ const orderSchema = new mongoose.Schema(
     paymentMethod: {
       type: String,
       required: true,
-      enum: ['credit', 'paypal', 'cod'], // Cash on Delivery
+      enum: ['credit', 'paypal', 'cod'], // Thanh toán khi nhận hàng
       trim: true
     },
     notes: {

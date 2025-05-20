@@ -1,13 +1,13 @@
 const Barber = require('../models/Barber');
 
 /**
- * Get all active barbers
+ * Lấy tất cả các barber đang hoạt động
  * @route GET /api/barbers
- * @access Public
+ * @access Công khai
  */
 const getAllBarbers = async (req, res) => {
   try {
-    // Find all active barbers
+    // Tìm tất cả barber đang hoạt động
     const barbers = await Barber.find({ is_active: true });
     
     return res.status(200).json({
@@ -28,13 +28,13 @@ const getAllBarbers = async (req, res) => {
 };
 
 /**
- * Get all barbers for staff (both active and inactive)
+ * Lấy tất cả barber cho nhân viên (cả đang hoạt động và không hoạt động)
  * @route GET /api/barbers/staff
- * @access Private (Staff only)
+ * @access Riêng tư (Chỉ nhân viên)
  */
 const getAllBarbersForStaff = async (req, res) => {
   try {
-    // Find all barbers regardless of active status
+    // Tìm tất cả barber bất kể trạng thái hoạt động
     const barbers = await Barber.find();
     
     return res.status(200).json({
@@ -55,9 +55,9 @@ const getAllBarbersForStaff = async (req, res) => {
 };
 
 /**
- * Get a single barber by ID
+ * Lấy barber theo ID
  * @route GET /api/barbers/:id
- * @access Public
+ * @access Công khai
  */
 const getBarberById = async (req, res) => {
   try {
@@ -87,9 +87,9 @@ const getBarberById = async (req, res) => {
 };
 
 /**
- * Create a new barber
+ * Tạo barber mới
  * @route POST /api/barbers
- * @access Private (Staff only)
+ * @access Riêng tư (Chỉ nhân viên)
  */
 const createBarber = async (req, res) => {
   try {
@@ -105,7 +105,7 @@ const createBarber = async (req, res) => {
       workingHours
     } = req.body;
 
-    // Validate required fields
+    // Xác thực các trường bắt buộc
     if (!name || !phone || !email) {
       return res.status(400).json({
         success: false,
@@ -113,7 +113,7 @@ const createBarber = async (req, res) => {
       });
     }
 
-    // Create new barber with Cloudinary image URL
+    // Tạo barber mới với URL hình ảnh từ Cloudinary
     const barber = new Barber({
       name,
       phone,
@@ -126,7 +126,7 @@ const createBarber = async (req, res) => {
       workingHours
     });
 
-    // Save barber to database
+    // Lưu barber vào cơ sở dữ liệu
     const savedBarber = await barber.save();
 
     return res.status(201).json({
@@ -154,9 +154,9 @@ const createBarber = async (req, res) => {
 };
 
 /**
- * Update a barber
+ * Cập nhật barber
  * @route PUT /api/barbers/:id
- * @access Private (Staff only)
+ * @access Riêng tư (Chỉ nhân viên)
  */
 const updateBarber = async (req, res) => {
   try {
@@ -172,7 +172,7 @@ const updateBarber = async (req, res) => {
       workingHours
     } = req.body;
 
-    // Check if email already exists for a different barber
+    // Kiểm tra xem email đã tồn tại cho barber khác không
     if (email) {
       const existingBarber = await Barber.findOne({ email, _id: { $ne: req.params.id } });
       if (existingBarber) {
@@ -183,7 +183,7 @@ const updateBarber = async (req, res) => {
       }
     }
 
-    // Build update object with Cloudinary image URL
+    // Xây dựng đối tượng cập nhật với URL hình ảnh từ Cloudinary
     const updateData = {
       name,
       phone,
@@ -195,12 +195,12 @@ const updateBarber = async (req, res) => {
       workingHours
     };
 
-    // Only update image URL if a new one is provided
+    // Chỉ cập nhật URL hình ảnh nếu có URL mới
     if (image_url) {
       updateData.imgURL = image_url;
     }
 
-    // Find and update barber
+    // Tìm và cập nhật barber
     const updatedBarber = await Barber.findByIdAndUpdate(
       req.params.id,
       updateData,
@@ -239,9 +239,9 @@ const updateBarber = async (req, res) => {
 };
 
 /**
- * Delete a barber
+ * Xóa barber
  * @route DELETE /api/barbers/:id
- * @access Private (Staff only)
+ * @access Riêng tư (Chỉ nhân viên)
  */
 const deleteBarber = async (req, res) => {
   try {
@@ -269,16 +269,16 @@ const deleteBarber = async (req, res) => {
 };
 
 /**
- * Toggle barber active status
+ * Chuyển đổi trạng thái hoạt động barber
  * @route PATCH /api/barbers/:id/toggle-status
- * @access Private (Staff only)
+ * @access Riêng tư (Chỉ nhân viên)
  */
 const toggleBarberStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { is_active } = req.body;
 
-    // Validate input
+    // Xác thực đầu vào
     if (is_active === undefined) {
       return res.status(400).json({
         success: false,
@@ -286,7 +286,7 @@ const toggleBarberStatus = async (req, res) => {
       });
     }
 
-    // Find and update barber with the new status
+    // Tìm và cập nhật barber với trạng thái mới
     const updatedBarber = await Barber.findByIdAndUpdate(
       id,
       { is_active: is_active },
@@ -315,6 +315,45 @@ const toggleBarberStatus = async (req, res) => {
   }
 };
 
+/**
+ * Tải ảnh barber lên Cloudinary
+ * @route POST /api/barbers/upload-image
+ * @access Riêng tư (Chỉ nhân viên)
+ */
+const uploadBarberImage = async (req, res) => {
+  try {
+    console.log('Upload request received');
+    
+    // Nếu không có file được tải lên
+    if (!req.file) {
+      console.log('No file found in request');
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload an image file'
+      });
+    }
+
+    console.log('File uploaded successfully:', req.file);
+    
+    // File đã được tải lên và xử lý bởi uploadMiddleware
+    return res.status(200).json({
+      success: true,
+      data: {
+        url: req.file.path, // Cloudinary URL
+        public_id: req.file.filename // Cloudinary public ID for future reference/deletion
+      },
+      message: 'Image uploaded successfully'
+    });
+  } catch (error) {
+    console.error('Error uploading barber image:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error uploading image',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 module.exports = {
   getAllBarbers,
   getAllBarbersForStaff,
@@ -322,5 +361,6 @@ module.exports = {
   createBarber,
   updateBarber,
   deleteBarber,
-  toggleBarberStatus
+  toggleBarberStatus,
+  uploadBarberImage
 };

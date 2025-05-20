@@ -43,6 +43,9 @@ const BookingPage = () => {
   // Add authentication states
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userData, setUserData] = useState(null);
+  
+  // Add guest mode indicator
+  const [isGuestMode, setIsGuestMode] = useState(true); // Default to guest mode
 
   // State to store time slot statuses from API
   const [timeSlotStatuses, setTimeSlotStatuses] = useState([]);
@@ -53,7 +56,7 @@ const BookingPage = () => {
   const [isValidatingToken, setIsValidatingToken] = useState(false);
   
   // For getting URL parameters and navigation
-  const location = useLocation ();
+  const location = useLocation();
   const navigate = useNavigate();
 
   // Format date to YYYY-MM-DD for comparing with input date value
@@ -139,6 +142,7 @@ const BookingPage = () => {
         
         if (!token) {
           setIsLoggedIn(false);
+          setIsGuestMode(true); // Set guest mode when no token is found
           return;
         }
         
@@ -150,6 +154,7 @@ const BookingPage = () => {
         });
         
         setIsLoggedIn(true);
+        setIsGuestMode(false); // Turn off guest mode when logged in
         setUserData(response.data.data.user);
         
         // Autofill user data in the booking form
@@ -160,10 +165,11 @@ const BookingPage = () => {
           phone: response.data.data.user.phone || '',
           user_id: response.data.data.user._id
         }));
-      } catch (error) {        // Error handled silently
+      } catch (error) {
         // Clear token if invalid
         localStorage.removeItem('token');
         setIsLoggedIn(false);
+        setIsGuestMode(true); // Set guest mode if token validation fails
       }
     };
     
@@ -193,7 +199,8 @@ const BookingPage = () => {
               }));
             }
           }
-        } catch (error) {          // Error handled silently
+        } catch (error) {
+          // Error handled silently
           setTimeSlotStatuses([]);
         } finally {
           setIsLoadingTimeSlots(false);
@@ -201,7 +208,7 @@ const BookingPage = () => {
       }
     };
       fetchTimeSlotStatuses();
-  }, [bookingData.barber_id, bookingData.date, bookingData.time]); // Remove bookingData.time from dependency array
+  }, [bookingData.barber_id, bookingData.date]); // Removed bookingData.time from dependency array
 
   // Wrap `validateBookingToken` in a `useCallback` hook
   const validateBookingToken = useCallback(async (token) => {
@@ -231,17 +238,17 @@ const BookingPage = () => {
         // Clear pending booking data
         localStorage.removeItem('pendingBooking');
   
-        // Reset form data
+        // Reset form data - works for both guest and logged-in users
         setBookingData({
           service: '',
           barber_id: '',
           date: '',
           time: '',
-          name: isLoggedIn ? userData.name : '',
-          email: isLoggedIn ? userData.email : '',
-          phone: isLoggedIn ? userData.phone : '',
+          name: isLoggedIn ? userData?.name : '',
+          email: isLoggedIn ? userData?.email : '',
+          phone: isLoggedIn ? userData?.phone : '',
           notes: '',
-          user_id: isLoggedIn ? userData._id : null
+          user_id: isLoggedIn ? userData?._id : null
         });
   
         // Remove token from URL to prevent reprocessing
@@ -272,7 +279,7 @@ const BookingPage = () => {
     } finally {
       setIsValidatingToken(false);
     }
-  }, [isLoggedIn, navigate, setBookingStatus, setBookingData, setIsValidatingToken, setShowBookingConfirmedModal, userData]);
+  }, [isLoggedIn, navigate, userData]);
   
   // Check for confirmation token in URL parameters on component mount
   useEffect(() => {
@@ -339,7 +346,9 @@ const BookingPage = () => {
       ...prev,
       time
     }));
-  };  const handleSubmit = async (e) => {
+  };
+  
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     
@@ -361,9 +370,12 @@ const BookingPage = () => {
       const requestData = {
         ...bookingData,
         service: serviceName, // Convert service ID to service name as required by the backend
-        requireEmailConfirmation: true // New flag to indicate email confirmation is needed
+        requireEmailConfirmation: true, // New flag to indicate email confirmation is needed
+        // For guest bookings, ensure user_id is null to avoid FK constraint errors
+        user_id: isGuestMode ? null : bookingData.user_id
       };
-        // Submit booking
+      
+      // Submit booking
       const response = await axios.post(
         'http://localhost:5000/api/bookings',
         requestData,
@@ -383,7 +395,8 @@ const BookingPage = () => {
       }));
       
       // Don't reset the form data yet - we'll do that after confirmation
-    } catch (error) {      // Handle API error
+    } catch (error) {
+      // Handle API error
       setBookingStatus({
         submitted: false,
         error: true,
@@ -394,11 +407,9 @@ const BookingPage = () => {
       localStorage.removeItem('pendingBooking');
     } finally {
       setIsLoading(false);
-    }  };
+    }
+  };
   
-  // Function to validate booking confirmation token
-  
-
   // Get minimum date (today) for the date picker
   const getMinDate = () => {
     return formatDate(new Date());
@@ -412,7 +423,9 @@ const BookingPage = () => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(price);
-  };  // Get service name by ID
+  };
+  
+  // Get service name by ID
   const getServiceNameById = (serviceId) => {
     const service = serviceList.find(service => service._id === serviceId);
     return service ? service.name : '';
@@ -463,7 +476,9 @@ const BookingPage = () => {
             </div>
           </div>
         </div>
-      </div>    );  };
+      </div>
+    );
+  };
   
   return (
     <div className="booking-page">
@@ -510,6 +525,26 @@ const BookingPage = () => {
                         {bookingStatus.errorMessage}
                       </div>
                     )}
+
+                    {isGuestMode && (
+                      <div className="alert alert-info mb-4" role="alert">
+                        <div className="d-flex align-items-center">
+                          <i className="bi bi-info-circle-fill me-2 fs-4"></i>
+                          <div>
+                            <strong>Guest Booking</strong> - You're booking as a guest. 
+                            <div>You'll receive a confirmation email to verify your appointment.</div>
+                            <div className="mt-1">
+                              <span>Already have an account? </span>
+                              <a href="/login?redirect=booking" className="alert-link">Log in</a>
+                              <span> or </span>
+                              <a href="/register?redirect=booking" className="alert-link">Sign up</a>
+                              <span> to manage your appointments.</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="row">                      {/* Service Details Section */}
                       <div className="col-12 mb-4">                        <h3 className="h5 mb-3 booking-section-title">
                           <i className="bi bi-calendar2-check me-2"></i>Service Details

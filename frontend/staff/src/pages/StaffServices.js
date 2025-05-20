@@ -143,24 +143,7 @@ const StaffServices = () => {
     }
   };
 
-  const toggleServiceStatus = async (service) => {
-    try {
-      const updatedData = { ...service, isActive: !service.isActive };
-      await staffService.updateService(service._id, updatedData);
-      setServices(services.map(s => 
-        s._id === service._id ? { ...s, isActive: !service.isActive } : s
-      ));
-    } catch (err) {
-      console.error('Error toggling service status:', err);
-      alert('Failed to update service status. Please try again.');
-    }
-  };
-
-  const formatCurrency = (price) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
-      .format(price);
-  };
-
+  
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -194,7 +177,7 @@ const StaffServices = () => {
                   {services.map(service => (
                     <tr key={service._id}>
                       <td>{service.name}</td>
-                      <td>{formatCurrency(service.price)}</td>
+                      <td>${service.price}</td>
                       <td>
                         {service.description.length > 50 
                           ? `${service.description.substring(0, 50)}...` 
@@ -204,27 +187,21 @@ const StaffServices = () => {
                         <span className={`badge bg-${service.isActive ? 'success' : 'danger'}`}>
                           {service.isActive ? 'Active' : 'Inactive'}
                         </span>
-                      </td>
-                      <td>
+                      </td>                      <td>
                         <div className="btn-group" role="group">
                           <button
-                            className="btn btn-sm btn-outline-primary"
+                            className="btn btn-sm btn-primary"
                             onClick={() => openEditModal(service)}
+                            title="Edit Service"
                           >
-                            <i className="fas fa-edit"></i>
+                            Edit
                           </button>
                           <button
-                            className="btn btn-sm btn-outline-danger"
+                            className="btn btn-sm btn-danger"
                             onClick={() => handleDeleteService(service._id)}
+                            title="Delete Service"
                           >
-                            <i className="fas fa-trash"></i>
-                          </button>
-                          <button
-                            className={`btn btn-sm ${service.isActive ? 'btn-outline-secondary' : 'btn-outline-success'}`}
-                            onClick={() => toggleServiceStatus(service)}
-                            title={service.isActive ? 'Deactivate' : 'Activate'}
-                          >
-                            <i className={`fas fa-${service.isActive ? 'pause' : 'play'}`}></i>
+                            Delete
                           </button>
                         </div>
                       </td>
@@ -241,99 +218,117 @@ const StaffServices = () => {
 
       {/* Service Modal */}
       {isModalOpen && (
-        <div className="modal show d-block" tabIndex="-1">
-          <div className="modal-dialog" style={{ zIndex: 1050 }}>
-            <div className="modal-content">
-              <form onSubmit={handleSubmit}>
-                <div className="modal-header">
-                  <h5 className="modal-title">
-                    {editingService ? 'Edit Service' : 'Add New Service'}
-                  </h5>
-                  <button type="button" className="btn-close" onClick={closeModal}></button>
-                </div>
+        <>
+          <div className="modal-backdrop fade show" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1040 }}></div>          <div className="modal show d-block" tabIndex="-1" style={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            zIndex: 2000, 
+            overflow: 'auto', 
+            display: 'flex', 
+            alignItems: 'flex-start', 
+            justifyContent: 'center',
+            paddingTop: '120px'
+          }}>            <div className="modal-dialog" style={{ 
+              margin: '0 auto', 
+              zIndex: 2010, 
+              width: '100%', 
+              maxWidth: '500px',
+              position: 'relative'
+            }}>
+              <div className="modal-content">
+                <form onSubmit={handleSubmit}>
+                  <div className="modal-header">
+                    <h5 className="modal-title">
+                      {editingService ? 'Edit Service' : 'Add New Service'}
+                    </h5>
+                    <button type="button" className="btn-close" onClick={closeModal}></button>
+                  </div>
                 
-                <div className="modal-body">
-                  {formErrors.submit && (
-                    <div className="alert alert-danger">{formErrors.submit}</div>
-                  )}
-                  
-                  <div className="mb-3">
-                    <label htmlFor="name" className="form-label">Service Name *</label>
-                    <input
-                      type="text"
-                      className={`form-control ${formErrors.name ? 'is-invalid' : ''}`}
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                    />
-                    {formErrors.name && (
-                      <div className="invalid-feedback">{formErrors.name}</div>
+                  <div className="modal-body">
+                    {formErrors.submit && (
+                      <div className="alert alert-danger">{formErrors.submit}</div>
                     )}
-                  </div>
-
-                  <div className="mb-3">
-                    <label htmlFor="price" className="form-label">Price (VND) *</label>
-                    <input
-                      type="number"
-                      className={`form-control ${formErrors.price ? 'is-invalid' : ''}`}
-                      id="price"
-                      name="price"
-                      value={formData.price}
-                      onChange={handleChange}
-                      min="0"
-                      required
-                    />
-                    {formErrors.price && (
-                      <div className="invalid-feedback">{formErrors.price}</div>
-                    )}
-                  </div>
-
-                  <div className="mb-3">
-                    <label htmlFor="description" className="form-label">Description *</label>
-                    <textarea
-                      className={`form-control ${formErrors.description ? 'is-invalid' : ''}`}
-                      id="description"
-                      name="description"
-                      value={formData.description}
-                      onChange={handleChange}
-                      rows="3"
-                      required
-                    ></textarea>
-                    {formErrors.description && (
-                      <div className="invalid-feedback">{formErrors.description}</div>
-                    )}
-                  </div>
-
-                  {editingService && (
-                    <div className="mb-3 form-check">
+                    
+                    <div className="mb-3">
+                      <label htmlFor="name" className="form-label fw-bold">Service Name:</label>
                       <input
-                        type="checkbox"
-                        className="form-check-input"
-                        id="isActive"
-                        name="isActive"
-                        checked={formData.isActive}
+                        type="text"
+                        className={`form-control ${formErrors.name ? 'is-invalid' : ''}`}
+                        id="name"
+                        name="name"
+                        value={formData.name}
                         onChange={handleChange}
+                        required
                       />
-                      <label className="form-check-label" htmlFor="isActive">Active</label>
+                      {formErrors.name && (
+                        <div className="invalid-feedback">{formErrors.name}</div>
+                      )}
                     </div>
-                  )}
-                </div>
-                
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    {editingService ? 'Update Service' : 'Create Service'}
-                  </button>
-                </div>
-              </form>
+
+                    <div className="mb-3">
+                      <label htmlFor="price" className="form-label fw-bold">Price (USD):</label>
+                      <input
+                        type="number"
+                        className={`form-control ${formErrors.price ? 'is-invalid' : ''}`}
+                        id="price"
+                        name="price"
+                        value={formData.price}
+                        onChange={handleChange}
+                        min="0"
+                        required
+                      />
+                      {formErrors.price && (
+                        <div className="invalid-feedback">{formErrors.price}</div>
+                      )}
+                    </div>
+
+                    <div className="mb-3">
+                      <label htmlFor="description" className="form-label fw-bold">Description:</label>
+                      <textarea
+                        className={`form-control ${formErrors.description ? 'is-invalid' : ''}`}
+                        id="description"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                        rows="3"
+                        required
+                      ></textarea>
+                      {formErrors.description && (
+                        <div className="invalid-feedback">{formErrors.description}</div>
+                      )}
+                    </div>
+
+                    {editingService && (
+                      <div className="mb-3 form-check">
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          id="isActive"
+                          name="isActive"
+                          checked={formData.isActive}
+                          onChange={handleChange}
+                        />
+                        <label className="form-check-label fw-bold" htmlFor="isActive">Active</label>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="modal-footer">
+                    <button type="button" className="btn btn-secondary" onClick={closeModal}>
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn btn-primary">
+                      {editingService ? 'Update Service' : 'Create Service'}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
-          <div className="modal-backdrop fade show"></div>
-        </div>
+        </>
       )}
     </div>
   );

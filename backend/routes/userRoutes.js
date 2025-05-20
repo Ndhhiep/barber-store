@@ -2,22 +2,22 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 
-// All routes in this file require authentication
+// Tất cả các route trong file này yêu cầu xác thực
 router.use(authController.protect);
 
-// GET /api/users - Get all users with pagination (staff only)
+// GET /api/users - Lấy tất cả người dùng với phân trang (chỉ nhân viên)
 router.get('/', authController.restrictTo('admin', 'manager', 'barber', 'staff'), authController.getAllUsers);
 
-// GET /api/users/stats - Get customer statistics for dashboard (staff only)
+// GET /api/users/stats - Lấy thống kê khách hàng cho dashboard (chỉ nhân viên)
 router.get('/stats', authController.restrictTo('admin', 'manager', 'barber', 'staff'), (req, res) => {
-  // TODO: Implement user statistics
+  // TODO: Triển khai tính năng thống kê người dùng
   res.status(200).json({
     status: 'success',
     data: {
       totalUsers: 0,
       newUsersThisMonth: 0,
       activeUsers: 0,
-      // Sample data until implementation
+      // Dữ liệu mẫu
       userGrowth: [
         { month: 'Jan', users: 0 },
         { month: 'Feb', users: 0 },
@@ -30,9 +30,9 @@ router.get('/stats', authController.restrictTo('admin', 'manager', 'barber', 'st
   });
 });
 
-// GET /api/users/:id - Get a specific user by ID (staff only or own user)
+// GET /api/users/:id - Lấy thông tin người dùng theo ID (chỉ nhân viên hoặc chính người dùng đó)
 router.get('/:id', (req, res, next) => {
-  // Allow access if staff or if the user is requesting their own info
+  // Cho phép truy cập nếu là nhân viên hoặc nếu người dùng đang yêu cầu chính thông tin của họ
   if (
     req.user.role === 'admin' || 
     req.user.role === 'manager' || 

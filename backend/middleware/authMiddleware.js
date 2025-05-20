@@ -2,12 +2,12 @@ const jwt = require('jsonwebtoken');
 const { promisify } = require('util');
 const User = require('../models/User');
 
-// Middleware to protect routes - verifies the token
+// Middleware bảo vệ các route - xác thực token
 const protect = async (req, res, next) => {
   try {
     let token;
     
-    // Get token from header
+    // Lấy token từ header
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
     }
@@ -19,10 +19,10 @@ const protect = async (req, res, next) => {
       });
     }
 
-    // Verify token
+    // Xác thực token
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET || 'your_jwt_secret');
 
-    // Check if user still exists
+    // Kiểm tra người dùng còn tồn tại hay không
     const currentUser = await User.findById(decoded.id);
     if (!currentUser) {
       return res.status(401).json({
@@ -31,7 +31,7 @@ const protect = async (req, res, next) => {
       });
     }
 
-    // Check if user is active
+    // Kiểm tra user còn đang hoạt động hay không
     if (!currentUser.isActive) {
       return res.status(401).json({
         status: 'fail',
@@ -39,7 +39,7 @@ const protect = async (req, res, next) => {
       });
     }
 
-    // Grant access to protected route
+    // Cấp quyền truy cập vào route được bảo vệ
     req.user = currentUser;
     next();
   } catch (error) {
@@ -50,7 +50,7 @@ const protect = async (req, res, next) => {
   }
 };
 
-// Middleware to check if user is staff
+// Middleware kiểm tra xem người dùng có phải nhân viên không
 const staffOnly = (req, res, next) => {
   if (req.user && req.user.role === 'staff') {
     next();
@@ -62,7 +62,7 @@ const staffOnly = (req, res, next) => {
   }
 };
 
-// Helper function to restrict to specific roles
+// Hàm hỗ trợ giới hạn cho các vai trò cụ thể
 const restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {

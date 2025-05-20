@@ -19,7 +19,7 @@ const ProductSearch = ({
       }, {});
       setSelectedCategories(initialCategoryState);
     }
-  }, [categories]); // Dependencies - only when categories change
+  }, [categories, selectedCategories]); // Added 'selectedCategories' to the dependency array
 
   // Update the "All" checkbox state based on individual checkboxes
   useEffect(() => {

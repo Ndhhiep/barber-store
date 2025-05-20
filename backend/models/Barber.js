@@ -31,7 +31,7 @@ const barberSchema = mongoose.Schema({
     type: Boolean,
     default: true
   },
-  // Add working days configuration
+  // Cấu hình ngày làm việc
   workingDays: {
     monday: { type: Boolean, default: true },
     tuesday: { type: Boolean, default: true },
@@ -41,7 +41,7 @@ const barberSchema = mongoose.Schema({
     saturday: { type: Boolean, default: true },
     sunday: { type: Boolean, default: false }
   },
-  // Add working hours configuration
+  // Cấu hình giờ làm việc
   workingHours: {
     start: { type: String, default: '09:00' },
     end: { type: String, default: '19:00' }
@@ -50,16 +50,16 @@ const barberSchema = mongoose.Schema({
   timestamps: true
 });
 
-// Method to check if a barber is available for a specific time slot
+// Phương thức kiểm tra barber có sẵn cho khung giờ cụ thể
 barberSchema.methods.isAvailable = async function(date, timeSlot) {
   try {
-    // Check if the barber works on this day
+    // Kiểm tra barber có làm việc trong ngày này
     const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     if (!this.workingDays[dayOfWeek]) {
       return false;
     }
     
-    // Check if the time slot is within working hours
+    // Kiểm tra khung giờ có nằm trong giờ làm việc
     const [hour, minute] = timeSlot.split(':').map(Number);
     const [startHour, startMinute] = this.workingHours.start.split(':').map(Number);
     const [endHour, endMinute] = this.workingHours.end.split(':').map(Number);
@@ -72,7 +72,7 @@ barberSchema.methods.isAvailable = async function(date, timeSlot) {
       return false;
     }
     
-    // Check if there's already a booking for this time slot
+    // Kiểm tra xem đã có đặt chỗ cho khung giờ này chưa
     const existingBooking = await Booking.findOne({
       barber_id: this._id,
       date: {

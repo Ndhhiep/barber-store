@@ -56,6 +56,7 @@ const CartPage = () => {
     
     checkServerStatus();
   }, []);
+  
   const handleQuantityChange = (productId, newQuantity) => {
     updateQuantity(productId, parseInt(newQuantity));
   };

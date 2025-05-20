@@ -16,6 +16,7 @@ const barberRoutes = require('./routes/barberRoutes'); // Import barber routes
 const userRoutes = require('./routes/userRoutes'); // Import user routes
 const dashboardRoutes = require('./routes/dashboardRoutes'); // Import dashboard routes
 const serviceRoutes = require('./routes/serviceRoutes'); // Import service routes
+const contactRoutes = require('./routes/contactRoutes'); // Import contact routes
 
 // Load environment variables
 dotenv.config();
@@ -52,6 +53,7 @@ app.use('/api/barbers', barberRoutes); // Add barber routes
 app.use('/api/users', userRoutes); // Add user routes
 app.use('/api/dashboard', dashboardRoutes); // Add dashboard routes
 app.use('/api/services', serviceRoutes); // Add service routes
+app.use('/api/contacts', contactRoutes); // Updated route to match frontend
 
 // Home route - enhanced with health check information
 app.get('/', (req, res) => {

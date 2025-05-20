@@ -14,35 +14,35 @@ const { protect, staffOnly } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
 // @route   GET /api/products
-// @desc    Fetch all products with pagination and filtering
+// @desc    Lấy tất cả sản phẩm với phân trang và lọc
 router.get('/', getProducts);
 
 // @route   GET /api/products/categories
-// @desc    Get distinct product categories
+// @desc    Lấy các danh mục sản phẩm khác nhau
 router.get('/categories', getProductsByCategory);
 
 // @route   GET /api/products/showcase-by-category
-// @desc    Get products grouped by category for showcase
+// @desc    Lấy sản phẩm theo nhóm danh mục để trình diễn
 router.get('/showcase-by-category', getProductsByCategoryShowcase);
 
 // @route   GET /api/products/stats
-// @desc    Get product statistics for dashboard
+// @desc    Lấy thống kê sản phẩm cho dashboard
 router.get('/stats', protect, staffOnly, getProductStats);
 
 // @route   POST /api/products
-// @desc    Create a new product
+// @desc    Tạo sản phẩm mới
 router.post('/', protect, staffOnly, upload.single('image'), createProduct);
 
 // @route   GET /api/products/:id
-// @desc    Fetch a single product by ID
+// @desc    Lấy sản phẩm theo ID
 router.get('/:id', getProductById);
 
 // @route   PUT /api/products/:id
-// @desc    Update a product
+// @desc    Cập nhật sản phẩm
 router.put('/:id', protect, staffOnly, upload.single('image'), updateProduct);
 
 // @route   DELETE /api/products/:id
-// @desc    Delete a product
+// @desc    Xóa sản phẩm
 router.delete('/:id', protect, staffOnly, deleteProduct);
 
 module.exports = router;

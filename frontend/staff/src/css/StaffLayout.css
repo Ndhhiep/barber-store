@@ -1,62 +1,84 @@
 /* StaffLayout.css */
 
-/* Global layout */
+/* Đặt lại cơ bản */
+* {
+  box-sizing: border-box;
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+/* Layout chung */
 .staff-page-container {
+  width: 100%;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  width: 100%;
-  padding-top: 0; /* Remove padding since header is now inside main content */
-  overflow-x: hidden; /* Prevent horizontal scrolling */
+  overflow: hidden;
+  height: 100vh;
 }
 
-/* Top Header */
-.staff-top-header {
-  background-color: #343a40;
-  color: white;
-  padding: 0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  z-index: 1001; /* Ensure header is above sidebar */
+/* Bố cục chính - Sidebar và Nội dung */
+.staff-layout-container {
+  display: flex;
+  flex: 1;
   width: 100%;
-  position: relative; /* Relative position within main content */
-  height: 56px; /* Fixed height for calculations */
+  height: 100vh; /* Full viewport height */
+  overflow: hidden; /* Prevent scroll on the container itself */
+}
+
+/* Sidebar */
+.staff-sidebar {
+  width: 250px;
+  background-color: #1e2330; /* Dark color from the image */
+  color: #fff;
+  height: 100vh;
+  position: fixed; /* Fixed position to stay in place when scrolling */
+  left: 0;
+  top: 0;
+  overflow-y: auto; /* Allow scrolling if needed */
+  z-index: 100; /* Ensure sidebar is above other content */
+  flex-shrink: 0; /* Prevent sidebar from shrinking */
+}
+
+/* Header trên cùng */
+.staff-top-header {
+  background-color: #FFFFFF;
+  color: #343a40;
+  padding: 0 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 100; /* Below sidebar but above content */
+  width: 100%; /* Width of its parent (content wrapper) */
+  height: 60px; /* Fixed height */
   display: flex;
   align-items: center;
-  box-sizing: border-box;
-  margin-bottom: 0; /* Remove margin */
-}
-
-/* Adjust container-fluid padding in header */
-.staff-top-header .container-fluid {
-  padding: 0 1rem; /* Even padding on both sides */
-  width: 100%;
-  max-width: 100%; /* Ensure it doesn't exceed the parent width */
+  flex-shrink: 0; /* Prevent header from shrinking */
+  position: relative; /* Ensure proper stacking */
+  left: 0; /* Ensure it's flush with the parent container */
+  right: 0;
+  border-bottom: 1px solid #e0e0e0; /* Example border */
+  position: sticky; /* Sticky header */
+  top: 0;
 }
 
 .staff-top-header .header-content {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end; /* Align content to right */
   align-items: center;
   width: 100%;
-}
-
-.staff-top-header .navbar-brand {
-  color: white;
-  font-size: 1.25rem;
-  font-weight: 600;
-  text-decoration: none;
 }
 
 .staff-top-header .user-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* Further reduce the gap between notification and avatar */
-  margin-left: auto; /* Ensures it stays aligned to the right */
-  padding-right: 30px; /* Increase padding on the right to keep items visible */
-  height: 56px; /* Match the header height */
+  gap: 1rem;
 }
 
-/* User avatar */
+/* Avatar người dùng */
 .user-avatar {
   width: 36px;
   height: 36px;
@@ -71,167 +93,39 @@
   cursor: pointer;
 }
 
-/* Notification bell */
-.notification-btn {
-  background: transparent;
-  border: none;
-  color: white;
-  cursor: pointer;
-  display: flex; /* Better alignment for the icon */
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-.notification-bell {
-  display: flex;
-  align-items: center;
-  margin-right: 10px;
-  position: relative;
-}
-
-.notification-btn .material-symbols-outlined {
-  font-size: 1.5rem;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-}
-
-.staff-top-header .logout-btn {
-  background-color: transparent;
-  border: 1px solid rgba(255,255,255,0.5);
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 3px;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-.staff-top-header .logout-btn:hover {
-  background-color: rgba(255,255,255,0.1);
-}
-
-/* Main Layout - Sidebar and Content */
-.staff-layout-container {
-  display: flex;
+/* Khung chứa content - Header và nội dung chính */
+.staff-content-wrapper {
   flex: 1;
-  position: relative;
-}
-
-/* Sidebar */
-.staff-sidebar {
-  width: 200px;
-  background-color: #2c3136;
-  color: #fff;
-  height: 100vh; /* Full viewport height */
   display: flex;
   flex-direction: column;
-  position: fixed;
-  top: 0; /* Start from the very top */
-  left: 0;
-  z-index: 900;
-  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-  overflow-y: auto; /* Allow scrolling if items don't fit */
+  overflow: hidden;
+  width: calc(100% - 250px);
+  margin-left: 250px; /* Added to offset content from fixed sidebar */
+  position: relative; /* Ensures proper stacking context */
+  z-index: 50; /* Lower than sidebar but higher than other elements */
 }
 
-.staff-sidebar .sidebar-header {
-  padding: 20px 15px;
-  background-color: #23272b;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.staff-sidebar .sidebar-header h3 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 500;
-}
-
-.staff-sidebar .sidebar-nav {
-  flex: 1;
-}
-
-.staff-sidebar .sidebar-nav ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.staff-sidebar .nav-item {
-  margin: 0;
-  padding: 0;
-}
-
-.staff-sidebar .nav-link {
-  display: block;
-  padding: 15px 20px;
-  color: #fff;
-  text-decoration: none;
-  font-weight: 500;
-  transition: background-color 0.2s;
-  position: relative;
-}
-
-.staff-sidebar .nav-link:hover {
-  background-color: rgba(255,255,255,0.1);
-}
-
-.staff-sidebar .nav-link.active {
-  background-color: rgba(255,255,255,0.1);
-  border-left: 4px solid #007bff;
-  padding-left: 16px; /* Adjust padding to account for border */
-}
-
-.staff-sidebar .sidebar-footer {
-  padding: 20px 15px;
-  border-top: 1px solid rgba(255,255,255,0.1);
-  background-color: #23272b;
-  margin-top: auto;
-}
-
-.staff-sidebar .user-info {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 10px;
-}
-
-.staff-sidebar .user-info span {
-  color: #fff;
-  font-weight: 500;
-  text-align: center;
-}
-
-.staff-sidebar .logout-btn {
-  background-color: transparent;
-  border: 1px solid rgba(255,255,255,0.5);
-  color: #fff;
-  padding: 6px 12px;
-  cursor: pointer;
-  border-radius: 4px;
-  font-size: 0.8rem;
-}
-
-/* Main Content */
+/* Nội dung chính */
 .staff-main-content {
   flex: 1;
   background-color: #f8f9fa;
-  overflow-x: auto;
-  margin-left: 200px; /* Match the width of the sidebar */
-  width: calc(100% - 200px); /* Full width minus sidebar width */
-  min-height: 100vh; /* Full height */
-  padding-top: 0; /* Remove top padding */
   display: flex;
   flex-direction: column;
+  overflow-y: auto; /* Allow content scrolling */
+  position: relative; /* Ensure proper stacking */
+  height: calc(100vh - 60px); /* Subtract header height */
+  z-index: 50; /* Same as content wrapper */
+  padding: 20px;
 }
 
-/* Content body - the area where Outlet renders */
+/* Phần body nội dung - khu vực Outlet render */
 .staff-content-body {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
 }
 
-/* Table styles */
+/* Style bảng */
 .staff-main-content table {
   width: 100%;
   border-collapse: collapse;
@@ -253,7 +147,7 @@
   vertical-align: middle;
 }
 
-/* Button styles */
+/* Style nút */
 .staff-main-content .btn-primary {
   background-color: #007bff;
   border-color: #007bff;
@@ -273,7 +167,7 @@
   transition: all 0.15s ease-in-out;
 }
 
-/* Modal styling fixes */
+/* Sửa style modal */
 .modal.show.d-block {
   z-index: 1050;
   position: fixed;
@@ -317,4 +211,46 @@
 .modal-body textarea,
 .modal-footer button {
   pointer-events: auto;
+}
+
+/* Loading state */
+.staff-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+  font-size: 1.5rem;
+  color: #007bff;
+}
+
+/* Responsive fixes for smaller screens */
+@media (max-width: 768px) {
+  .sidebar-container {
+    width: 0; /* Hide by default on mobile */
+    transition: width 0.3s;
+  }
+  
+  .staff-sidebar {
+    transform: translateX(-100%); /* Hide sidebar off-screen */
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar-open .sidebar-container {
+    width: 250px; /* Show when sidebar-open class is added */
+  }
+  
+  .sidebar-open .staff-sidebar {
+    transform: translateX(0); /* Show sidebar */
+  }
+  
+  .staff-content-wrapper {
+    width: 100%;
+    margin-left: 0;
+  }
+  
+  .sidebar-open .staff-content-wrapper {
+    width: calc(100% - 250px);
+    margin-left: 250px;
+  }
 }
