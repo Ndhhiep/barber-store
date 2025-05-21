@@ -28,7 +28,7 @@ const server = http.createServer(app);
 
 // CORS configuration with specific options - định nghĩa một lần dùng chung
 const corsOptions = {
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://barber-store-tan.vercel.app/'], // Allow both frontend origins
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://v0-barber-store.vercel.app'], // Allow both frontend origins
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Added PATCH method
   allowedHeaders: ['Content-Type', 'Accept', 'Authorization'], // Allow these headers
   credentials: true, // Allow cookies
