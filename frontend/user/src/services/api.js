@@ -2,7 +2,7 @@ import axios from 'axios';
 import { isServerOnline, handleApiError } from '../utils/serverCheck';
 import { logout } from './authService';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://barber-store.onrender.com';
 
 // Create axios instance with base configuration
 const api = axios.create({
