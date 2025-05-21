@@ -1,7 +1,7 @@
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 
-// Import staff pages
+// Nhập các trang dành cho staff
 import StaffDashboard from '../pages/StaffDashboard';
 import StaffAppointments from '../pages/StaffAppointments';
 import StaffOrders from '../pages/StaffOrders';
@@ -13,18 +13,18 @@ import StaffLayout from '../components/StaffLayout';
 import StaffLoginPage from '../pages/StaffLoginPage';
 import StaffContacts from '../pages/StaffContacts';
 
-// Import staff route guards
+// Nhập các route guard dành cho staff
 import { StaffProtectedRoute, StaffPublicOnlyRoute } from '../components/common/RouteGuards';
 
 const StaffRoutes = () => {
   return (
     <Routes>
-      {/* Public staff routes */}
+      {/* Các route công khai cho staff */}
       <Route element={<StaffPublicOnlyRoute />}>
         <Route path="/login" element={<StaffLoginPage />} />
       </Route>
       
-      {/* Protected staff routes */}
+      {/* Các route được bảo vệ cho staff */}
       <Route element={<StaffProtectedRoute />}>
         <Route element={<StaffLayout />}>
           <Route path="/" element={<StaffDashboard />} />

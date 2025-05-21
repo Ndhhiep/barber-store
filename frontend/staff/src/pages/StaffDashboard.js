@@ -31,7 +31,6 @@ const StaffDashboard = () => {
   
   // Sử dụng Socket.IO context
   const { isConnected, registerHandler, unregisterHandler } = useSocketContext();
-  // Today's date is displayed directly in the component
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -114,7 +113,7 @@ const StaffDashboard = () => {
         }
       } catch (error) {
         console.error('Error fetching monthly revenue:', error);
-        // Set default values to prevent undefined errors
+        // Thiết lập giá trị mặc định để tránh lỗi undefined
         setMonthlyRevenue({
           appointmentRevenue: 0,
           orderRevenue: 0,
@@ -134,7 +133,7 @@ const StaffDashboard = () => {
     
     console.log('Setting up socket listeners for dashboard');
     
-    // Handler cho đơn hàng mới
+    // Xử lý sự kiện đơn hàng mới
     const handleNewOrder = (data) => {
       console.log('Received new order event:', data);
       
@@ -162,7 +161,7 @@ const StaffDashboard = () => {
       }
     };
     
-    // Handler cho lịch hẹn mới
+    // Xử lý sự kiện lịch hẹn mới
     const handleNewBooking = (data) => {
       console.log('Received new booking event:', data);
       
@@ -200,18 +199,18 @@ const StaffDashboard = () => {
       }
     };
     
-    // Đăng ký các event handler
+    // Đăng ký các xử lý sự kiện
     registerHandler('newOrder', handleNewOrder);
     registerHandler('newBooking', handleNewBooking);
     
-    // Clean up khi component unmount
+    // Dọn dẹp khi component unmount
     return () => {
       console.log('Cleaning up socket listeners');
       unregisterHandler('newOrder', handleNewOrder);
       unregisterHandler('newBooking', handleNewBooking);
     };
   }, [isConnected, registerHandler, unregisterHandler]);
-  // Format time to display in a readable format
+  // Định dạng thời gian để hiển thị dễ đọc
   const formatTime = (timeString) => {
     return new Date(`2000-01-01T${timeString}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };

@@ -1,9 +1,9 @@
 import axios from 'axios';
 import staffAuthService from './staffAuthService';
 
-const API_URL = 'http://localhost:5000/api'; // Adjust to your backend URL
+const API_URL = 'http://localhost:5000/api'; // Điều chỉnh URL backend cho phù hợp
 
-// Get all products with optional filtering
+// Lấy tất cả sản phẩm với tùy chọn lọc
 const getAllProducts = async (category = '', page = 1, limit = 10) => {
   try {
     const query = new URLSearchParams();
@@ -20,7 +20,7 @@ const getAllProducts = async (category = '', page = 1, limit = 10) => {
   }
 };
 
-// Get product by ID
+// Lấy sản phẩm theo ID
 const getProductById = async (id) => {
   try {
     const response = await axios.get(`${API_URL}/products/${id}`, {
@@ -32,10 +32,10 @@ const getProductById = async (id) => {
   }
 };
 
-// Create new product
+// Tạo sản phẩm mới
 const createProduct = async (productData) => {
   try {
-    // Handle file upload if there's an image
+    // Xử lý tải lên tệp nếu có hình ảnh
     const formData = new FormData();
     Object.keys(productData).forEach(key => {
       if (key === 'image' && productData.image instanceof File) {
@@ -57,10 +57,10 @@ const createProduct = async (productData) => {
   }
 };
 
-// Update product
+// Cập nhật sản phẩm
 const updateProduct = async (id, productData) => {
   try {
-    // Handle file upload if there's an image
+    // Xử lý tải lên tệp nếu có hình ảnh
     const formData = new FormData();
     Object.keys(productData).forEach(key => {
       if (key === 'image' && productData.image instanceof File) {
@@ -82,13 +82,13 @@ const updateProduct = async (id, productData) => {
   }
 };
 
-// Delete product
+// Xóa sản phẩm
 const deleteProduct = async (id) => {
   try {
     const response = await axios.delete(`${API_URL}/products/${id}`, {
       headers: staffAuthService.authHeader()
     });
-    // Response will include information about both product and image deletion
+    // Phản hồi sẽ bao gồm thông tin về cả sản phẩm và việc xóa hình ảnh
     return response.data;
   } catch (error) {
     console.error('Error in deleteProduct service:', error);
@@ -96,7 +96,7 @@ const deleteProduct = async (id) => {
   }
 };
 
-// Get all categories
+// Lấy tất cả danh mục
 const getAllCategories = async () => {
   try {
     const response = await axios.get(`${API_URL}/products/categories`, {
@@ -108,7 +108,7 @@ const getAllCategories = async () => {
   }
 };
 
-// Get product statistics for dashboard
+// Lấy thống kê sản phẩm cho dashboard
 const getProductStats = async () => {
   try {
     const response = await axios.get(`${API_URL}/products/stats`, {

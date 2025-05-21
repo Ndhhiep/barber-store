@@ -6,8 +6,8 @@ const StaffProducts = () => {
   const [categories, setCategories] = useState(['All Categories']);
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [loading, setLoading] = useState(true);
-  const [isUploading, setIsUploading] = useState(false); // New state for upload loading
-  const [successMessage, setSuccessMessage] = useState(''); // New state for success message
+  const [isUploading, setIsUploading] = useState(false); // State loading khi upload
+  const [successMessage, setSuccessMessage] = useState(''); // State thông báo thành công
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -24,10 +24,10 @@ const StaffProducts = () => {
   const [imagePreview, setImagePreview] = useState('');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
-  const [productDisplayId, setProductDisplayId] = useState(null); // New state for displayed product ID
+  const [productDisplayId, setProductDisplayId] = useState(null); // State ID sản phẩm hiển thị
   const [deleteLoading, setDeleteLoading] = useState(false);
   
-  // Define fetchCategories with useCallback
+  // Định nghĩa fetchCategories với useCallback
   const fetchCategories = useCallback(async () => {
     try {
       const response = await staffProductService.getAllCategories();
@@ -44,7 +44,7 @@ const StaffProducts = () => {
     }
   }, []);
   
-  // Define fetchProducts with useCallback
+  // Định nghĩa fetchProducts với useCallback
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
@@ -57,7 +57,7 @@ const StaffProducts = () => {
         setProducts(response.products);
         setTotalPages(response.totalPages || 1);
       } else {
-        // Fallback nếu response không đúng định dạng
+        // Giải pháp thay thế nếu response không đúng định dạng
         console.warn('Invalid response format:', response);
         setProducts([]);
         setTotalPages(1);
@@ -73,13 +73,13 @@ const StaffProducts = () => {
     }
   }, [selectedCategory, currentPage]);
     
-  // Fetch products on initial load and when filters change
+  // Lấy dữ liệu sản phẩm khi tải lần đầu và khi thay đổi bộ lọc
   useEffect(() => {
     fetchProducts();
     fetchCategories();
   }, [selectedCategory, currentPage, fetchProducts, fetchCategories]);
   
-  // Auto-hide success message after 3 seconds
+  // Tự động ẩn thông báo thành công sau 3 giây
   useEffect(() => {
     if (successMessage) {
       const timer = setTimeout(() => {
@@ -92,7 +92,8 @@ const StaffProducts = () => {
   
   const handleCategoryChange = (e) => {
     setSelectedCategory(e.target.value);
-    setCurrentPage(1); // Reset to first page when changing category
+    // Đặt lại trang đầu khi thay đổi category
+    setCurrentPage(1);
   };
   
   const handlePageChange = (page) => {
@@ -124,9 +125,9 @@ const StaffProducts = () => {
       name: product.name || '',
       description: product.description || '',
       price: product.price ? product.price.toString() : '0',
-      stock: product.quantity ? product.quantity.toString() : '0', // Use quantity instead of stock
+      stock: product.quantity ? product.quantity.toString() : '0', // Sử dụng quantity thay vì stock
       category: product.category || '',
-      image: null // Existing image will be kept if not changed
+      image: null // Giữ ảnh hiện có nếu không thay đổi
     });
     setImagePreview(product.imgURL || '');
     setEditMode(true);
@@ -154,7 +155,7 @@ const StaffProducts = () => {
         image: file
       });
       
-      // Create preview
+      // Tạo bản xem trước
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
@@ -165,7 +166,7 @@ const StaffProducts = () => {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsUploading(true); // Start loading state
+    setIsUploading(true); // Bắt đầu trạng thái loading
     
     try {
       const productData = {
@@ -186,13 +187,13 @@ const StaffProducts = () => {
       }
       
       closeModal();
-      fetchProducts(); // Refresh the product list
+      fetchProducts(); // Làm mới danh sách sản phẩm
     } catch (err) {
       console.error('Error saving product:', err);
       setError(`Failed to ${editMode ? 'update' : 'create'} product. Please try again.`);
-      setTimeout(() => setError(null), 3000); // Clear error after 3 seconds
+      setTimeout(() => setError(null), 3000); // Xóa lỗi sau 3 giây
     } finally {
-      setIsUploading(false); // End loading state
+      setIsUploading(false); // Kết thúc trạng thái loading
     }
   };
   

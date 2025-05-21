@@ -34,13 +34,13 @@ const StaffLoginPage = () => {
     setIsLoading(true);
     
     try {
-      // Use staffAuthService.staffLogin for authentication
+      // Sử dụng staffAuthService.staffLogin để xác thực
       const response = await staffAuthService.staffLogin(formData.email, formData.password);
       
-      // Set a flag in sessionStorage to indicate proper login flow
+      // Đặt flag trong sessionStorage để đánh dấu quy trình đăng nhập đúng
       sessionStorage.setItem('staffJustLoggedIn', 'true');
       
-      // Navigate to staff dashboard
+      // Điều hướng đến trang dashboard cho staff
       navigate('/');
     } catch (error) {
       setError(
@@ -58,7 +58,7 @@ const StaffLoginPage = () => {
       
       <div className="container login-container">
         <div className="row">
-          {/* Left column with welcome text */}
+          {/* Cột bên trái với nội dung chào mừng */}
           <div className="col-lg-6 welcome-column">
             <div className="welcome-content">
               <h1 className="welcome-title">Staff Portal<br/>The Gentle</h1>
@@ -69,7 +69,7 @@ const StaffLoginPage = () => {
             </div>
           </div>
           
-          {/* Right column with login form */}
+          {/* Cột bên phải với form đăng nhập */}
           <div className="col-lg-6 form-column">
             <div className="card login-card">
               <div className="card-body p-4">

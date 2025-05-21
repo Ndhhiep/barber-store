@@ -13,13 +13,13 @@ const StaffCustomers = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [customerDetails, setCustomerDetails] = useState(null);
   const [activeTab, setActiveTab] = useState('info');
-  // Add new state to track new customer IDs
+  // Thêm state mới để theo dõi các ID khách hàng mới
   const [newCustomerIds, setNewCustomerIds] = useState(new Set());
   
-  // Socket.IO integration
+  // Tích hợp Socket.IO
   const { isConnected, registerHandler, unregisterHandler } = useSocketContext();  const { clearCustomerNotifications } = useNotifications();
 
-  // Define fetchCustomers before using it in useEffect
+  // Định nghĩa hàm fetchCustomers trước khi sử dụng trong useEffect
   const fetchCustomers = useCallback(async () => {
     try {
       setLoading(true);
@@ -35,84 +35,83 @@ const StaffCustomers = () => {
     }
   }, [searchTerm, currentPage]);
 
-  // Fetch customers when page loads or search/pagination changes
+  // Lấy dữ liệu khách hàng khi trang tải hoặc khi tìm kiếm/đổi trang
   useEffect(() => {
     fetchCustomers();
-    // Clear customer notifications when the page loads
+    // Xóa thông báo khách hàng khi trang được tải
     clearCustomerNotifications();
   }, [searchTerm, currentPage, clearCustomerNotifications, fetchCustomers]);
   
-  // Socket.IO event handler for real-time updates
+  // Xử lý sự kiện khách hàng mới từ Socket.IO
   useEffect(() => {
     if (!isConnected) return;
     
-    // Handler for new customer event
+    // Handler cho sự kiện khách hàng mới
     const handleNewCustomer = (data) => {
       console.log('New customer received via socket:', data);
       
-      // Only add the new customer to the list if we're on the first page and not searching
+      // Chỉ thêm khách hàng mới nếu đang ở trang đầu và không trong chế độ tìm kiếm
       if (data && data.user && currentPage === 1 && !searchTerm) {
         setCustomers(prevCustomers => {
-          // Add the new customer to the top of the list
+          // Thêm khách hàng mới vào đầu danh sách
           const newCustomers = [data.user, ...prevCustomers];
-          // If there are more items than the page limit, remove the last one
+          // Nếu có nhiều hơn số lượng trang, loại bỏ khách hàng cuối cùng
           return newCustomers.length > 10 ? newCustomers.slice(0, 10) : newCustomers;
         });
         
-        // Mark this customer as new to show the badge
+        // Đánh dấu khách hàng này là mới để hiển thị badge
         setNewCustomerIds(prev => {
           const updated = new Set(prev);
           updated.add(data.user._id);
           return updated;
         });
       } else {
-        // If we're not on the first page or searching, just update the counter
-        // The user will need to refresh to see the new customer
-        console.log('New customer added but not shown due to pagination/search state');
+        // Nếu không ở trang đầu hoặc đang tìm kiếm, chỉ cập nhật log
+        console.log('Khách hàng mới đã thêm nhưng không hiển thị do phân trang/tìm kiếm');
       }
     };
     
-    // Register socket event handlers
+    // Đăng ký handler sự kiện khách hàng mới
     registerHandler('newCustomer', handleNewCustomer);
     
-    // Clean up on unmount
+    // Dọn dẹp khi component unmount
     return () => {
       unregisterHandler('newCustomer', handleNewCustomer);
     };
   }, [isConnected, registerHandler, unregisterHandler, currentPage, searchTerm]);
   
   
-  // Handle search form submission
+  // Xử lý submit form tìm kiếm
   const handleSearch = (e) => {
     e.preventDefault();
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1); // Đặt lại trang đầu khi tìm kiếm
     fetchCustomers();
   };
   
-  // Handle search input change
+  // Xử lý thay đổi input tìm kiếm
   const handleSearchInputChange = (e) => {
     setSearchTerm(e.target.value);
   };
   
-  // Handle pagination
+  // Xử lý chuyển trang phân trang
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
   };
-    // View customer details
+    // Hiển thị chi tiết khách hàng
   const handleViewCustomer = async (id) => {
     try {
       const customer = await staffCustomerService.getCustomerById(id);
       setCustomerDetails(customer);
       
-      // Fetch both bookings and orders for this customer
+      // Lấy cả bookings và orders cho khách hàng này
       const [bookings, orders] = await Promise.all([
-        staffCustomerService.getCustomerBookings(id), // This function should be updated to filter by user_id
+        staffCustomerService.getCustomerBookings(id), // Hàm này nên được cập nhật để lọc theo user_id
         staffCustomerService.getCustomerOrders(id)
       ]);
       
-      // Make sure we're only setting bookings that belong to this specific customer
+      // Đảm bảo chỉ đặt bookings thuộc về khách hàng cụ thể này
       const customerBookings = Array.isArray(bookings.bookings) 
         ? bookings.bookings.filter(booking => booking.user_id === id || booking.userId === id)
         : [];
@@ -125,7 +124,7 @@ const StaffCustomers = () => {
       
       setIsModalOpen(true);
       
-      // Remove the NEW badge if this customer is marked as new
+      // Loại bỏ badge NEW nếu đã xem
       if (newCustomerIds.has(id)) {
         setNewCustomerIds(prev => {
           const updated = new Set(prev);
@@ -133,20 +132,20 @@ const StaffCustomers = () => {
           return updated;
         });
         
-        // Clear the notification badge in the navigation button
+        // Xóa badge thông báo
         clearCustomerNotifications();
       }
       
-      // Mark as viewed - update the state if this was a new customer
+      // Đánh dấu khách hàng đã xem (nếu cần)
       if (customer.isNew) {
-        // Update local state to indicate this customer is no longer new
+        // Cập nhật state local để chỉ ra khách hàng này không còn mới
         setCustomers(prevCustomers => 
           prevCustomers.map(c => 
             c._id === id ? { ...c, isNew: false } : c
           )
         );
         
-        // You could also update this on the server if needed
+        // Bạn cũng có thể cập nhật điều này trên server nếu cần
         // await staffCustomerService.markCustomerAsViewed(id);
       }
     } catch (err) {
@@ -195,7 +194,7 @@ const StaffCustomers = () => {
     }
   };
   
-  // Close modal and reset state
+  // Đóng modal chi tiết và reset state
   const closeModal = () => {
     setIsModalOpen(false);
     setCustomerDetails(null);
@@ -225,7 +224,7 @@ const StaffCustomers = () => {
     }
   };
   
-  // Format date to display in a readable format
+  // Định dạng ngày để hiển thị dễ đọc
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const options = { day: '2-digit', month: 'short', year: 'numeric' };

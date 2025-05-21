@@ -232,7 +232,7 @@ const StaffOrders = () => {
     <div className="container mt-4">
       <h2>Manage Orders</h2>
       
-      {/* Main Orders Table */}
+      {/* Bảng đơn hàng chính */}
       <div className="row mb-4 mt-4">
         <div className="col">
           <div className="card">
@@ -248,26 +248,26 @@ const StaffOrders = () => {
                     const val = e.target.value;
                     setSearchId(val);
                     
-                    // Handle different input scenarios
+                    // Xử lý các trường hợp input khác nhau
                     const trimmed = val.trim();
                     
-                    // If empty, reset to original listing
+                    // Nếu trống, đặt lại danh sách ban đầu
                     if (!trimmed) {
                       setSearchId('');
                       fetchOrders();
                     }
-                    // If exactly 6 chars, execute search
+                    // Nếu đúng 6 ký tự, thực hiện tìm kiếm
                     else if (trimmed.length === 6) {
                       handleSearch();
                     }
-                    // If user deletes characters and length is no longer 6, reset to original listing
+                    // Nếu người dùng xóa ký tự và độ dài không còn 6, đặt lại danh sách ban đầu
                     else if (trimmed.length < 6 && searchId.trim().length >= 6) {
                       fetchOrders();
                     }
-                    // For other cases, do nothing (don't search until exactly 6 chars)
+                    // Trong các trường hợp khác, không làm gì (không tìm kiếm trừ khi đúng 6 ký tự)
                   }}
                   onKeyDown={e => {
-                    // Also handle Enter key for convenience
+                    // Cũng xử lý phím Enter cho tiện lợi
                     if (e.key === 'Enter' && searchId.trim().length === 6) handleSearch();
                   }}
                 />

@@ -105,7 +105,7 @@ export const daysBetween = (startDate, endDate) => {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
-export default {
+const dateUtils = {
   formatDate,
   formatTime,
   formatDateTime,
@@ -115,3 +115,5 @@ export default {
   convertTo12HourFormat,
   daysBetween
 };
+
+export default dateUtils;

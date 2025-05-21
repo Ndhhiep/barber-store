@@ -112,7 +112,6 @@ const BookingPage = () => {
     
     return false;
   }, [timeSlotStatuses]);
-
   // Check if a time slot is in the past or booked - for future use in showing specific messages
   // eslint-disable-next-line no-unused-vars
   
@@ -208,7 +207,7 @@ const BookingPage = () => {
       }
     };
       fetchTimeSlotStatuses();
-  }, [bookingData.barber_id, bookingData.date]); // Removed bookingData.time from dependency array
+  }, [bookingData.barber_id, bookingData.date, bookingData.time]);
 
   // Wrap `validateBookingToken` in a `useCallback` hook
   const validateBookingToken = useCallback(async (token) => {

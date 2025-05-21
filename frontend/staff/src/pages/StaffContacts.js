@@ -9,29 +9,29 @@ const StaffContacts = () => {
   const [error, setError] = useState(null);
   const [selectedContact, setSelectedContact] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  // Add new state to track new contact IDs
+  // State để theo dõi new contact IDs
   const [newContactIds, setNewContactIds] = useState(new Set());
   
-  // Socket.IO integration
+  // Tích hợp Socket.IO
   const { isConnected, registerHandler, unregisterHandler } = useSocketContext();
   const { clearContactNotifications } = useNotifications();
   useEffect(() => {
     fetchContacts();
-    // Clear contact notifications when the page loads
+    // Xóa thông báo liên hệ khi trang được tải
     clearContactNotifications();
   }, [clearContactNotifications]);
   
-  // Socket.IO event handler for real-time updates
+  // Xử lý sự kiện Socket.IO cho cập nhật thời gian thực
   useEffect(() => {
     if (!isConnected) return;
     
-    // Handler for new contact event
+    // Xử lý sự kiện liên hệ mới
     const handleNewContact = (data) => {
       console.log('New contact received via socket:', data);
-      // Add the new contact to the list
+      // Thêm liên hệ mới vào danh sách
       if (data && data.contact) {
         setContacts(prevContacts => [data.contact, ...prevContacts]);
-        // Mark this contact as new to show the badge
+        // Đánh dấu liên hệ này là mới để hiển thị badge
         setNewContactIds(prev => {
           const updated = new Set(prev);
           updated.add(data.contact._id);
@@ -40,10 +40,10 @@ const StaffContacts = () => {
       }
     };
     
-    // Register socket event handlers
+    // Đăng ký các handler của socket
     registerHandler('newContact', handleNewContact);
     
-    // Clean up on unmount
+    // Dọn dẹp khi component unmount
     return () => {
       unregisterHandler('newContact', handleNewContact);
     };
@@ -80,7 +80,7 @@ const StaffContacts = () => {
     setSelectedContact(contact);
     setShowModal(true);
     
-    // Remove the NEW badge if this contact is marked as new
+    // Xóa badge NEW nếu liên hệ này được đánh dấu mới
     if (newContactIds.has(contact._id)) {
       setNewContactIds(prev => {
         const updated = new Set(prev);
@@ -88,11 +88,11 @@ const StaffContacts = () => {
         return updated;
       });
       
-      // Clear the notification badge in the navigation button
+      // Xóa badge thông báo ở nút điều hướng
       clearContactNotifications();
     }
     
-    // If the contact status is 'new', update it to 'read'
+    // Nếu trạng thái liên hệ là 'new', cập nhật thành 'read'
     if (contact.status === 'new') {
       handleUpdateStatus(contact._id, 'read');
     }
@@ -101,7 +101,7 @@ const StaffContacts = () => {
   const handleUpdateStatus = async (id, status) => {
     try {
       await staffContactService.updateContactStatus(id, status);
-      // Update the local state to reflect the change
+      // Cập nhật state cục bộ để phản ánh sự thay đổi
       setContacts(contacts.map(contact => 
         contact._id === id ? { ...contact, status } : contact
       ));
@@ -206,7 +206,7 @@ const StaffContacts = () => {
         </div>
       )}
       
-      {/* Contact Details Modal */}
+      {/* Modal chi tiết liên hệ */}
       {selectedContact && (
         <div className={`modal fade ${showModal ? 'show' : ''}`} 
              style={{ display: showModal ? 'block' : 'none' }} 
@@ -221,7 +221,7 @@ const StaffContacts = () => {
                 <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
               </div>
               <div className="modal-body">
-                {/* Contact Information - Plain Layout */}
+                {/* Thông tin liên hệ - Bố cục đơn giản */}
                 <div className="mb-3">
                   <div className="row mb-1">
                     <div className="col-sm-2"><strong>Name:</strong></div>
@@ -249,15 +249,15 @@ const StaffContacts = () => {
                   </div>
                 </div>
 
-                {/* Message Section - Plain Layout with Border */}
+                {/* Phần tin nhắn - Bố cục đơn giản có viền */}
                 <div className="mb-3">
                   <p className="mb-1"><strong>Message:</strong></p>
                   <div 
                     className="p-2 border rounded" 
                     style={{ 
                       whiteSpace: 'pre-wrap', 
-                      minHeight: '100px', // Added min-height
-                      backgroundColor: '#f8f9fa' // Added background color (light gray)
+                      minHeight: '100px',
+                      backgroundColor: '#f8f9fa'
                     }}
                   >
                     {selectedContact.message}
@@ -272,7 +272,7 @@ const StaffContacts = () => {
         </div>
       )}
       
-      {/* Modal backdrop */}
+      {/* Lớp nền modal */}
       {showModal && <div className="modal-backdrop fade show"></div>}
     </div>
   );

@@ -4,14 +4,14 @@ import staffAuthService from './staffAuthService';
 const API_URL = '/api/contacts';
 
 const getAllContacts = async () => {
-  // Get the staff user which contains the token
+  // Lấy user staff chứa token
   const staffUser = staffAuthService.getStaffUser();
   const token = staffUser ? staffUser.token : null;
   
   console.log('Staff user:', staffUser);
   console.log('Token available:', !!token);
   
-  // Set up headers with the authentication token
+  // Thiết lập header với token xác thực
   const config = {
     headers: {
       Authorization: `Bearer ${token}`
@@ -29,10 +29,11 @@ const getAllContacts = async () => {
 };
 
 const getContactById = async (id) => {
-  // Get the staff user which contains the token
+  // Lấy user staff chứa token
   const staffUser = staffAuthService.getStaffUser();
   const token = staffUser ? staffUser.token : null;
   
+  // Thiết lập header với token xác thực
   const config = {
     headers: {
       Authorization: `Bearer ${token}`
@@ -44,10 +45,11 @@ const getContactById = async (id) => {
 };
 
 const updateContactStatus = async (id, status) => {
-  // Get the staff user which contains the token
+  // Lấy user staff chứa token
   const staffUser = staffAuthService.getStaffUser();
   const token = staffUser ? staffUser.token : null;
   
+  // Thiết lập header với token xác thực
   const config = {
     headers: {
       Authorization: `Bearer ${token}`
@@ -59,10 +61,11 @@ const updateContactStatus = async (id, status) => {
 };
 
 const deleteContact = async (id) => {
-  // Get the staff user which contains the token
+  // Lấy user staff chứa token
   const staffUser = staffAuthService.getStaffUser();
   const token = staffUser ? staffUser.token : null;
   
+  // Thiết lập header với token xác thực
   const config = {
     headers: {
       Authorization: `Bearer ${token}`

@@ -57,17 +57,17 @@ export const SocketProvider = ({ children }) => {
       
       // Register system event handlers
       socketInstance.on('connect', onConnect);
-      socketInstance.on('disconnect', onDisconnect);
-      socketInstance.on('connect_error', onError);
+      socketInstance.on('disconnect', onDisconnect);      socketInstance.on('connect_error', onError);
+      
+      // Store a copy of handlersRef.current outside the cleanup function
+      // to avoid stale reference in the cleanup function
+      const currentHandlers = handlersRef.current;
       
       // Clean up on unmount
       return () => {
         console.log('Cleaning up socket connection...');
-        
-        // Copy handlersRef.current to a variable to avoid stale reference
-        const currentHandlers = handlersRef.current;
 
-        // Unregister event handlers
+        // Unregister event handlers using the saved reference
         if (currentHandlers.size > 0) {
           currentHandlers.forEach((callbacks, eventName) => {
             callbacks.forEach((wrappedCb, originalCb) => {

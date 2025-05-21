@@ -1,18 +1,18 @@
 /**
- * Utility for checking server connectivity and providing feedback
+ * Tiện ích kiểm tra kết nối server và hiển thị phản hồi
  */
 
-const API_URL = 'http://localhost:5000'; // Base API URL
+const API_URL = 'http://localhost:5000'; // URL gốc của API
 
 /**
- * Check if the server is reachable
- * @returns {Promise<boolean>} - True if server is reachable
+ * Kiểm tra xem server có thể truy cập được không
+ * @returns {Promise<boolean>} - True nếu server có thể truy cập được
  */
 export const isServerOnline = async () => {
   try {
-    // Use fetch with timeout to check if server is reachable
+    // Sử dụng fetch với timeout để kiểm tra kết nối server
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // timeout 5 giây
     
     const response = await fetch(`${API_URL}/api`, {
       method: 'GET',
@@ -22,15 +22,16 @@ export const isServerOnline = async () => {
     clearTimeout(timeoutId);
     return response.ok;
   } catch (error) {
+    // Lỗi mạng hoặc không thể kết nối server
     console.warn('Server connectivity check failed:', error);
     return false;
   }
 };
 
 /**
- * Show server connection error message
- * @param {Function} setError - Function to set error state
- * @param {string} customMessage - Optional custom error message
+ * Hiển thị thông báo lỗi kết nối server
+ * @param {Function} setError - Hàm để cập nhật trạng thái lỗi
+ * @param {string} customMessage - Thông điệp lỗi tuỳ chọn
  */
 export const showServerError = (setError, customMessage = null) => {
   const defaultMessage = 'Could not connect to the server. Please check your internet connection and try again.';
@@ -38,14 +39,14 @@ export const showServerError = (setError, customMessage = null) => {
 };
 
 /**
- * Handle API errors based on response status
- * @param {Error} error - Error object from API call
- * @returns {string} - User-friendly error message
+ * Xử lý lỗi API dựa trên mã phản hồi
+ * @param {Error} error - Đối tượng lỗi từ cuộc gọi API
+ * @returns {string} - Thông điệp lỗi thân thiện với người dùng
  */
 export const handleApiError = (error) => {
   if (!error.response) {
-    // Network error or server not reachable
-    return 'Could not connect to the server. Please check your internet connection.';
+    // Lỗi mạng hoặc không thể kết nối server
+    return 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối internet.';
   }
   
   const { status } = error.response;
@@ -67,9 +68,9 @@ export const handleApiError = (error) => {
 };
 
 /**
- * Check for server connectivity with a fallback UI update
- * @param {Function} onlineCallback - Function to call if server is online
- * @param {Function} offlineCallback - Function to call if server is offline
+ * Kiểm tra kết nối server với phương án dự phòng cập nhật giao diện
+ * @param {Function} onlineCallback - Hàm gọi khi server online
+ * @param {Function} offlineCallback - Hàm gọi khi server offline
  */
 export const checkServerWithFallback = async (onlineCallback, offlineCallback) => {
   const isOnline = await isServerOnline();
@@ -82,18 +83,18 @@ export const checkServerWithFallback = async (onlineCallback, offlineCallback) =
 };
 
 /**
- * Wait for specified delay
- * @param {number} ms - Milliseconds to wait
- * @returns {Promise} - Promise that resolves after delay
+ * Chờ độ trễ xác định
+ * @param {number} ms - Số mili-giây chờ
+ * @returns {Promise} - Promise sẽ resolve sau khi chờ
  */
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Helper to retry API calls with exponential backoff
- * @param {Function} apiCall - Function that makes the API call
- * @param {number} maxRetries - Maximum number of retries
- * @param {number} initialDelay - Initial delay in ms
- * @returns {Promise<any>} - Result of the API call
+ * Trợ giúp thử gọi API lại với cơ chế lùi thời gian lũy thừa
+ * @param {Function} apiCall - Hàm thực hiện cuộc gọi API
+ * @param {number} maxRetries - Số lần thử tối đa
+ * @param {number} initialDelay - Độ trễ ban đầu (ms)
+ * @returns {Promise<any>} - Kết quả của cuộc gọi API
  */
 export const retryWithBackoff = async (apiCall, maxRetries = 3, initialDelay = 1000) => {
   let retries = 0;
@@ -105,19 +106,19 @@ export const retryWithBackoff = async (apiCall, maxRetries = 3, initialDelay = 1
     } catch (error) {
       retries++;
       
-      // If reached max retries or it's not a connection error, throw
+      // Nếu đạt số lần thử tối đa hoặc không phải lỗi kết nối, ném lỗi
       if (retries >= maxRetries || (error.response && error.response.status !== 0)) {
         throw error;
       }
       
-      // Wait with exponential backoff using the extracted helper function
+      // Chờ với cơ chế lùi thời gian lũy thừa bằng hàm trợ giúp
       await wait(delay);
       delay *= 2; // Exponential backoff
     }
   }
 };
 
-// Create the object before exporting it as default
+// Tạo object trước khi xuất mặc định
 const serverCheckUtils = {
   isServerOnline,
   showServerError,

@@ -1,9 +1,9 @@
 import axios from 'axios';
 import staffAuthService from './staffAuthService';
 
-const API_URL = 'http://localhost:5000/api'; // Adjust to your backend URL
+const API_URL = 'http://localhost:5000/api'; // Điều chỉnh theo URL backend của bạn
 
-// Get all barbers (only active ones)
+// Lấy tất cả thợ cắt (chỉ những người đang hoạt động)
 const getAllBarbers = async () => {
   try {
     const response = await axios.get(`${API_URL}/barbers`, {
@@ -15,16 +15,16 @@ const getAllBarbers = async () => {
   }
 };
 
-// Get all barbers for staff (both active and inactive)
+// Lấy tất cả thợ cắt cho nhân viên (bao gồm đang hoạt động và không hoạt động)
 const getAllBarbersForStaff = async () => {
   try {
     const headers = staffAuthService.authHeader();
-    // Removed sensitive auth header logging
+    // Đã loại bỏ việc ghi log header xác thực nhạy cảm
     
     const response = await axios.get(`${API_URL}/barbers/staff`, {
       headers: headers
     });
-    // Removed full response logging
+    // Đã loại bỏ việc ghi toàn bộ response
     return response.data;
   } catch (error) {
     console.error('Error fetching barbers:', error.message);
@@ -32,7 +32,7 @@ const getAllBarbersForStaff = async () => {
   }
 };
 
-// Get barber by ID
+// Lấy thợ cắt theo ID
 const getBarberById = async (id) => {
   try {
     const response = await axios.get(`${API_URL}/barbers/${id}`, {
@@ -44,7 +44,7 @@ const getBarberById = async (id) => {
   }
 };
 
-// Upload barber image to Cloudinary
+// Tải hình ảnh thợ cắt lên Cloudinary
 const uploadBarberImage = async (imageFile) => {
   try {
     console.log('Uploading file to Cloudinary:', imageFile.name);
@@ -52,7 +52,7 @@ const uploadBarberImage = async (imageFile) => {
     const formData = new FormData();
     formData.append('image', imageFile);
     
-    // Log form data content for debugging
+    // Ghi log nội dung form data để gỡ lỗi
     console.log('Form data created with image file');
     
     const response = await axios.post(`${API_URL}/barbers/upload-image`, formData, {
@@ -70,13 +70,13 @@ const uploadBarberImage = async (imageFile) => {
   }
 };
 
-// Create new barber
+// Tạo thợ cắt mới
 const createBarber = async (barberData) => {
   try {    
-    // Prepare barber data
+    // Chuẩn bị dữ liệu thợ cắt
     const { title, expertise, imageFile, ...restData } = barberData;
     
-    // If there's an image file to upload
+    // Nếu có file hình ảnh để tải lên
     let image_url = '';
     if (imageFile) {
       console.log('Creating barber with image file upload');
@@ -105,12 +105,12 @@ const createBarber = async (barberData) => {
   }
 };
 
-// Update barber
+// Cập nhật thợ cắt
 const updateBarber = async (id, barberData) => {
   try {
     console.log('Updating barber ID:', id);
     
-    // If there's an image file to upload
+    // Nếu có file hình ảnh để tải lên
     let image_url = barberData.imageUrl || '';
     if (barberData.imageFile) {
       console.log('Updating with new image file, will replace existing image');
@@ -123,23 +123,23 @@ const updateBarber = async (id, barberData) => {
       console.log('Keeping existing image URL:', image_url);
     }
 
-    // Properly format data to match backend expectations
+    // Định dạng dữ liệu phù hợp với yêu cầu backend
     const barberPayload = {
       name: barberData.name,
-      // If phone and email don't exist in form, provide default values
+      // Nếu phone và email không tồn tại trong form, cung cấp giá trị mặc định
       phone: barberData.phone || "Not provided",
       email: barberData.email || "not-provided@example.com",
       description: barberData.description,
       specialization: barberData.specialization,
-      // Backend expects to save as imgURL but needs image_url in the request
+      // Backend mong muốn lưu dưới dạng imgURL nhưng cần image_url trong request
       image_url: image_url,
       is_active: barberData.is_active,
       workingDays: barberData.workingDays,
       workingHours: barberData.workingHours
-      // Title and expertise fields have been removed
+      // Đã loại bỏ các trường title và expertise
     };
     
-    // Removed payload logging
+    // Đã loại bỏ việc ghi log payload
     
     const response = await axios.put(`${API_URL}/barbers/${id}`, barberPayload, {
       headers: {
@@ -154,7 +154,7 @@ const updateBarber = async (id, barberData) => {
   }
 };
 
-// Delete barber
+// Xóa thợ cắt
 const deleteBarber = async (id) => {
   try {
     const response = await axios.delete(`${API_URL}/barbers/${id}`, {
@@ -166,7 +166,7 @@ const deleteBarber = async (id) => {
   }
 };
 
-// Toggle barber active status
+// Chuyển đổi trạng thái hoạt động của thợ cắt
 const toggleBarberStatus = async (id, isActive) => {
   try {
     const response = await axios.patch(

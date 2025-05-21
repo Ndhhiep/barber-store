@@ -70,7 +70,7 @@ const StaffServices = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
     
-    // Clear errors when user fixes them
+    // Xóa lỗi khi user sửa
     if (formErrors[name]) {
       setFormErrors(prev => ({ ...prev, [name]: null }));
     }

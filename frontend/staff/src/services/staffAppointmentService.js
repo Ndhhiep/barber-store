@@ -1,16 +1,16 @@
 import axios from 'axios';
 import staffAuthService from './staffAuthService';
 
-const API_URL = 'http://localhost:5000/api'; // Adjust to your backend URL
+const API_URL = 'http://localhost:5000/api'; // Điều chỉnh lại URL backend của bạn
 
-// Get all appointments with optional filtering and pagination
+// Lấy tất cả lịch hẹn với tùy chọn lọc và phân trang
 const getAllAppointments = async (page = 1, limit = 10, filter = '') => {
   try {
     let queryString = `?page=${page}&limit=${limit}`;
     
-    // If filter is not empty, append it to the query string
+    // Nếu filter không rỗng, thêm vào query string
     if (filter) {
-      // Remove leading '?' from filter if it exists, as we've already added it
+      // Loại bỏ ký tự '?' ở đầu của filter nếu có, vì chúng ta đã thêm '?' trước đó
       const filterStr = filter.startsWith('?') ? filter.substring(1) : filter;
       queryString += `&${filterStr}`;
     }
@@ -24,13 +24,13 @@ const getAllAppointments = async (page = 1, limit = 10, filter = '') => {
   }
 };
 
-// Get appointments for today with pagination
+// Lấy các lịch hẹn hôm nay với phân trang
 const getTodayAppointments = async (page = 1, limit = 10) => {
   const today = new Date().toISOString().split('T')[0];
   return getAllAppointments(page, limit, `date=${today}`);
 };
 
-// Get appointments for this week with pagination
+// Lấy các lịch hẹn trong tuần này với phân trang
 const getWeekAppointments = async (page = 1, limit = 10) => {
   const today = new Date();
   const startOfWeek = new Date(today);
@@ -44,7 +44,7 @@ const getWeekAppointments = async (page = 1, limit = 10) => {
   return getAllAppointments(page, limit, `startDate=${start}&endDate=${end}`);
 };
 
-// Get appointment by ID
+// Lấy thông tin lịch hẹn theo ID (có hỗ trợ populate barber)
 const getAppointmentById = async (id) => {
   try {
     // Thêm populate=barber_id vào query để lấy thông tin đầy đủ của barber
@@ -57,7 +57,7 @@ const getAppointmentById = async (id) => {
   }
 };
 
-// Update appointment status
+// Cập nhật trạng thái lịch hẹn
 const updateAppointmentStatus = async (id, status) => {
   try {
     const response = await axios.put(
@@ -71,7 +71,7 @@ const updateAppointmentStatus = async (id, status) => {
   }
 };
 
-// Get dashboard statistics for appointments
+// Lấy thống kê cho dashboard liên quan đến lịch hẹn
 const getAppointmentStats = async () => {
   try {
     const response = await axios.get(`${API_URL}/bookings/stats`, {

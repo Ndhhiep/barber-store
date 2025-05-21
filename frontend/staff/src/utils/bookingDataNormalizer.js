@@ -1,22 +1,22 @@
 /**
- * Normalizes booking data from different sources (API, Socket.IO, etc.)
- * to ensure consistent format and field access
+ * Chuẩn hóa dữ liệu đặt lịch từ các nguồn khác nhau (API, Socket.IO, v.v.)
+ * để đảm bảo định dạng và truy cập trường nhất quán
  * 
- * @param {Object} bookingData - Raw booking data from any source
- * @returns {Object} - Normalized booking data with consistent field naming
+ * @param {Object} bookingData - Dữ liệu đặt lịch thô từ bất kỳ nguồn nào
+ * @returns {Object} - Dữ liệu đặt lịch đã được chuẩn hóa với tên trường nhất quán
  */
 const normalizeBookingData = (bookingData) => {
   if (!bookingData) return {};
   
   const normalized = { ...bookingData };
   
-  // Process user information from different possible structures
-  // 1. Direct fields
+  // Xử lý thông tin người dùng từ các cấu trúc có thể khác nhau
+  // 1. Trường trực tiếp
   let userName = normalized.userName || normalized.name || null;
   let userEmail = normalized.userEmail || normalized.email || null;
   let userPhone = normalized.userPhone || normalized.phone || null;
   
-  // 2. Check if user info is in a nested user object (user_id or user field)
+  // 2. Kiểm tra nếu thông tin người dùng nằm trong object lồng nhau (trường user_id hoặc user)
   const userObject = normalized.user || 
                     (normalized.user_id && typeof normalized.user_id === 'object' ? normalized.user_id : null);
   
@@ -26,15 +26,15 @@ const normalizeBookingData = (bookingData) => {
     userPhone = userPhone || userObject.phone;
   }
   
-  // 3. Set normalized user fields
+  // 3. Gán các trường người dùng đã chuẩn hóa
   normalized.userName = userName || 'N/A';
   normalized.userEmail = userEmail || 'N/A';
   normalized.userPhone = userPhone || 'N/A';
   
-  // Process barber information - Cải thiện xử lý thông tin barber
+  // Xử lý thông tin thợ cắt - cải thiện cách xử lý thông tin thợ
   let barberName = normalized.barberName || null;
   
-  // Check if barber info is in a nested barber object
+  // Kiểm tra nếu thông tin thợ cắt nằm trong object lồng nhau
   const barberObject = normalized.barber_id && typeof normalized.barber_id === 'object' ? 
                       normalized.barber_id : null;
                       
@@ -50,10 +50,10 @@ const normalizeBookingData = (bookingData) => {
     barberName = barberName || normalized.barber;
   }
   
-  // Set normalized barber field
+  // Gán trường barber đã chuẩn hóa
   normalized.barberName = barberName || 'Any Available';
   
-  // Ensure serviceName is set
+  // Đảm bảo trường serviceName được gán
   normalized.serviceName = normalized.serviceName || normalized.service || 'N/A';
   
   return normalized;

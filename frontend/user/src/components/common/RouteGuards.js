@@ -3,27 +3,27 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { hasRoleAccess } from '../../services/authService';
 
 /**
- * Component to protect routes that require user role access
+ * Component bảo vệ các route yêu cầu quyền truy cập của người dùng
  */
 export const UserOnlyRoute = () => {
-  // Check if the current user has 'user' role access
+  // Kiểm tra xem người dùng hiện tại có vai trò 'user' hay không
   const isUser = hasRoleAccess('user');
 
   if (isUser) {
-    // If user has regular user role, allow access
+    // Nếu là người dùng hợp lệ, cho phép truy cập
     return <Outlet />;
   } else {
-    // If not authenticated at all, redirect to login
+    // Nếu chưa xác thực, chuyển hướng đến trang đăng nhập
     return <Navigate to="/login" replace />;
   }
 };
 
 /**
- * Component to protect routes that should be accessible only when not logged in
- * (like login and register pages)
+ * Component bảo vệ các route chỉ truy cập khi chưa đăng nhập
+ * (ví dụ: trang đăng nhập và đăng ký)
  */
 export const PublicOnlyRoute = () => {
-  // Check for regular user authentication
+  // Kiểm tra trạng thái xác thực của người dùng
   const token = localStorage.getItem('token');
   const userStr = localStorage.getItem('user');
   
@@ -32,11 +32,11 @@ export const PublicOnlyRoute = () => {
   if (token && userStr) {
     try {
       const userData = JSON.parse(userStr);
-      // Make sure we have valid user data with correct role
+      // Đảm bảo chúng ta có dữ liệu người dùng hợp lệ với vai trò chính xác
       isUser = userData && userData.role === 'user' && userData.name;
     } catch (e) {
       console.error("Error parsing user data:", e);
-      // Clear invalid user data
+      // Xóa dữ liệu người dùng không hợp lệ
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       isUser = false;
@@ -44,10 +44,10 @@ export const PublicOnlyRoute = () => {
   }
 
   if (isUser) {
-    // If user is regular user, redirect to home
+    // Nếu đã đăng nhập, chuyển hướng về trang chủ
     return <Navigate to="/" replace />;
   } else {
-    // If not authenticated at all, allow access
+    // Nếu chưa đăng nhập, cho phép truy cập
     return <Outlet />;
   }
 };

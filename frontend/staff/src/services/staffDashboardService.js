@@ -1,9 +1,9 @@
 import axios from 'axios';
 import staffAuthService from './staffAuthService';
 
-const API_URL = 'http://localhost:5000/api'; // Adjust to your backend URL
+const API_URL = 'http://localhost:5000/api'; // Điều chỉnh URL backend cho phù hợp
 
-// Get all dashboard stats
+// Lấy tất cả thống kê cho trang tổng quan
 const getDashboardStats = async () => {
   try {
     const response = await axios.get(`${API_URL}/dashboard/stats`, {
@@ -15,7 +15,7 @@ const getDashboardStats = async () => {
   }
 };
 
-// Get chart data for orders and appointments
+// Lấy dữ liệu biểu đồ cho đơn hàng và lịch hẹn
 const getChartData = async () => {
   try {
     const response = await axios.get(`${API_URL}/dashboard/chart-data`, {
@@ -27,7 +27,7 @@ const getChartData = async () => {
   }
 };
 
-// Get monthly revenue from completed appointments and delivered orders
+// Lấy doanh thu hàng tháng từ lịch hẹn hoàn thành và đơn hàng đã giao
 const getMonthlyRevenue = async () => {
   try {
     const response = await axios.get(`${API_URL}/dashboard/monthly-revenue`, {

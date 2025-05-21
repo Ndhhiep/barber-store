@@ -70,9 +70,11 @@ export const searchProducts = async (keyword) => {
   }
 };
 
-export default {
+const productService = {
   getProducts,
   getProductById,
   getProductsByCategory,
   searchProducts
 };
+
+export default productService;

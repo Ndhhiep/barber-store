@@ -1,9 +1,9 @@
 import axios from 'axios';
 import staffAuthService from './staffAuthService';
 
-const API_URL = 'http://localhost:5000/api'; // Adjust to your backend URL
+const API_URL = 'http://localhost:5000/api'; // Điều chỉnh URL backend cho phù hợp
 
-// Get all services
+// Lấy tất cả dịch vụ
 const getAllServices = async () => {
   try {
     const response = await axios.get(`${API_URL}/services`, {
@@ -15,7 +15,7 @@ const getAllServices = async () => {
   }
 };
 
-// Get service by ID
+// Lấy dịch vụ theo ID
 const getServiceById = async (id) => {
   try {
     const response = await axios.get(`${API_URL}/services/${id}`, {
@@ -27,7 +27,7 @@ const getServiceById = async (id) => {
   }
 };
 
-// Create new service
+// Tạo dịch vụ mới
 const createService = async (serviceData) => {
   try {
     const response = await axios.post(
@@ -41,7 +41,7 @@ const createService = async (serviceData) => {
   }
 };
 
-// Update existing service
+// Cập nhật dịch vụ
 const updateService = async (id, serviceData) => {
   try {
     const response = await axios.put(
@@ -55,7 +55,7 @@ const updateService = async (id, serviceData) => {
   }
 };
 
-// Delete a service
+// Xóa dịch vụ
 const deleteService = async (id) => {
   try {
     const response = await axios.delete(`${API_URL}/services/${id}`, {

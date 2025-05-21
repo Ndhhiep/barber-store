@@ -1,14 +1,14 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api'; // Adjust to your backend URL
+const API_URL = 'http://localhost:5000/api'; // Điều chỉnh URL backend cho phù hợp
 
-// Store staff user in localStorage with separate keys
+// Lưu token và thông tin user staff vào localStorage
 const setStaffUser = (data) => {
   localStorage.setItem('staffToken', data.token);
   localStorage.setItem('staffUser', JSON.stringify(data.data.user));
 };
 
-// Get staff user from localStorage
+// Lấy thông tin user staff từ localStorage
 const getStaffUser = () => {
   const staffToken = localStorage.getItem('staffToken');
   const staffUserStr = localStorage.getItem('staffUser');
@@ -23,21 +23,21 @@ const getStaffUser = () => {
   }
 };
 
-// Check if staff is authenticated
+// Kiểm tra xem staff đã xác thực chưa
 const isStaffAuthenticated = () => {
   return localStorage.getItem('staffToken') !== null;
 };
 
-// Staff Login - now specifically for staff access
+// Đăng nhập cho staff - chỉ dành cho staff
 const staffLogin = async (email, password) => {
   try {
-    // Using the regular login endpoint but processing differently
+    // Sử dụng endpoint login chung nhưng xử lý đặc biệt cho staff
     const response = await axios.post(`${API_URL}/auth/login`, { email, password });
     
-    // Check if user is staff
+    // Kiểm tra user có vai trò staff không
     if (response.data.status === 'success' && response.data.token) {
       if (response.data.data?.user?.role === 'staff') {
-        // Store staff user data with separate keys
+        // Lưu dữ liệu staff với các key riêng
         setStaffUser(response.data);
         return response.data;
       } else {
@@ -52,7 +52,7 @@ const staffLogin = async (email, password) => {
   }
 };
 
-// Staff Logout - clears staff-specific data and navigation history
+// Đăng xuất staff - xóa dữ liệu và lịch sử điều hướng của staff
 const staffLogout = () => {
   localStorage.removeItem('staffToken');
   localStorage.removeItem('staffUser');
@@ -61,7 +61,7 @@ const staffLogout = () => {
   window.location.href = '/login';
 };
 
-// Get authentication header for staff
+// Lấy header xác thực cho staff
 const authHeader = () => {
   const staffToken = localStorage.getItem('staffToken');
   

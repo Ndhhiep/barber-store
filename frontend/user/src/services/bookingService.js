@@ -101,10 +101,12 @@ export const getAvailableTimeSlots = async (date, barberId = null) => {
   }
 };
 
-export default {
+const bookingService = {
   getMyBookings,
   createBooking,
   cancelBooking,
   getBookingById,
   getAvailableTimeSlots
 };
+
+export default bookingService;

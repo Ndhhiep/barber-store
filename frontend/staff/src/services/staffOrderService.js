@@ -1,9 +1,9 @@
 import axios from 'axios';
 import staffAuthService from './staffAuthService';
 
-const API_URL = 'http://localhost:5000/api'; // Adjust to your backend URL
+const API_URL = 'http://localhost:5000/api'; // Điều chỉnh URL backend cho phù hợp
 
-// Get all orders with optional filtering
+// Lấy tất cả đơn hàng với tùy chọn lọc
 const getAllOrders = async (status = '', page = 1, limit = 10) => {
   try {
     const query = new URLSearchParams();
@@ -20,7 +20,7 @@ const getAllOrders = async (status = '', page = 1, limit = 10) => {
   }
 };
 
-// Get order by ID
+// Lấy đơn hàng theo ID
 const getOrderById = async (id) => {
   try {
     const response = await axios.get(`${API_URL}/orders/${id}`, {
@@ -32,10 +32,10 @@ const getOrderById = async (id) => {
   }
 };
 
-// Update order status
+// Cập nhật trạng thái đơn hàng
 const updateOrderStatus = async (id, status) => {
   try {
-    // Add debug logging
+    // Thêm log debug
     console.log(`Updating order ${id} status to ${status}`);
     
     // Ensure the API URL has proper formatting
@@ -70,7 +70,7 @@ const updateOrderStatus = async (id, status) => {
   }
 };
 
-// Get recent orders for dashboard
+// Lấy đơn hàng gần đây cho dashboard
 const getRecentOrders = async (limit = 5) => {
   try {
     const response = await axios.get(`${API_URL}/orders/recent?limit=${limit}`, {
@@ -82,7 +82,7 @@ const getRecentOrders = async (limit = 5) => {
   }
 };
 
-// Get order statistics for dashboard
+// Lấy thống kê đơn hàng cho dashboard
 const getOrderStats = async () => {
   try {
     const response = await axios.get(`${API_URL}/orders/stats`, {
@@ -94,7 +94,7 @@ const getOrderStats = async () => {
   }
 };
 
-// Search orders by short ID (6 ký tự cuối của ID)
+// Tìm kiếm đơn hàng theo short ID (6 ký tự cuối của ID)
 const searchOrders = async (searchTerm) => {
   try {
     // Kiểm tra xem searchTerm có phải là 6 ký tự hay không
