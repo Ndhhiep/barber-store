@@ -2,7 +2,7 @@ import axios from 'axios';
 import { isServerOnline, handleApiError } from '../utils/serverCheck';
 import { logout } from './authService';
 
-const API_URL = 'https://barber-store.onrender.com';
+const API_URL = 'http://localhost:5000/'; // Adjust the URL for your backend
 
 // Create axios instance with base configuration
 const api = axios.create({
@@ -20,9 +20,9 @@ let isServerConfirmedOnline = false;
 api.interceptors.request.use(
   async (config) => {
     // Only check server connectivity if we haven't confirmed it's online
-    // or if it's a critical operation like login/register
-    const isAuthRequest = config.url && (config.url.includes('/auth/login') || 
-                                        config.url.includes('/auth/register'));
+    // or if it's a critical operation like login/register    
+    const isAuthRequest = config.url && (config.url.includes('/api/auth/login') || 
+                                        config.url.includes('/api/auth/register'));
     
     if (!isServerConfirmedOnline || isAuthRequest) {
       try {

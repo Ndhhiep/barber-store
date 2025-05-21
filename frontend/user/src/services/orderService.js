@@ -9,7 +9,7 @@ import api from './api';
  */
 export const getMyOrders = async () => {
   try {
-    const response = await api.get('/orders/user/my-orders');
+    const response = await api.get('/api/orders/user/my-orders');
     return response.data;
   } catch (error) {
     console.error('Get my orders error:', error);
@@ -52,7 +52,7 @@ export const createOrder = async (orderData) => {
       }
     }
     
-    const response = await api.post('/orders', orderData);
+    const response = await api.post('/api/orders', orderData);
     return response.data;
   } catch (error) {
     console.error('Create order error:', error);

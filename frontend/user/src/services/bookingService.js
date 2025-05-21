@@ -16,7 +16,7 @@ const getToken = () => localStorage.getItem('token');
  */
 export const getMyBookings = async () => {
   try {
-    return await api.get('/bookings/my-bookings');
+    return await api.get('/api/bookings/my-bookings');
   } catch (error) {
     console.error('Get my bookings error:', error);
     throw error;

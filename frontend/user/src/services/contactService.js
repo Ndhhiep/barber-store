@@ -7,7 +7,7 @@ import api from './api';
  */
 export const submitContactForm = async (contactData) => {
   try {
-    const response = await api.post('/contacts', contactData);
+    const response = await api.post('/api/contacts', contactData);
     return response.data;
   } catch (error) {
     console.error('Error submitting contact form:', error);

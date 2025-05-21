@@ -99,7 +99,6 @@ const BookingPage = () => {
 
     fetchServices();
   }, []);
-
   // Check if a time slot should be disabled - wrapped in useCallback
   const isTimeSlotDisabled = useCallback((timeSlot) => {
     // If we have statuses from the backend, use those
@@ -110,6 +109,7 @@ const BookingPage = () => {
       }
     }
     
+    // If we don't have status data yet, assume the slot is available
     return false;
   }, [timeSlotStatuses]);
   // Check if a time slot is in the past or booked - for future use in showing specific messages
@@ -174,8 +174,7 @@ const BookingPage = () => {
     
     checkAuthStatus();
   }, []);
-
-  // Fetch time slot statuses when barber or date changes
+  // Fetch time slot statuses when barber or date changes (not on time selection)
   useEffect(() => {
     const fetchTimeSlotStatuses = async () => {
       if (bookingData.barber_id && bookingData.date) {
@@ -207,7 +206,7 @@ const BookingPage = () => {
       }
     };
       fetchTimeSlotStatuses();
-  }, [bookingData.barber_id, bookingData.date, bookingData.time]);
+  }, [bookingData.barber_id, bookingData.date]);
 
   // Wrap `validateBookingToken` in a `useCallback` hook
   const validateBookingToken = useCallback(async (token) => {
@@ -339,12 +338,18 @@ const BookingPage = () => {
       }));
     }
   };
-
   const handleTimeSelect = (time) => {
-    setBookingData(prev => ({
-      ...prev,
-      time
-    }));
+    // Check if the time is available before setting it (using already loaded time slot data)
+    const isAvailable = timeSlotStatuses.some(
+      slot => slot.start_time === time && !slot.isPast && slot.isAvailable
+    );
+    
+    if (isAvailable || timeSlotStatuses.length === 0) {
+      setBookingData(prev => ({
+        ...prev,
+        time
+      }));
+    }
   };
   
   const handleSubmit = async (e) => {

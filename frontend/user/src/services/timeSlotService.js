@@ -51,10 +51,8 @@ const getTimeSlotStatus = async (barberId, date) => {
         isPast: false,
         isAvailable: true
       }));
-    }
-
-    // Regular flow for specific barber
-    const response = await api.get('/bookings/time-slots-status', {
+    }    // Regular flow for specific barber
+    const response = await api.get('/api/bookings/time-slots-status', {
       params: {
         barberId,
         date
@@ -78,7 +76,7 @@ const getTimeSlotStatus = async (barberId, date) => {
  */
 const checkTimeSlotAvailability = async (barberId, date, timeSlot) => {
   try {
-    const response = await api.get('/bookings/check-availability', {
+    const response = await api.get('/api/bookings/check-availability', {
       params: {
         barberId,
         date,
