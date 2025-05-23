@@ -15,11 +15,13 @@ export const NotificationProvider = ({ children }) => {
   const [customerNotifications, setCustomerNotifications] = useState(0);
   
   // Sử dụng Socket.IO context
-  const { isConnected, registerHandler, unregisterHandler } = useSocketContext();
-  // Handler cho sự kiện newOrder
+  const { isConnected, registerHandler, unregisterHandler } = useSocketContext();  // Handler cho sự kiện newOrder
   const handleNewOrder = useCallback((data) => {
     console.log('Thông báo đơn hàng mới/cập nhật nhận được:', data);
-    setOrderNotifications((prev) => prev + 1);
+    // Chỉ tăng thông báo khi có order mới (insert), không tăng khi update
+    if (data.operationType === 'insert') {
+      setOrderNotifications((prev) => prev + 1);
+    }
   }, []);
   
   // Handler cho sự kiện newBooking

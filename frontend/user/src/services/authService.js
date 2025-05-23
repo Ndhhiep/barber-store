@@ -11,7 +11,7 @@ import api from './api';
  */
 export const login = async (email, password) => {
   try {
-    const response = await api.post('/api/auth/login', { email, password });
+    const response = await api.post('/auth/login', { email, password });
     
     // Check if response has expected structure
     if (response && response.data) {
@@ -33,11 +33,10 @@ export const login = async (email, password) => {
               window.location.href = result.redirectPath;
             } else {
               window.location.href = '/';
-            }
-          } else if (user.role === 'staff') {
-            throw new Error('Đây là tài khoản nhân viên. Vui lòng đăng nhập tại trang đăng nhập dành cho nhân viên.');
+            }          } else if (user.role === 'staff') {
+            throw new Error('This is a staff account. Please login at the staff login page.');
           } else {
-            throw new Error('Tài khoản của bạn không có quyền truy cập vào phần này.');
+            throw new Error('Your account does not have permission to access this section.');
           }
         }
       }
@@ -52,7 +51,7 @@ export const login = async (email, password) => {
     // Improved error handling
     if (error.response) {
       // Server returned an error response
-      const errorMessage = error.response.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.';
+      const errorMessage = error.response.data?.message || 'Login failed. Please check your credentials.';
       throw new Error(errorMessage);
     }
     
@@ -67,7 +66,7 @@ export const login = async (email, password) => {
  */
 export const register = async (userData) => {
   try {
-    const result = await api.post('/api/auth/register', userData);
+    const result = await api.post('/auth/register', userData);
     
     if (result.success && result.token) {
       localStorage.setItem('token', result.token);
@@ -98,7 +97,7 @@ export const getUserProfile = async () => {
     }
     
     // Nếu không có trong localStorage, lấy từ API
-    const response = await api.get('/api/auth/me');
+    const response = await api.get('/auth/me');
     
     if (response.data && response.data.user) {
       localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -119,7 +118,7 @@ export const getUserProfile = async () => {
  */
 export const updateUserProfile = async (userData) => {
   try {
-    const result = await api.put('/api/auth/update-profile', userData);
+    const result = await api.put('/auth/update-profile', userData);
     
     // Cập nhật thông tin user trong localStorage nếu thành công
     if (result.success && result.data && result.data.user) {

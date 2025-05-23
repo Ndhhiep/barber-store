@@ -1,7 +1,7 @@
 import axios from 'axios';
 import staffAuthService from './staffAuthService';
 
-const API_URL = 'http://localhost:5000/api'; // Điều chỉnh theo URL backend của bạn
+const API_URL = process.env.REACT_APP_BACKEND_API_URL; // Sử dụng biến môi trường thay vì hardcode URL
 
 // Lấy tất cả thợ cắt (chỉ những người đang hoạt động)
 const getAllBarbers = async () => {

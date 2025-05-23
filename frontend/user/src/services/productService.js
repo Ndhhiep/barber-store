@@ -1,7 +1,15 @@
 /**
  * Service quản lý các API liên quan đến sản phẩm
  */
-import api from './api';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_BACKEND_API_URL || 'http://localhost:5000/api'; // Use variable from .env file
+
+// Helper function to get auth headers
+const getAuthHeader = () => {
+  const token = localStorage.getItem('userToken');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 /**
  * Lấy danh sách sản phẩm với các bộ lọc tùy chọn
@@ -17,11 +25,11 @@ export const getProducts = async (filters = {}) => {
         queryParams.append(key, filters[key]);
       }
     });
+      const queryString = queryParams.toString();
+    const endpoint = queryString ? `${API_URL}/products?${queryString}` : `${API_URL}/products`;
     
-    const queryString = queryParams.toString();
-    const endpoint = queryString ? `/products?${queryString}` : '/products';
-    
-    return await api.get(endpoint);
+    const response = await axios.get(endpoint);
+    return response;
   } catch (error) {
     console.error('Get products error:', error);
     throw error;
@@ -35,7 +43,8 @@ export const getProducts = async (filters = {}) => {
  */
 export const getProductById = async (id) => {
   try {
-    return await api.get(`/products/${id}`);
+    const response = await axios.get(`${API_URL}/products/${id}`);
+    return response;
   } catch (error) {
     console.error(`Get product ${id} error:`, error);
     throw error;

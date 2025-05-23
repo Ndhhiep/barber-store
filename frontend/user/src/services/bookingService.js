@@ -1,14 +1,15 @@
-import axios from 'axios';
-
 /**
  * Service quản lý các API liên quan đến lịch hẹn
  */
-import api from './api';
+import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/bookings';
+const API_URL = process.env.REACT_APP_BACKEND_API_URL || 'http://localhost:5000/api'; // Use variable from .env file
 
-// Get authentication token
-const getToken = () => localStorage.getItem('token');
+// Helper function to get auth headers
+const getAuthHeader = () => {
+  const token = localStorage.getItem('userToken');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 /**
  * Lấy danh sách lịch hẹn của người dùng hiện tại
@@ -16,7 +17,10 @@ const getToken = () => localStorage.getItem('token');
  */
 export const getMyBookings = async () => {
   try {
-    return await api.get('/api/bookings/my-bookings');
+    const response = await axios.get(`${API_URL}/bookings/my-bookings`, {
+      headers: getAuthHeader()
+    });
+    return response;
   } catch (error) {
     console.error('Get my bookings error:', error);
     throw error;
@@ -29,15 +33,10 @@ export const getMyBookings = async () => {
  * @returns {Promise<Object>} - Lịch hẹn đã tạo
  */
 export const createBooking = async (bookingData) => {
-  const headers = {};
-  const token = getToken();
-  
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  
   try {
-    const response = await axios.post(API_URL, bookingData, { headers });
+    const response = await axios.post(`${API_URL}/bookings`, bookingData, {
+      headers: getAuthHeader()
+    });
     return response.data;
   } catch (error) {
     throw error;
@@ -50,17 +49,9 @@ export const createBooking = async (bookingData) => {
  * @returns {Promise<Object>} - Kết quả hủy lịch hẹn
  */
 export const cancelBooking = async (id) => {
-  const token = getToken();
-  
-  if (!token) {
-    throw new Error('Authentication required');
-  }
-  
   try {
-    const response = await axios.put(`${API_URL}/${id}/cancel`, {}, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+    const response = await axios.put(`${API_URL}/bookings/${id}/cancel`, {}, {
+      headers: getAuthHeader()
     });
     return response.data;
   } catch (error) {
@@ -75,7 +66,10 @@ export const cancelBooking = async (id) => {
  */
 export const getBookingById = async (id) => {
   try {
-    return await api.get(`/bookings/${id}`);
+    const response = await axios.get(`${API_URL}/bookings/${id}`, {
+      headers: getAuthHeader()
+    });
+    return response;
   } catch (error) {
     console.error(`Get booking ${id} error:`, error);
     throw error;
@@ -90,11 +84,14 @@ export const getBookingById = async (id) => {
  */
 export const getAvailableTimeSlots = async (date, barberId = null) => {
   try {
-    let endpoint = `/bookings/available-slots?date=${date}`;
+    let endpoint = `${API_URL}/bookings/available-slots?date=${date}`;
     if (barberId) {
       endpoint += `&barberId=${barberId}`;
     }
-    return await api.get(endpoint);
+    const response = await axios.get(endpoint, {
+      headers: getAuthHeader()
+    });
+    return response;
   } catch (error) {
     console.error('Get available time slots error:', error);
     throw error;

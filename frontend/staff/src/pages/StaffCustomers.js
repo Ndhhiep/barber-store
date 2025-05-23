@@ -13,6 +13,10 @@ const StaffCustomers = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [customerDetails, setCustomerDetails] = useState(null);
   const [activeTab, setActiveTab] = useState('info');
+  // Pagination states for bookings and orders
+  const [bookingsPage, setBookingsPage] = useState(1);
+  const [ordersPage, setOrdersPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
   // Thêm state mới để theo dõi các ID khách hàng mới
   const [newCustomerIds, setNewCustomerIds] = useState(new Set());
   
@@ -193,12 +197,14 @@ const StaffCustomers = () => {
       alert('Failed to update customer information. Please try again.');
     }
   };
-  
-  // Đóng modal chi tiết và reset state
+    // Đóng modal chi tiết và reset state
   const closeModal = () => {
     setIsModalOpen(false);
     setCustomerDetails(null);
     setActiveTab('info');
+    // Reset pagination for bookings and orders
+    setBookingsPage(1);
+    setOrdersPage(1);
   };
   
   // Handle form input change
@@ -238,7 +244,7 @@ const StaffCustomers = () => {
       {error && <div className="alert alert-danger">{error}</div>}
       
       <div className="row mb-4 mt-4">
-        <div className="col">
+        <div className="col"> 
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <span>All Customers</span>
@@ -272,32 +278,39 @@ const StaffCustomers = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {customers.map(customer => (
-                        <tr key={customer._id} className={newCustomerIds.has(customer._id) ? 'table-warning' : ''}>
-                          <td>{customer._id.slice(-6).toUpperCase()}
-                            {newCustomerIds.has(customer._id) && (
-                              <span className="badge bg-danger ms-2 animate__animated animate__fadeIn animate__pulse animate__infinite">NEW</span>
-                            )}
+                      {customers.map(customer => (                        <tr key={customer._id} className={newCustomerIds.has(customer._id) ? 'table-warning' : ''}>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              {customer._id.slice(-6).toUpperCase()}
+                              {newCustomerIds.has(customer._id) && (
+                                <span className="badge bg-danger ms-2 animate__animated animate__fadeIn animate__pulse animate__infinite">
+                                  <i className="fas fa-star me-1"></i>NEW
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td>{customer.name || 'N/A'}</td>
                           <td>{customer.email}</td>
                           <td>{customer.phone || 'N/A'}</td>
                           <td>{formatDate(customer.createdAt)}</td>
                           <td>{customer.bookingsCount || 0}</td>
-                          <td>{customer.ordersCount || 0}</td>
-                          <td>
-                            <button 
-                              className="btn btn-sm btn-info me-1" 
-                              onClick={() => handleViewCustomer(customer._id)}
-                            >
-                              View
-                            </button>
-                            <button 
-                              className="btn btn-sm btn-primary me-1"
-                              onClick={() => handleEditCustomer(customer._id)}
-                            >
-                              Edit
-                            </button>
+                          <td>{customer.ordersCount || 0}</td>                          <td>
+                            <div className="d-flex gap-1">
+                              <button 
+                                className="btn btn-sm btn-info" 
+                                onClick={() => handleViewCustomer(customer._id)}
+                                title="View customer details"
+                              >
+                                View
+                              </button>
+                              <button 
+                                className="btn btn-sm btn-primary"
+                                onClick={() => handleEditCustomer(customer._id)}
+                                title="Edit customer"
+                              >
+                                Edit
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -368,7 +381,7 @@ const StaffCustomers = () => {
             display: 'flex', 
             alignItems: 'flex-start', 
             justifyContent: 'center',
-            paddingTop: '120px'
+            paddingTop: '80px'
           }}>
             <div className="modal-dialog modal-lg" style={{ 
               margin: '0 auto', 
@@ -376,282 +389,441 @@ const StaffCustomers = () => {
               width: '100%', 
               maxWidth: '800px',
               position: 'relative'
-            }}>
-              <div className="modal-content">
+            }}>              <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">
+                    <i className={`fas ${customerDetails.isEditing ? 'fa-user-edit' : 'fa-user'} me-2`}></i>
                     {customerDetails.isEditing ? 'Edit Customer' : 'Customer Details'}
                   </h5>
-                  <button type="button" className="btn-close" onClick={closeModal}></button>
-                </div>
-                <div className="modal-body">
-                  {/* Tabs for different sections */}
-                  <ul className="nav nav-tabs mb-3">
-                    <li className="nav-item">
-                      <button 
-                        className={`nav-link ${activeTab === 'info' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('info')}
-                      >
-                        Personal Information
-                      </button>
-                    </li>
-                    {!customerDetails.isEditing && (
-                      <>
-                        <li className="nav-item">
-                          <button 
-                            className={`nav-link ${activeTab === 'bookings' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('bookings')}
-                          >
-                            Bookings
-                          </button>
-                        </li>
-                        <li className="nav-item">
-                          <button 
-                            className={`nav-link ${activeTab === 'orders' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('orders')}
-                          >
-                            Orders
-                          </button>
-                        </li>
-                      </>
-                    )}
-                  </ul>
+                  <button type="button" className="btn-close btn-close-white" onClick={closeModal}></button>
+                </div>                <div className="modal-body" style={{ height: '600px', overflowY: 'auto' }}>
+                  {/* Tabs for different sections */}                {customerDetails.isEditing ? (
+                    <div className="mb-4"></div>
+                  ) : (
+                    <ul className="nav nav-tabs nav-fill mb-4">
+                      <li className="nav-item">                      
+                        <button 
+                          className={`nav-link ${activeTab === 'info' ? 'active text-primary' : ''}`}
+                          onClick={() => setActiveTab('info')}
+                        >
+                          <i className="fas fa-user me-2"></i>Personal Information
+                        </button>
+                      </li>
+                      <li className="nav-item">
+                        <button 
+                          className={`nav-link ${activeTab === 'bookings' ? 'active text-warning' : ''}`}
+                          onClick={() => {
+                            setActiveTab('bookings');
+                            setBookingsPage(1);
+                          }}
+                        >
+                          <i className="fas fa-calendar-alt me-2"></i>Bookings
+                        </button>
+                      </li>
+                      <li className="nav-item">
+                        <button 
+                          className={`nav-link ${activeTab === 'orders' ? 'active text-success' : ''}`}
+                          onClick={() => {
+                            setActiveTab('orders');
+                            setOrdersPage(1);
+                          }}
+                        >
+                          <i className="fas fa-shopping-bag me-2"></i>Orders
+                        </button>
+                      </li>
+                    </ul>
+                  )}
                   
                   {/* Personal Information */}
                   {activeTab === 'info' && (
                     <div>
                       {customerDetails.isEditing ? (
                         <form onSubmit={(e) => { e.preventDefault(); handleSaveCustomer(); }}>
-                          <div className="row">
-                            <div className="col-md-6 mb-3">
-                              <label htmlFor="name" className="form-label">Full Name</label>
-                              <input 
-                                type="text" 
-                                className="form-control" 
-                                id="name" 
-                                name="name" 
-                                value={customerDetails.name || ''} 
-                                onChange={handleInputChange}
-                                required
-                              />
+                          <div className="card border-left border-primary mb-4">
+                            <div className="card-header bg-light">
+                              <h6 className="mb-0 text-primary">
+                                <i className="fas fa-user-edit me-2"></i>Personal Information
+                              </h6>
                             </div>
-                            <div className="col-md-6 mb-3">
-                              <label htmlFor="email" className="form-label">Email Address</label>
-                              <input 
-                                type="email" 
-                                className="form-control" 
-                                id="email" 
-                                name="email" 
-                                value={customerDetails.email || ''} 
-                                onChange={handleInputChange}
-                                required
-                              />
-                            </div>
-                          </div>
-                          <div className="row">
-                            <div className="col-md-6 mb-3">
-                              <label htmlFor="phone" className="form-label">Phone Number</label>
-                              <input 
-                                type="tel" 
-                                className="form-control" 
-                                id="phone" 
-                                name="phone" 
-                                value={customerDetails.phone || ''} 
-                                onChange={handleInputChange}
-                              />
-                            </div>
-                          </div>
-                          <h6 className="mt-3">Address Information</h6>
-                          <div className="row">
-                            <div className="col-md-12 mb-3">
-                              <label htmlFor="address.street" className="form-label">Street Address</label>
-                              <input 
-                                type="text" 
-                                className="form-control" 
-                                id="address.street" 
-                                name="address.street" 
-                                value={customerDetails.address?.street || ''} 
-                                onChange={handleInputChange}
-                              />
+                            <div className="card-body">
+                              <div className="row">
+                                <div className="col-md-6 mb-3">
+                                  <label htmlFor="name" className="form-label">Full Name</label>
+                                  <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    id="name" 
+                                    name="name" 
+                                    value={customerDetails.name || ''} 
+                                    onChange={handleInputChange}
+                                    required
+                                  />
+                                </div>
+                                <div className="col-md-6 mb-3">
+                                  <label htmlFor="email" className="form-label">Email Address</label>
+                                  <input 
+                                    type="email" 
+                                    className="form-control" 
+                                    id="email" 
+                                    name="email" 
+                                    value={customerDetails.email || ''} 
+                                    onChange={handleInputChange}
+                                    required
+                                  />
+                                </div>
+                              </div>                              <div className="row">
+                                <div className="col-md-6 mb-3">
+                                  <label htmlFor="phone" className="form-label">Phone Number</label>
+                                  <input 
+                                    type="tel" 
+                                    className="form-control" 
+                                    id="phone" 
+                                    name="phone" 
+                                    value={customerDetails.phone || ''} 
+                                    onChange={handleInputChange}
+                                  />
+                                </div>
+                              </div>
                             </div>
                           </div>
-                          <div className="row">
-                            <div className="col-md-6 mb-3">
-                              <label htmlFor="address.city" className="form-label">City</label>
-                              <input 
-                                type="text" 
-                                className="form-control" 
-                                id="address.city" 
-                                name="address.city" 
-                                value={customerDetails.address?.city || ''} 
-                                onChange={handleInputChange}
-                              />
+                          <div className="card border-left border-info mb-3">
+                            <div className="card-header bg-light">
+                              <h6 className="mb-0 text-info">
+                                <i className="fas fa-map-marker-alt me-2"></i>Address Information
+                              </h6>
                             </div>
-                            <div className="col-md-6 mb-3">
-                              <label htmlFor="address.state" className="form-label">State/Province</label>
-                              <input 
-                                type="text" 
-                                className="form-control" 
-                                id="address.state" 
-                                name="address.state" 
-                                value={customerDetails.address?.state || ''} 
-                                onChange={handleInputChange}
-                              />
-                            </div>
-                          </div>
-                          <div className="row">
-                            <div className="col-md-6 mb-3">
-                              <label htmlFor="address.zipCode" className="form-label">Zip/Postal Code</label>
-                              <input 
-                                type="text" 
-                                className="form-control" 
-                                id="address.zipCode" 
-                                name="address.zipCode" 
-                                value={customerDetails.address?.zipCode || ''} 
-                                onChange={handleInputChange}
-                              />
-                            </div>
-                            <div className="col-md-6 mb-3">
-                              <label htmlFor="address.country" className="form-label">Country</label>
-                              <input 
-                                type="text" 
-                                className="form-control" 
-                                id="address.country" 
-                                name="address.country" 
-                                value={customerDetails.address?.country || ''} 
-                                onChange={handleInputChange}
-                              />
+                            <div className="card-body">
+                              <div className="row">
+                                <div className="col-md-12 mb-3">
+                                  <label htmlFor="address.street" className="form-label">Street Address</label>
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    id="address.street"
+                                    name="address.street"
+                                    value={customerDetails.address?.street || ''}
+                                    onChange={handleInputChange}
+                                  />
+                                </div>
+                              </div>
+                              <div className="row">
+                                <div className="col-md-6 mb-3">
+                                  <label htmlFor="address.city" className="form-label">City</label>
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    id="address.city"
+                                    name="address.city"
+                                    value={customerDetails.address?.city || ''}
+                                    onChange={handleInputChange}
+                                  />
+                                </div>
+                                <div className="col-md-6 mb-3">
+                                  <label htmlFor="address.state" className="form-label">State/Province</label>
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    id="address.state"
+                                    name="address.state"
+                                    value={customerDetails.address?.state || ''}
+                                    onChange={handleInputChange}
+                                  />
+                                </div>
+                              </div>
+                              <div className="row">
+                                <div className="col-md-6 mb-3">
+                                  <label htmlFor="address.zipCode" className="form-label">Zip/Postal Code</label>
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    id="address.zipCode"
+                                    name="address.zipCode"
+                                    value={customerDetails.address?.zipCode || ''}
+                                    onChange={handleInputChange}
+                                  />
+                                </div>
+                                <div className="col-md-6 mb-3">
+                                  <label htmlFor="address.country" className="form-label">Country</label>
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    id="address.country"
+                                    name="address.country"
+                                    value={customerDetails.address?.country || ''}
+                                    onChange={handleInputChange}
+                                  />
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </form>
                       ) : (
                         <>
-                          <div className="row">
+                          <div className="row mb-4">
                             <div className="col-md-6">
-                              <h6>Personal Details</h6>
-                              <p><strong>Name:</strong> {customerDetails.name || 'N/A'}</p>
-                              <p><strong>Email:</strong> {customerDetails.email}</p>
-                              <p><strong>Phone:</strong> {customerDetails.phone || 'N/A'}</p>
-                              <p><strong>Member Since:</strong> {formatDate(customerDetails.createdAt)}</p>
+                              <div className="card h-100 border-left border-primary">
+                                <div className="card-header bg-light">
+                                  <h6 className="mb-0 text-primary">
+                                    <i className="fas fa-user me-2"></i>Personal Details
+                                  </h6>
+                                </div>                                <div className="card-body">
+                                  <p><strong>Name:</strong> {customerDetails.name || 'N/A'}</p>
+                                  <p><strong>Email:</strong> {customerDetails.email}</p>
+                                  <p><strong>Phone:</strong> {customerDetails.phone || 'N/A'}</p>
+                                  <p><strong>Member Since:</strong> {formatDate(customerDetails.createdAt)}</p>
+                                  <p className="mt-2 text-success"><strong>Total Spent:</strong> ${customerDetails.orders?.reduce((total, order) => total + (order.totalAmount || 0), 0).toFixed(2)}</p>
+                                </div>
+                              </div>
                             </div>
                             <div className="col-md-6">
-                              <h6>Address</h6>
-                              {customerDetails.address ? (
-                                <address>
-                                  {customerDetails.address.street && <p>{customerDetails.address.street}</p>}
-                                  {customerDetails.address.city && customerDetails.address.state && (
-                                    <p>{customerDetails.address.city}, {customerDetails.address.state} {customerDetails.address.zipCode}</p>
+                              <div className="card h-100 border-left border-info">
+                                <div className="card-header bg-light">
+                                  <h6 className="mb-0 text-info">
+                                    <i className="fas fa-map-marker-alt me-2"></i>Address
+                                  </h6>
+                                </div>
+                                <div className="card-body">
+                                  {customerDetails.address ? (
+                                    <address>
+                                      {customerDetails.address.street && <p>{customerDetails.address.street}</p>}
+                                      {customerDetails.address.city && customerDetails.address.state && (
+                                        <p>{customerDetails.address.city}, {customerDetails.address.state} {customerDetails.address.zipCode}</p>
+                                      )}
+                                      {customerDetails.address.country && <p>{customerDetails.address.country}</p>}
+                                    </address>
+                                  ) : (
+                                    <p>No address on file</p>
                                   )}
-                                  {customerDetails.address.country && <p>{customerDetails.address.country}</p>}
-                                </address>
-                              ) : (
-                                <p>No address on file</p>
-                              )}
+                                </div>
+                              </div>
                             </div>
                           </div>
-                          <div className="row mt-3">
+                          <div className="row">
                             <div className="col-md-6">
-                              <h6>Order Statistics</h6>
-                              <p><strong>Total Orders:</strong> {customerDetails.orders?.length || 0}</p>
-                              <p><strong>Total Spent:</strong> ${customerDetails.orders?.reduce((total, order) => total + (order.totalAmount || 0), 0).toFixed(2)}</p>
+                              <div className="card h-100 border-left border-success">
+                                <div className="card-header bg-light">
+                                  <h6 className="mb-0 text-success">
+                                    <i className="fas fa-shopping-cart me-2"></i>Order Statistics
+                                  </h6>
+                                </div>
+                                <div className="card-body">
+                                  <p><strong>Total Orders:</strong> {customerDetails.orders?.length || 0}</p>
+                                  
+                                </div>
+                              </div>
                             </div>
                             <div className="col-md-6">
-                              <h6>Booking Statistics</h6>
-                              <p><strong>Total Bookings:</strong> {customerDetails.bookings?.length || 0}</p>
+                              <div className="card h-100 border-left border-warning">
+                                <div className="card-header bg-light">
+                                  <h6 className="mb-0 text-warning">
+                                    <i className="fas fa-calendar-check me-2"></i>Booking Statistics
+                                  </h6>
+                                </div>
+                                <div className="card-body">
+                                  <p><strong>Total Bookings:</strong> {customerDetails.bookings?.length || 0}</p>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </>
                       )}
                     </div>
                   )}
-                  
-                  {/* Bookings Tab */}
+                    {/* Bookings Tab */}
                   {activeTab === 'bookings' && (
                     <div>
-                      <h6>Customer Bookings</h6>
-                      {customerDetails.bookings?.length > 0 ? (
-                        <div className="table-responsive">
-                          <table className="table table-sm">
-                            <thead>
-                              <tr>
-                                <th>Booking ID</th>
-                                <th>Service</th>
-                                <th>Date</th>
-                                <th>Time</th>
-                                <th>Status</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {customerDetails.bookings.map(booking => (
-                                <tr key={booking._id}>
-                                  <td>#{booking._id.slice(-6).toUpperCase()}</td>
-                                  <td>{booking.serviceName}</td>
-                                  <td>{formatDate(booking.date)}</td>
-                                  <td>{booking.time}</td>
-                                  <td>
-                                    <span className={`badge bg-${
-                                      booking.status === 'pending' ? 'warning' : 
-                                      booking.status === 'confirmed' ? 'success' : 
-                                      booking.status === 'cancelled' ? 'danger' : 
-                                      booking.status === 'completed' ? 'info' : 'secondary'
-                                    }`}>
-                                      {booking.status?.charAt(0).toUpperCase() + booking.status?.slice(1)}
-                                    </span>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                      <div className="card border-left border-warning mb-3">
+                        <div className="card-header bg-light">
+                          <h6 className="mb-0 text-warning">
+                            <i className="fas fa-calendar-alt me-2"></i>Customer Bookings
+                          </h6>
                         </div>
-                      ) : (
-                        <p>This customer has no bookings.</p>
-                      )}
+                        <div className="card-body">
+                          {customerDetails.bookings?.length > 0 ? (
+                            <>
+                              <div className="table-responsive">
+                                <table className="table table-sm table-hover">
+                                  <thead>
+                                    <tr>
+                                      <th>Booking ID</th>
+                                      <th>Service</th>
+                                      <th>Date</th>
+                                      <th>Time</th>
+                                      <th>Status</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {customerDetails.bookings
+                                      .slice(
+                                        (bookingsPage - 1) * ITEMS_PER_PAGE,
+                                        bookingsPage * ITEMS_PER_PAGE
+                                      )
+                                      .map(booking => (
+                                        <tr key={booking._id}>
+                                          <td>#{booking._id.slice(-6).toUpperCase()}</td>
+                                          <td>{booking.serviceName}</td>
+                                          <td>{formatDate(booking.date)}</td>
+                                          <td>{booking.time}</td>
+                                          <td>
+                                            <span className={`badge bg-${
+                                              booking.status === 'pending' ? 'warning' : 
+                                              booking.status === 'confirmed' ? 'success' : 
+                                              booking.status === 'cancelled' ? 'danger' : 
+                                              booking.status === 'completed' ? 'info' : 'secondary'
+                                            }`}>
+                                              {booking.status?.charAt(0).toUpperCase() + booking.status?.slice(1)}
+                                            </span>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                              {/* Bookings Pagination */}
+                              {Math.ceil(customerDetails.bookings.length / ITEMS_PER_PAGE) > 1 && (
+                                <nav aria-label="Bookings pagination" className="mt-3">
+                                  <ul className="pagination pagination-sm justify-content-center">
+                                    <li className={`page-item ${bookingsPage === 1 ? 'disabled' : ''}`}>
+                                      <button 
+                                        className="page-link" 
+                                        onClick={() => setBookingsPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={bookingsPage === 1}
+                                      >
+                                        <i className="fas fa-chevron-left"></i>
+                                      </button>
+                                    </li>
+                                    
+                                    {[...Array(Math.ceil(customerDetails.bookings.length / ITEMS_PER_PAGE))].map((_, i) => (
+                                      <li 
+                                        key={i} 
+                                        className={`page-item ${bookingsPage === i + 1 ? 'active' : ''}`}
+                                      >
+                                        <button 
+                                          className="page-link" 
+                                          onClick={() => setBookingsPage(i + 1)}
+                                        >
+                                          {i + 1}
+                                        </button>
+                                      </li>
+                                    ))}
+                                    
+                                    <li className={`page-item ${bookingsPage === Math.ceil(customerDetails.bookings.length / ITEMS_PER_PAGE) ? 'disabled' : ''}`}>
+                                      <button 
+                                        className="page-link" 
+                                        onClick={() => setBookingsPage(prev => Math.min(prev + 1, Math.ceil(customerDetails.bookings.length / ITEMS_PER_PAGE)))}
+                                        disabled={bookingsPage === Math.ceil(customerDetails.bookings.length / ITEMS_PER_PAGE)}
+                                      >
+                                        <i className="fas fa-chevron-right"></i>
+                                      </button>
+                                    </li>
+                                  </ul>
+                                </nav>
+                              )}
+                            </>
+                          ) : (
+                            <p>This customer has no bookings.</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )}
-                  
-                  {/* Orders Tab */}
+                    {/* Orders Tab */}
                   {activeTab === 'orders' && (
                     <div>
-                      <h6>Customer Orders</h6>
-                      {customerDetails.orders?.length > 0 ? (
-                        <div className="table-responsive">
-                          <table className="table table-sm">
-                            <thead>
-                              <tr>
-                                <th>Order ID</th>
-                                <th>Date</th>
-                                <th>Total</th>
-                                <th>Status</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {customerDetails.orders.map(order => (
-                                <tr key={order._id}>
-                                  <td>#{order.orderNumber || order._id.slice(-6).toUpperCase()}</td>
-                                  <td>{formatDate(order.createdAt)}</td>
-                                  <td>${order.totalAmount?.toFixed(2)}</td>
-                                  <td>
-                                    <span className={`badge bg-${
-                                      order.status === 'processing' ? 'info' : 
-                                      order.status === 'shipped' ? 'primary' : 
-                                      order.status === 'delivered' ? 'success' : 
-                                      order.status === 'cancelled' ? 'danger' : 'secondary'
-                                    }`}>
-                                      {order.status?.charAt(0).toUpperCase() + order.status?.slice(1)}
-                                    </span>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                      <div className="card border-left border-success mb-3">
+                        <div className="card-header bg-light">
+                          <h6 className="mb-0 text-success">
+                            <i className="fas fa-shopping-bag me-2"></i>Customer Orders
+                          </h6>
                         </div>
-                      ) : (
-                        <p>This customer has no orders.</p>
-                      )}
+                        <div className="card-body">
+                          {customerDetails.orders?.length > 0 ? (
+                            <>
+                              <div className="table-responsive">
+                                <table className="table table-sm table-hover">
+                                  <thead>
+                                    <tr>
+                                      <th>Order ID</th>
+                                      <th>Date</th>
+                                      <th>Total</th>
+                                      <th>Status</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {customerDetails.orders
+                                      .slice(
+                                        (ordersPage - 1) * ITEMS_PER_PAGE,
+                                        ordersPage * ITEMS_PER_PAGE
+                                      )
+                                      .map(order => (
+                                        <tr key={order._id}>
+                                          <td>#{order.orderNumber || order._id.slice(-6).toUpperCase()}</td>
+                                          <td>{formatDate(order.createdAt)}</td>
+                                          <td>${order.totalAmount?.toFixed(2)}</td>
+                                          <td>
+                                            <span className={`badge bg-${
+                                              order.status === 'processing' ? 'info' : 
+                                              order.status === 'shipped' ? 'primary' : 
+                                              order.status === 'delivered' ? 'success' : 
+                                              order.status === 'cancelled' ? 'danger' : 'secondary'
+                                            }`}>
+                                              {order.status?.charAt(0).toUpperCase() + order.status?.slice(1)}
+                                            </span>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                              {/* Orders Pagination */}
+                              {Math.ceil(customerDetails.orders.length / ITEMS_PER_PAGE) > 1 && (
+                                <nav aria-label="Orders pagination" className="mt-3">
+                                  <ul className="pagination pagination-sm justify-content-center">
+                                    <li className={`page-item ${ordersPage === 1 ? 'disabled' : ''}`}>
+                                      <button 
+                                        className="page-link" 
+                                        onClick={() => setOrdersPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={ordersPage === 1}
+                                      >
+                                        <i className="fas fa-chevron-left"></i>
+                                      </button>
+                                    </li>
+                                    
+                                    {[...Array(Math.ceil(customerDetails.orders.length / ITEMS_PER_PAGE))].map((_, i) => (
+                                      <li 
+                                        key={i} 
+                                        className={`page-item ${ordersPage === i + 1 ? 'active' : ''}`}
+                                      >
+                                        <button 
+                                          className="page-link" 
+                                          onClick={() => setOrdersPage(i + 1)}
+                                        >
+                                          {i + 1}
+                                        </button>
+                                      </li>
+                                    ))}
+                                    
+                                    <li className={`page-item ${ordersPage === Math.ceil(customerDetails.orders.length / ITEMS_PER_PAGE) ? 'disabled' : ''}`}>
+                                      <button 
+                                        className="page-link" 
+                                        onClick={() => setOrdersPage(prev => Math.min(prev + 1, Math.ceil(customerDetails.orders.length / ITEMS_PER_PAGE)))}
+                                        disabled={ordersPage === Math.ceil(customerDetails.orders.length / ITEMS_PER_PAGE)}
+                                      >
+                                        <i className="fas fa-chevron-right"></i>
+                                      </button>
+                                    </li>
+                                  </ul>
+                                </nav>
+                              )}
+                            </>
+                          ) : (
+                            <p>This customer has no orders.</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )}
-                </div>
-                <div className="modal-footer">
+                </div>                <div className="modal-footer">
                   {customerDetails.isEditing ? (
                     <>
                       <button 
@@ -659,31 +831,31 @@ const StaffCustomers = () => {
                         className="btn btn-secondary" 
                         onClick={closeModal}
                       >
-                        Cancel
+                        <i className="fas fa-times me-2"></i>Cancel
                       </button>
                       <button 
                         type="button" 
                         className="btn btn-primary"
                         onClick={handleSaveCustomer}
                       >
-                        Save Changes
+                        <i className="fas fa-save me-2"></i>Save Changes
                       </button>
                     </>
                   ) : (
                     <>
                       <button 
                         type="button" 
-                        className="btn btn-primary me-auto"
+                        className="btn btn-outline-primary me-auto"
                         onClick={() => handleEditCustomer(customerDetails._id)}
                       >
-                        Edit Customer
+                        <i className="fas fa-user-edit me-2"></i>Edit Customer
                       </button>
                       <button 
                         type="button" 
                         className="btn btn-secondary"
                         onClick={closeModal}
                       >
-                        Close
+                        <i className="fas fa-times me-2"></i>Close
                       </button>
                     </>
                   )}

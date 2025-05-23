@@ -9,6 +9,8 @@ const MyBookingsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [serverOnline, setServerOnline] = useState(true);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [bookingToCancel, setBookingToCancel] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -101,26 +103,46 @@ const MyBookingsPage = () => {
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
+  };  // Open confirmation modal
+  const openCancelModal = (bookingId) => {
+    // Find the booking in our state to show details in the modal
+    const selectedBooking = bookings.find(booking => booking._id === bookingId);
+    if (selectedBooking) {
+      setBookingToCancel(bookingId);
+      setShowConfirmModal(true);
+    } else {
+      console.error('Booking not found:', bookingId);
+    }
   };
-
+  
+  // Close confirmation modal
+  const closeCancelModal = () => {
+    setShowConfirmModal(false);
+    setBookingToCancel(null);
+  };
+  
   // Handle booking cancellation
-  const handleCancelBooking = async (bookingId) => {
-    if (window.confirm('Are you sure you want to cancel this booking?')) {
-      try {
-        await cancelBooking(bookingId);
-        
-        // Update the booking status in the UI
-        setBookings(prevBookings =>
-          prevBookings.map(booking =>
-            booking._id === bookingId
-              ? { ...booking, status: 'cancelled' }
-              : booking
-          )
-        );
-      } catch (error) {
-        console.error('Error cancelling booking:', error);
-        alert('Failed to cancel booking. Please try again.');
-      }
+  const handleCancelBooking = async () => {
+    if (!bookingToCancel) return;
+    
+    try {
+      await cancelBooking(bookingToCancel);
+      
+      // Update the booking status in the UI
+      setBookings(prevBookings =>
+        prevBookings.map(booking =>
+          booking._id === bookingToCancel
+            ? { ...booking, status: 'cancelled' }
+            : booking
+        )
+      );
+      
+      // Close the modal
+      closeCancelModal();
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+      alert('Failed to cancel booking. Please try again.');
+      closeCancelModal();
     }
   };
 
@@ -193,10 +215,15 @@ const MyBookingsPage = () => {
                 <div className="card-header d-flex justify-content-between align-items-center">
                   <h5 className="mb-0">{booking.service}</h5>
                   {getStatusBadge(booking.status)}
-                </div>
-                <div className="card-body">
+                </div>                <div className="card-body">
                   <p className="mb-2"><strong>Date:</strong> {formatDate(booking.date)} at {booking.time}</p>
-                  <p className="mb-2"><strong>Barber:</strong> {booking.barber}</p>
+                  <p className="mb-2">
+                    <strong>Barber:</strong> {
+                      booking.barber?.name || 
+                      (booking.barber_id?.name ? booking.barber_id.name : 
+                       (typeof booking.barber === 'string' ? booking.barber : 'Not specified'))
+                    }
+                  </p>
                   {booking.notes && (
                     <p className="mb-2"><strong>Notes:</strong> {booking.notes}</p>
                   )}
@@ -204,11 +231,10 @@ const MyBookingsPage = () => {
                     Booked on {new Date(booking.createdAt).toLocaleString()}
                   </p>
                 </div>
-                <div className="card-footer">
-                  {(booking.status === 'pending' || booking.status === 'confirmed') && (
+                <div className="card-footer">                  {(booking.status === 'pending' || booking.status === 'confirmed') && (
                     <button
                       className="btn btn-outline-danger btn-sm w-100"
-                      onClick={() => handleCancelBooking(booking._id)}
+                      onClick={() => openCancelModal(booking._id)}
                     >
                       Cancel Booking
                     </button>
@@ -217,6 +243,66 @@ const MyBookingsPage = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+        {/* Confirmation Modal */}
+      {showConfirmModal && bookingToCancel && (
+        <div className="modal-backdrop">
+          <div className="confirmation-modal">
+            <div className="confirmation-modal-content">
+              <h4>Cancel Booking</h4>
+              
+              {/* Booking details section */}
+              <div className="booking-details mb-3">
+                {(() => {
+                  // Find the booking to display its details
+                  const bookingDetails = bookings.find(b => b._id === bookingToCancel);
+                  if (bookingDetails) {
+                    return (
+                      <div className="card booking-summary">
+                        <div className="card-body">
+                          <h6 className="booking-service">{bookingDetails.service}</h6>
+                          <hr />
+                          <div className="booking-info">
+                            <p><strong>Date:</strong> {formatDate(bookingDetails.date)} at {bookingDetails.time}</p>
+                            <p>
+                              <strong>Barber:</strong> {
+                                bookingDetails.barber?.name || 
+                                (bookingDetails.barber_id?.name ? bookingDetails.barber_id.name : 
+                                (typeof bookingDetails.barber === 'string' ? bookingDetails.barber : 'Not specified'))
+                              }
+                            </p>
+                            {bookingDetails.notes && (
+                              <p className="booking-notes"><strong>Notes:</strong> {bookingDetails.notes}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return <p>Loading booking details...</p>;
+                })()}
+              </div>
+              
+              <p>Are you sure you want to cancel this booking?</p>
+              <p className="text-muted small">This action cannot be undone.</p>
+              
+              <div className="confirmation-modal-actions">
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={closeCancelModal}
+                >
+                  Keep Booking
+                </button>
+                <button 
+                  className="btn btn-danger" 
+                  onClick={handleCancelBooking}
+                >
+                  Cancel Booking
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

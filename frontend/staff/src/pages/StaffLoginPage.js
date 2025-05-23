@@ -32,10 +32,9 @@ const StaffLoginPage = () => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-    
-    try {
+      try {
       // Sử dụng staffAuthService.staffLogin để xác thực
-      const response = await staffAuthService.staffLogin(formData.email, formData.password);
+      await staffAuthService.staffLogin(formData.email, formData.password);
       
       // Đặt flag trong sessionStorage để đánh dấu quy trình đăng nhập đúng
       sessionStorage.setItem('staffJustLoggedIn', 'true');

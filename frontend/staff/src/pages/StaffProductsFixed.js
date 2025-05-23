@@ -4,7 +4,9 @@ import staffProductService from '../services/staffProductService';
 // Define items per page constant
 const ITEMS_PER_PAGE = 10;
 
-const StaffProducts = () => {  const [filteredProducts, setFilteredProducts] = useState([]);
+const StaffProducts = () => {
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [categories, setCategories] = useState(['All Categories']);
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
@@ -46,55 +48,50 @@ const StaffProducts = () => {  const [filteredProducts, setFilteredProducts] = u
       setCategories(['All Categories', 'Pomade', 'Pre-styling', 'Grooming']);
     }
   }, []);
+  
   // Định nghĩa fetchProducts với useCallback
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       // Chỉ truyền category khi không phải "All Categories"
       const categoryParam = selectedCategory !== 'All Categories' ? selectedCategory : '';
+      const response = await staffProductService.getAllProducts(categoryParam, currentPage, ITEMS_PER_PAGE);
       
-      // Nếu đang lọc low stock, cần lấy tất cả sản phẩm từ tất cả các trang
-      if (showLowStockOnly) {
-        // Gọi API với tham số để lấy tất cả sản phẩm
-        const allPagesResponse = await staffProductService.getAllProducts(categoryParam, 1, 1000); // Lấy số lượng lớn để đảm bảo lấy tất cả
-          if (allPagesResponse && allPagesResponse.products) {
-          const allProductsData = allPagesResponse.products;
-          
-          // Lọc các sản phẩm có số lượng <= 5
-          const lowStockProducts = allProductsData.filter(product => (product.quantity || 0) <= 5);
-          
-          // Tính toán phân trang cho sản phẩm low stock
-          const totalLowStockItems = lowStockProducts.length;
-          const totalLowStockPages = Math.max(1, Math.ceil(totalLowStockItems / ITEMS_PER_PAGE));
-          
-          // Xác định sản phẩm low stock cần hiển thị cho trang hiện tại
-          const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-          const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, lowStockProducts.length);
-          const currentPageLowStockProducts = lowStockProducts.slice(startIndex, endIndex);
-          
-          setFilteredProducts(currentPageLowStockProducts);
-          setTotalPages(totalLowStockPages);
+      // Kiểm tra dữ liệu trả về
+      if (response && response.products) {
+        const allProducts = response.products;
+        setProducts(allProducts);
+        
+        // Apply low stock filter if enabled
+        const productsToShow = showLowStockOnly 
+          ? allProducts.filter(product => (product.quantity || 0) <= 5)
+          : allProducts;
+        
+        setFilteredProducts(productsToShow);
+        
+        // Calculate total pages based on filtered products when low stock filter is enabled
+        if (showLowStockOnly) {
+          // When low stock filter is active, calculate pages based on filtered results
+          const lowStockCount = allProducts.filter(product => (product.quantity || 0) <= 5).length;
+          const calculatedPages = Math.max(1, Math.ceil(lowStockCount / ITEMS_PER_PAGE));
+          setTotalPages(calculatedPages);
         } else {
-          setFilteredProducts([]);
-          setTotalPages(1);
-        }
-      } else {        // Chế độ bình thường, lấy sản phẩm theo trang
-        const response = await staffProductService.getAllProducts(categoryParam, currentPage, ITEMS_PER_PAGE);
-          if (response && response.products) {
-          const allProducts = response.products;
-          setFilteredProducts(allProducts);
+          // When showing all products, use the totalPages from API response
           setTotalPages(response.totalPages || 1);
-        } else {
-          // Giải pháp thay thế nếu response không đúng định dạng
-          console.warn('Invalid response format:', response);
-          setFilteredProducts([]);
-          setTotalPages(1);
         }
+      } else {
+        // Giải pháp thay thế nếu response không đúng định dạng
+        console.warn('Invalid response format:', response);
+        setProducts([]);
+        setFilteredProducts([]);
+        setTotalPages(1);
       }
       
-      setError(null);    } catch (err) {
+      setError(null);
+    } catch (err) {
       console.error('Error fetching products:', err);
       setError('Failed to load products. Please try again later.');
+      setProducts([]);
       setFilteredProducts([]);
     } finally {
       setLoading(false);
@@ -106,7 +103,8 @@ const StaffProducts = () => {  const [filteredProducts, setFilteredProducts] = u
     fetchProducts();
     fetchCategories();
   }, [selectedCategory, currentPage, fetchProducts, fetchCategories]);
-    // Tự động ẩn thông báo thành công sau 3 giây
+  
+  // Tự động ẩn thông báo thành công sau 3 giây
   useEffect(() => {
     if (successMessage) {
       const timer = setTimeout(() => {
@@ -122,15 +120,32 @@ const StaffProducts = () => {  const [filteredProducts, setFilteredProducts] = u
     // Đặt lại trang đầu khi thay đổi category
     setCurrentPage(1);
   };
-    const handleLowStockFilterChange = async () => {
+  
+  const handleLowStockFilterChange = () => {
     // Toggle the low stock filter
-    setShowLowStockOnly(prev => !prev);
-    
-    // Reset to page 1 when toggling filter
-    setCurrentPage(1);
-    
-    // Sản phẩm sẽ được cập nhật trong fetchProducts, được gọi bởi useEffect khi state thay đổi
-    // Không cần xử lý phân trang tại đây
+    setShowLowStockOnly(prev => {
+      const newFilterState = !prev;
+      
+      // If we're enabling the filter, immediately recalculate filtered products and pagination
+      if (newFilterState) {
+        const lowStockProducts = products.filter(product => (product.quantity || 0) <= 5);
+        setFilteredProducts(lowStockProducts);
+        
+        // Recalculate total pages based on filtered products
+        const calculatedPages = Math.max(1, Math.ceil(lowStockProducts.length / ITEMS_PER_PAGE));
+        setTotalPages(calculatedPages);
+      } else {
+        // If disabling the filter, restore original products and pagination
+        setFilteredProducts(products);
+        // We need to fetch the total pages from API or calculate it
+        const calculatedPages = Math.max(1, Math.ceil(products.length / ITEMS_PER_PAGE));
+        setTotalPages(calculatedPages);
+      }
+      
+      // Reset to page 1
+      setCurrentPage(1);
+      return newFilterState;
+    });
   };
   
   const handlePageChange = (page) => {
@@ -139,6 +154,7 @@ const StaffProducts = () => {  const [filteredProducts, setFilteredProducts] = u
     }
   };
   
+  // Rest of the component remains the same...
   const resetForm = () => {
     setCurrentProduct({
       name: '',
@@ -156,7 +172,8 @@ const StaffProducts = () => {  const [filteredProducts, setFilteredProducts] = u
     resetForm();
     setIsModalOpen(true);
   };
-    const openEditModal = (product) => {
+  
+  const openEditModal = (product) => {
     setCurrentProduct({
       id: product._id,
       name: product.name || '',
@@ -284,7 +301,8 @@ const StaffProducts = () => {  const [filteredProducts, setFilteredProducts] = u
                 <span className="me-3">All Products</span>
               </div>
               <div className="d-flex align-items-center">
-                <div className="form-check form-switch me-3">                  <input
+                <div className="form-check form-switch me-3">
+                  <input
                     className="form-check-input"
                     type="checkbox"
                     id="lowStockFilter"
@@ -324,7 +342,8 @@ const StaffProducts = () => {  const [filteredProducts, setFilteredProducts] = u
                         <th>Actions</th>
                       </tr>
                     </thead>
-                    <tbody>                      {filteredProducts.map(product => {
+                    <tbody>
+                      {filteredProducts.map(product => {
                         const isLowStock = (product.quantity || 0) <= 5;
                         return (
                           <tr key={product._id}>
@@ -339,7 +358,8 @@ const StaffProducts = () => {  const [filteredProducts, setFilteredProducts] = u
                             </td>
                             <td>{product.name}</td>
                             <td>{product.category}</td>
-                            <td>${parseFloat(product.price).toFixed(2)}</td>                            <td>
+                            <td>${parseFloat(product.price).toFixed(2)}</td>
+                            <td>
                               {isLowStock ? (
                                 <span className="text-danger fw-bold d-flex align-items-center">
                                   {product.quantity || 0}
@@ -510,7 +530,9 @@ const StaffProducts = () => {  const [filteredProducts, setFilteredProducts] = u
                           onChange={handleInputChange}
                         ></textarea>
                       </div>
-                    </div>                    {/* Row 4: Image Upload and Preview */}
+                    </div>
+                    
+                    {/* Row 4: Image Upload and Preview */}
                     <div className="row mb-4"> {/* Increased bottom margin */}
                       <div className="col-12">
                         <label htmlFor="image" className="form-label fw-bold">Product Image</label> {/* Added fw-bold */}

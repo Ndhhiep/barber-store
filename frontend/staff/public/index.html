@@ -23,12 +23,51 @@
       Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
-    -->    <title>Barber Store - Staff Client</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    -->    <title>Barber Store - Staff Client</title>    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0..200" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
     <style>
       body {
         cursor: default; 
+      }
+      .border-left {
+        border-left: 4px solid transparent !important;
+      }
+      .border-primary {
+        border-left-color: #007bff !important;
+      }
+      .border-info {
+        border-left-color: #17a2b8 !important;
+      }
+      .border-success {
+        border-left-color: #28a745 !important;
+      }      .border-warning {
+        border-left-color: #ffc107 !important;
+      }
+      
+      /* Custom table styling for customer details */
+      .table-hover tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+        transition: all 0.2s;
+      }
+      
+      .card {
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        transition: all 0.3s;
+      }
+      
+      .card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      }
+      
+      /* Improving tab appearance */
+      .nav-tabs .nav-link {
+        font-weight: 500;
+      }
+      
+      .nav-tabs .nav-link.active {
+        border-top: 3px solid;
+        font-weight: 600;
       }
     </style>
 

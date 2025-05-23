@@ -1,5 +1,13 @@
-import api from './api';
+import axios from 'axios';
 import { isServerOnline } from '../utils/serverCheck';
+
+const API_URL = process.env.REACT_APP_BACKEND_API_URL || 'http://localhost:5000/api'; // Use variable from .env file
+
+// Helper function to get auth headers
+const getAuthHeader = () => {
+  const token = localStorage.getItem('userToken');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 /**
  * Get time slot status for a specific barber on a given date
@@ -43,20 +51,21 @@ const getTimeSlotStatus = async (barberId, date) => {
             isAvailable: slotTotalMinutes >= (currentTotalMinutes + 30)
           };
         });
-      }
-
-      // For future dates, all slots are available
+      }      // For future dates, all slots are available
       return defaultTimeSlots.map(timeSlot => ({
         start_time: timeSlot,
         isPast: false,
         isAvailable: true
       }));
-    }    // Regular flow for specific barber
-    const response = await api.get('/api/bookings/time-slots-status', {
+    }
+    
+    // Regular flow for specific barber
+    const response = await axios.get(`${API_URL}/bookings/time-slots-status`, {
       params: {
         barberId,
         date
-      }
+      },
+      headers: getAuthHeader()
     });
 
     // Return time slots status array
@@ -76,12 +85,13 @@ const getTimeSlotStatus = async (barberId, date) => {
  */
 const checkTimeSlotAvailability = async (barberId, date, timeSlot) => {
   try {
-    const response = await api.get('/api/bookings/check-availability', {
+    const response = await axios.get(`${API_URL}/bookings/check-availability`, {
       params: {
         barberId,
         date,
         timeSlot
-      }
+      },
+      headers: getAuthHeader()
     });
     
     return response.data.data.isAvailable;

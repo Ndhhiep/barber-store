@@ -1,7 +1,15 @@
 /**
  * Service quản lý các API liên quan đến đơn hàng
  */
-import api from './api';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_BACKEND_API_URL || 'http://localhost:5000/api'; // Use variable from .env file
+
+// Helper function to get auth headers
+const getAuthHeader = () => {
+  const token = localStorage.getItem('userToken');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 /**
  * Lấy danh sách đơn hàng của người dùng hiện tại
@@ -9,11 +17,19 @@ import api from './api';
  */
 export const getMyOrders = async () => {
   try {
-    const response = await api.get('/api/orders/user/my-orders');
+    const response = await axios.get(`${API_URL}/orders/user/my-orders`, {
+      headers: getAuthHeader()
+    });
     return response.data;
   } catch (error) {
     console.error('Get my orders error:', error);
-    throw new Error(error.response?.data?.message || 'Failed to fetch orders');
+    
+    // Enhanced error handling
+    const errorMessage = error.response?.data?.message 
+      || (error.response ? `Server responded with status: ${error.response.status}` : error.message)
+      || 'Failed to fetch orders';
+    
+    throw new Error(errorMessage);
   }
 };
 
@@ -24,11 +40,19 @@ export const getMyOrders = async () => {
  */
 export const getOrderById = async (id) => {
   try {
-    const response = await api.get(`/orders/${id}`);
+    const response = await axios.get(`${API_URL}/orders/${id}`, {
+      headers: getAuthHeader()
+    });
     return response.data;
   } catch (error) {
     console.error(`Get order ${id} error:`, error);
-    throw new Error(error.response?.data?.message || `Failed to fetch order details`);
+    
+    // Enhanced error handling with more detailed information
+    const errorMessage = error.response?.data?.message 
+      || (error.response ? `Server responded with status: ${error.response.status}` : error.message)
+      || 'Failed to fetch order details';
+      
+    throw new Error(errorMessage);
   }
 };
 
@@ -51,8 +75,9 @@ export const createOrder = async (orderData) => {
         console.warn('Error parsing user data:', error);
       }
     }
-    
-    const response = await api.post('/api/orders', orderData);
+      const response = await axios.post(`${API_URL}/orders`, orderData, {
+      headers: getAuthHeader()
+    });
     return response.data;
   } catch (error) {
     console.error('Create order error:', error);

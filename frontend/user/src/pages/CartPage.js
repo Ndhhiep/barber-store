@@ -14,7 +14,9 @@ const CartPage = () => {
   } = useCart();
   
   const navigate = useNavigate();
-    const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successOrderId, setSuccessOrderId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderError, setOrderError] = useState(null);
   const [serverStatus, setServerStatus] = useState('checking');
@@ -163,6 +165,12 @@ const CartPage = () => {
     setOrderError(null);
   };
   
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    // Redirect to products page after closing success modal
+    navigate('/products', { state: { orderSuccess: true, orderId: successOrderId } });
+  };
+  
   const handleSubmitOrder = async (e) => {
     if (e && e.preventDefault) {
       e.preventDefault();
@@ -286,11 +294,11 @@ const CartPage = () => {
   
         if (!response.ok) {
           throw new Error(result.error || 'Failed to create order');
-        }
-  
-        // Show success message
-        alert('Order submitted successfully! Your order ID is: ' + result.orderId);
-          // Clear cart and close modal
+        }        // Show success modal instead of alert
+        setSuccessOrderId(result.orderId);
+        setShowSuccessModal(true);
+        
+        // Clear cart and close checkout modal
         clearCart();
         setShowModal(false);
         
@@ -303,9 +311,8 @@ const CartPage = () => {
           paymentMethod: '',
           notes: ''
         });
-  
-        // Redirect to a thank you page or back to products
-        navigate('/products', { state: { orderSuccess: true, orderId: result.orderId } });
+        
+        // No immediate redirect - will redirect after user closes the success modal
       } catch (fetchError) {
         if (fetchError.name === 'AbortError') {
           throw new Error('Request timed out. The server might be down or overloaded.');
@@ -608,6 +615,29 @@ const CartPage = () => {
               </div>
             </div>
           </form>
+        </div>
+      </div>
+      
+      {/* Success Modal */}
+      <div className={`checkout-modal ${showSuccessModal ? 'show' : ''}`}>
+        <div className="modal-content success-modal">
+          <div className="modal-header">
+            <h5>Order Confirmation</h5>
+            <button className="close-btn" onClick={handleCloseSuccessModal}>&times;</button>
+          </div>
+          <div className="modal-body text-center py-4">
+            <div className="success-icon mb-3">
+              <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '3rem' }}></i>
+            </div>
+            <h4 className="mb-3">Thank You For Your Order!</h4>
+            <p className="mb-4">Your order has been submitted successfully.</p>
+            <p className="mb-4"><strong>Order ID:</strong> {successOrderId}</p>
+            <div className="d-grid">
+              <button className="btn checkout-btn" onClick={handleCloseSuccessModal}>
+                Continue Shopping
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

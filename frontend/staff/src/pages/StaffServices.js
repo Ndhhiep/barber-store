@@ -145,11 +145,10 @@ const StaffServices = () => {
 
   
   return (
-    <div className="container mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <div className="container mt-4">      <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Manage Services</h2>
-        <button className="btn btn-primary" onClick={openAddModal}>
-          <i className="fas fa-plus me-1"></i> Add Service
+        <button className="btn btn-success" onClick={openAddModal}>
+          <i className="bi bi-plus-circle me-1"></i> Add New Service
         </button>
       </div>
 

@@ -115,7 +115,6 @@ const BookingPage = () => {
   // Check if a time slot is in the past or booked - for future use in showing specific messages
   // eslint-disable-next-line no-unused-vars
   
-
   // Update current time every minute for time slot validation
   useEffect(() => {
     const updateCurrentTime = () => {
@@ -131,7 +130,8 @@ const BookingPage = () => {
     
     const timer = setInterval(updateCurrentTime, 60000);
     return () => clearInterval(timer);
-  }, [isTimeSlotDisabled, bookingData.time]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTimeSlotDisabled]);
   
   // Check user authentication status on component mount
   useEffect(() => {
@@ -173,21 +173,24 @@ const BookingPage = () => {
     };
     
     checkAuthStatus();
-  }, []);
-  // Fetch time slot statuses when barber or date changes (not on time selection)
+  }, []);  // Fetch time slot statuses when barber or date changes (not on time selection)
   useEffect(() => {
     const fetchTimeSlotStatuses = async () => {
       if (bookingData.barber_id && bookingData.date) {
         try {
           setIsLoadingTimeSlots(true);
-            // Call the service to get time slot statuses
+          // Call the service to get time slot statuses
           const statuses = await timeSlotService.getTimeSlotStatus(bookingData.barber_id, bookingData.date);
           setTimeSlotStatuses(statuses);
           
+          // Get the current selected time from the latest bookingData
+          // This way we don't need to add bookingData.time to dependencies
+          const currentSelectedTime = bookingData.time;
+          
           // If currently selected time is not available, reset it
-          if (bookingData.time) {
+          if (currentSelectedTime) {
             const isCurrentTimeAvailable = statuses.some(
-              slot => slot.start_time === bookingData.time && slot.isAvailable && !slot.isPast
+              slot => slot.start_time === currentSelectedTime && slot.isAvailable && !slot.isPast
             );
             
             if (!isCurrentTimeAvailable) {
@@ -205,7 +208,8 @@ const BookingPage = () => {
         }
       }
     };
-      fetchTimeSlotStatuses();
+    fetchTimeSlotStatuses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingData.barber_id, bookingData.date]);
 
   // Wrap `validateBookingToken` in a `useCallback` hook

@@ -161,8 +161,8 @@ const getMonthlyRevenue = asyncHandler(async (req, res) => {
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-    
-    // Doanh thu từ cuộc hẹn hoàn thành
+      // Doanh thu từ cuộc hẹn hoàn thành
+    // Cần lấy giá dịch vụ từ collection Service bằng cách lookup
     const appointmentsRevenue = await Booking.aggregate([
       {
         $match: {
@@ -171,9 +171,30 @@ const getMonthlyRevenue = asyncHandler(async (req, res) => {
         }
       },
       {
+        // Lookup để lấy thông tin từ collection Service
+        $lookup: {
+          from: 'services',
+          let: { serviceName: "$service" },
+          pipeline: [
+            { 
+              $match: { 
+                $expr: { $eq: ["$name", "$$serviceName"] }
+              }
+            }
+          ],
+          as: "serviceDetails"
+        }
+      },
+      {
+        $addFields: {
+          // Lấy giá từ dịch vụ đã lookup, hoặc 0 nếu không tìm thấy
+          servicePrice: { $ifNull: [{ $arrayElemAt: ["$serviceDetails.price", 0] }, 0] }
+        }
+      },
+      {
         $group: {
           _id: null,
-          total: { $sum: { $ifNull: ["$price", 0] } }
+          total: { $sum: "$servicePrice" }
         }
       }
     ]);
@@ -192,16 +213,21 @@ const getMonthlyRevenue = asyncHandler(async (req, res) => {
           total: { $sum: { $ifNull: ["$totalAmount", 0] } }
         }
       }
-    ]);
-
-    const appointmentTotal = appointmentsRevenue.length > 0 ? appointmentsRevenue[0].total : 0;
+    ]);    const appointmentTotal = appointmentsRevenue.length > 0 ? appointmentsRevenue[0].total : 0;
     const orderTotal = ordersRevenue.length > 0 ? ordersRevenue[0].total : 0;
+    const totalRevenue = appointmentTotal + orderTotal;
+    
+    console.log('Monthly Revenue Breakdown:');
+    console.log('- Appointments Revenue:', appointmentTotal);
+    console.log('- Orders Revenue:', orderTotal);
+    console.log('- Total Revenue:', totalRevenue);
 
     res.status(200).json({
       status: 'success',
       data: {
-        appointmentsRevenue: appointmentTotal,
-        ordersRevenue: orderTotal
+        appointmentRevenue: appointmentTotal,
+        orderRevenue: orderTotal,
+        totalRevenue: totalRevenue
       }
     });
   } catch (error) {

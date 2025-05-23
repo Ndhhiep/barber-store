@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api'; // Điều chỉnh URL backend cho phù hợp
+const API_URL = process.env.REACT_APP_BACKEND_API_URL; // Sử dụng biến môi trường thay vì hardcode URL
 
 // Lưu token và thông tin user staff vào localStorage
 const setStaffUser = (data) => {

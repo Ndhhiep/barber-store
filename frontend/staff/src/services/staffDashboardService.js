@@ -1,7 +1,7 @@
 import axios from 'axios';
 import staffAuthService from './staffAuthService';
 
-const API_URL = 'http://localhost:5000/api'; // Điều chỉnh URL backend cho phù hợp
+const API_URL = process.env.REACT_APP_BACKEND_API_URL; // Sử dụng biến môi trường thay vì hardcode URL
 
 // Lấy tất cả thống kê cho trang tổng quan
 const getDashboardStats = async () => {

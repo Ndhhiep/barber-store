@@ -1,7 +1,7 @@
 import axios from 'axios';
 import staffAuthService from './staffAuthService';
 
-const API_URL = '/api/contacts';
+const API_URL = `${process.env.REACT_APP_BACKEND_API_URL}/contacts`; // Sử dụng biến môi trường thay vì hardcode URL
 
 const getAllContacts = async () => {
   // Lấy user staff chứa token

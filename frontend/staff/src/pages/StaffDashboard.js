@@ -18,7 +18,6 @@ const StaffDashboard = () => {
     recentOrders: []
   });
   const [error, setError] = useState(null);
-  const [notifications, setNotifications] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [monthlyRevenue, setMonthlyRevenue] = useState({
     appointmentRevenue: 0,
@@ -95,18 +94,25 @@ const StaffDashboard = () => {
     };
 
     fetchChartData();
-  }, []);
-    useEffect(() => {
+  }, []);    useEffect(() => {
     const fetchMonthlyRevenue = async () => {
       try {
         const response = await staffDashboardService.getMonthlyRevenue();
         if (response.status === 'success' && response.data) {
           // Kiểm tra và truy cập đúng cấu trúc dữ liệu
           console.log('Monthly revenue response:', response.data);
+          
+          // Calculate total revenue if it's not provided
+          const appointmentRevenue = response.data.appointmentRevenue || 0;
+          const orderRevenue = response.data.orderRevenue || 0;
+          const totalRevenue = response.data.totalRevenue || (appointmentRevenue + orderRevenue);
+          
           setMonthlyRevenue({
-            appointmentRevenue: response.data.appointmentRevenue || 0,
-            orderRevenue: response.data.orderRevenue || 0,
-            totalRevenue: response.data.totalRevenue || 0,
+            appointmentRevenue: appointmentRevenue,
+            orderRevenue: orderRevenue,
+            totalRevenue: totalRevenue,
+            month: new Date().toLocaleString('default', { month: 'long' }),
+            year: new Date().getFullYear()
           });
         } else {
           throw new Error('Failed to fetch monthly revenue');
@@ -133,23 +139,12 @@ const StaffDashboard = () => {
     
     console.log('Setting up socket listeners for dashboard');
     
-    // Xử lý sự kiện đơn hàng mới
+  // Xử lý sự kiện đơn hàng mới
     const handleNewOrder = (data) => {
       console.log('Received new order event:', data);
       
-      // Tạo thông báo mới
+      // Cập nhật danh sách đơn hàng gần đây nếu là đơn hàng mới
       if (data.operationType === 'insert') {
-        const newNotification = {
-          id: Date.now(),
-          type: 'order',
-          message: `New order created: #${data.documentId.slice(-6).toUpperCase()}`,
-          timestamp: new Date().toISOString(),
-          seen: false
-        };
-        
-        setNotifications(prev => [newNotification, ...prev.slice(0, 9)]);
-        
-        // Cập nhật danh sách đơn hàng gần đây nếu là đơn hàng mới
         if (data.fullDocument) {
           const newOrder = data.fullDocument;
           setDashboardData(prev => ({
@@ -160,24 +155,12 @@ const StaffDashboard = () => {
         }
       }
     };
-    
-    // Xử lý sự kiện lịch hẹn mới
+      // Xử lý sự kiện lịch hẹn mới
     const handleNewBooking = (data) => {
       console.log('Received new booking event:', data);
       
-      // Tạo thông báo mới
+      // Cập nhật danh sách lịch hẹn hôm nay nếu là lịch hẹn mới cho ngày hôm nay
       if (data.operationType === 'insert') {
-        const newNotification = {
-          id: Date.now(),
-          type: 'booking',
-          message: `New appointment scheduled: ${data.fullDocument?.serviceName || 'Service'}`,
-          timestamp: new Date().toISOString(),
-          seen: false
-        };
-        
-        setNotifications(prev => [newNotification, ...prev.slice(0, 9)]);
-        
-        // Cập nhật danh sách lịch hẹn hôm nay nếu là lịch hẹn mới cho ngày hôm nay
         if (data.fullDocument) {
           const today = new Date().toISOString().split('T')[0];
           const bookingDate = new Date(data.fullDocument.date).toISOString().split('T')[0];
@@ -209,15 +192,9 @@ const StaffDashboard = () => {
       unregisterHandler('newOrder', handleNewOrder);
       unregisterHandler('newBooking', handleNewBooking);
     };
-  }, [isConnected, registerHandler, unregisterHandler]);
-  // Định dạng thời gian để hiển thị dễ đọc
+  }, [isConnected, registerHandler, unregisterHandler]);  // Định dạng thời gian để hiển thị dễ đọc
   const formatTime = (timeString) => {
     return new Date(`2000-01-01T${timeString}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-  
-  // Xoá thông báo
-  const dismissNotification = (id) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
   };
 
   if (loading) {
@@ -237,50 +214,6 @@ const StaffDashboard = () => {
         </div>
       )}
       
-      {/* Hiển thị thông báo real-time */}
-      {notifications.length > 0 && (
-        <div className="row mb-4">
-          <div className="col-12">
-            <div className="card border-primary">
-              <div className="card-header bg-primary text-white d-flex justify-content-between">
-                <span>Real-time Notifications</span>
-                <button 
-                  className="btn btn-sm btn-light" 
-                  onClick={() => setNotifications([])}
-                >
-                  Clear All
-                </button>
-              </div>
-              <div className="card-body p-0">
-                <ul className="list-group list-group-flush">
-                  {notifications.map((notification) => (
-                    <li 
-                      key={notification.id} 
-                      className="list-group-item d-flex justify-content-between align-items-center"
-                    >
-                      <div>
-                        <span className={`badge me-2 ${notification.type === 'order' ? 'bg-success' : 'bg-primary'}`}>
-                          {notification.type === 'order' ? 'Order' : 'Booking'}
-                        </span>
-                        {notification.message}
-                        <small className="ms-2 text-muted">
-                          {new Date(notification.timestamp).toLocaleTimeString()}
-                        </small>
-                      </div>
-                      <button 
-                        className="btn btn-sm btn-light border" 
-                        onClick={() => dismissNotification(notification.id)}
-                      >
-                        <i className="bi bi-x"></i>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
       
       <div className="row mt-4">
         <div className="col-md-3 mb-4">
@@ -327,8 +260,7 @@ const StaffDashboard = () => {
               
             </div>
           </div>
-        </div>
-        <div className="col-md-3 mb-4">
+        </div>        <div className="col-md-3 mb-4">
           <div className="card border-top border-info border-3 shadow-sm">
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-2">
@@ -336,7 +268,7 @@ const StaffDashboard = () => {
                   <i className="bi bi-currency-dollar fs-3 text-info me-2"></i>
                   <h6 className="mb-0">Total Revenue</h6>
                 </div>
-                
+                <small className="text-muted">{monthlyRevenue.month} {monthlyRevenue.year}</small>
               </div>
               <h3 className="fw-bold">${monthlyRevenue.totalRevenue.toFixed(2)}</h3>
               

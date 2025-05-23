@@ -64,11 +64,17 @@ const MyOrdersPage = () => {
       }
     } catch (err) {
       console.error('Error fetching order:', err);
-      setError(err.message || 'Failed to load order');
+      setError(`Unable to load order details: ${err.message}`);
+      
+      // If we have other orders, select the first one to avoid showing empty state
+      if (orders.length > 0 && selectedOrder && selectedOrder._id === id) {
+        const fallbackOrder = orders.find(order => order._id !== id) || orders[0];
+        setSelectedOrder(fallbackOrder);
+      }
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, orders, selectedOrder]);
   
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -126,9 +132,8 @@ const MyOrdersPage = () => {
                     key={order._id} 
                     className={`list-group-item list-group-item-action ${selectedOrder && selectedOrder._id === order._id ? 'active' : ''}`}
                     onClick={() => fetchOrderById(order._id)}
-                  >
-                    <div className="d-flex w-100 justify-content-between">
-                      <h6 className="mb-1">Order #{order._id.substring(order._id.length - 8)}</h6>
+                  >                    <div className="d-flex w-100 justify-content-between">
+                      <h6 className="mb-1" style={{fontFamily: 'sans-serif'}}>Order ID: {order._id.substring(order._id.length - 6)}</h6>
                       <span className={`badge ${getStatusBadgeColor(order.status)}`}>
                         {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                       </span>
@@ -152,13 +157,21 @@ const MyOrdersPage = () => {
               </div>
             ) : error ? (
               <div className="alert alert-danger" role="alert">
-                {error}
+                <div className="d-flex align-items-center mb-2">
+                  <i className="bi bi-exclamation-triangle-fill me-2" style={{ fontSize: "1.5rem" }}></i>
+                  <h5 className="mb-0">Error Loading Order</h5>
+                </div>
+                <p>{error}</p>
+                <p className="mb-0">
+                  <button className="btn btn-outline-primary btn-sm" onClick={() => setError(null)}>
+                    <i className="bi bi-arrow-left me-1"></i> Return to Orders
+                  </button>
+                </p>
               </div>
             ) : selectedOrder ? (
-              <div className="card order-detail-card">
-                <div className="card-header d-flex justify-content-between align-items-center">
+              <div className="card order-detail-card">                <div className="card-header d-flex justify-content-between align-items-center">
                   <div>
-                    <h5 className="mb-0">Order #{selectedOrder._id.substring(selectedOrder._id.length - 8)}</h5>
+                    <h5 className="mb-0" style={{fontFamily: 'sans-serif'}}>Order ID: {selectedOrder._id.substring(selectedOrder._id.length - 6)}</h5>
                     <small className="text-muted">Placed on {formatDate(selectedOrder.createdAt)}</small>
                   </div>
                   <span className={`badge ${getStatusBadgeColor(selectedOrder.status)}`}>

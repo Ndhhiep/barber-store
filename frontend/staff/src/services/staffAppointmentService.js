@@ -1,7 +1,7 @@
 import axios from 'axios';
 import staffAuthService from './staffAuthService';
 
-const API_URL = 'http://localhost:5000/api'; // Điều chỉnh lại URL backend của bạn
+const API_URL = process.env.REACT_APP_BACKEND_API_URL; // Sử dụng biến môi trường thay vì hardcode URL
 
 // Lấy tất cả lịch hẹn với tùy chọn lọc và phân trang
 const getAllAppointments = async (page = 1, limit = 10, filter = '') => {
