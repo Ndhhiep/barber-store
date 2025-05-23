@@ -1,0 +1,49 @@
+/* Additional modal fixes for perfect centering */
+.modal-centered {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex !important;
+  align-items: center !important; /* ensure vertical centering */
+  justify-content: center !important; /* ensure horizontal centering */
+  z-index: 1050;
+  padding: 0 !important; /* remove any padding */
+}
+
+.modal-dialog {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto !important;
+}
+
+.modal-content {
+  margin: 0 auto;
+  width: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  outline: 0;
+  transform: translateY(0); /* Neutralize any potential transform */
+}
+
+/* Override any Bootstrap defaults that might interfere */
+@media (min-width: 576px) {
+  .modal-dialog {
+    max-width: 500px;
+    margin: 0 auto !important;
+  }
+}
+
+/* Additional vertical centering fixes */
+.modal-centered .modal-dialog {
+  min-height: calc(100% - 3.5rem);
+  display: flex;
+  align-items: center;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}

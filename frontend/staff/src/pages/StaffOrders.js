@@ -3,8 +3,7 @@ import staffOrderService from '../services/staffOrderService';
 import { useSocketContext } from '../context/SocketContext';
 import { useNotifications } from '../context/NotificationContext';
 
-const StaffOrders = () => {
-  // State cho dữ liệu và UI
+const StaffOrders = () => {  // State cho dữ liệu và UI
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState('All Orders');
@@ -12,14 +11,12 @@ const StaffOrders = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [viewOrder, setViewOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // Thêm state mới để theo dõi đơn hàng mới
-  const [newOrderIds, setNewOrderIds] = useState(new Set());
   const [searchId, setSearchId] = useState('');
     // Sử dụng Socket.IO context với các trạng thái cần thiết
   const { isConnected, registerHandler, unregisterHandler } = useSocketContext();
   
   // Sử dụng NotificationContext để xóa thông báo khi đến trang orders
-  const { clearOrderNotifications } = useNotifications();
+  const { clearOrderNotifications, newOrderIds, removeNewOrderId } = useNotifications();
   
   // Xóa thông báo đơn hàng khi component mount
   useEffect(() => {
@@ -28,8 +25,7 @@ const StaffOrders = () => {
   
   // Status options cho filter
   const statusOptions = ['All Orders', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
-  
-  // Handler cho sự kiện newOrder - được tối ưu bằng useCallback
+    // Handler cho sự kiện newOrder - được tối ưu bằng useCallback
   const handleNewOrder = useCallback((data) => {
     try {
       console.log('Received new order event:', data);
@@ -39,17 +35,7 @@ const StaffOrders = () => {
         // Thêm đơn hàng mới vào đầu mảng orders
         setOrders(prevOrders => [data.fullDocument, ...prevOrders]);
         
-        // Đánh dấu đơn hàng này là mới trong Set
-        setNewOrderIds(prev => new Set(prev).add(data.fullDocument._id));
-        
-        // Sau 60 giây, bỏ đánh dấu "NEW" cho đơn hàng này
-        setTimeout(() => {
-          setNewOrderIds(prev => {
-            const updated = new Set(prev);
-            updated.delete(data.fullDocument._id);
-            return updated;
-          });
-        }, 60000); // 60 seconds
+        // Note: Badge management is now handled by NotificationContext
       } 
       // Nếu là sự kiện cập nhật
       else if (data.operationType === 'update' && data.documentId) {
@@ -159,8 +145,7 @@ const StaffOrders = () => {
       alert(`Failed to update order status: ${err.message}. Please try again.`);
     }
   }, []);
-  
-  // Handler để xem chi tiết đơn hàng - tối ưu hóa
+    // Handler để xem chi tiết đơn hàng - tối ưu hóa
   const handleViewOrder = useCallback(async (id) => {
     try {
       const response = await staffOrderService.getOrderById(id);
@@ -172,13 +157,18 @@ const StaffOrders = () => {
         throw new Error('Invalid order data received');
       }
       
+      // Remove the 'NEW' badge for this order if it exists
+      if (newOrderIds.has(id)) {
+        removeNewOrderId(id);
+      }
+      
       setViewOrder(orderDetails);
       setIsModalOpen(true);
     } catch (err) {
       console.error('Error fetching order details:', err);
       alert(`Failed to load order details: ${err.message}. Please try again.`);
     }
-  }, []);
+  }, [newOrderIds, removeNewOrderId]);
   
   // Handler để đóng modal
   const closeModal = useCallback(() => {

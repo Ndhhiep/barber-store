@@ -16,12 +16,9 @@ const StaffCustomers = () => {
   // Pagination states for bookings and orders
   const [bookingsPage, setBookingsPage] = useState(1);
   const [ordersPage, setOrdersPage] = useState(1);
-  const ITEMS_PER_PAGE = 5;
-  // Thêm state mới để theo dõi các ID khách hàng mới
-  const [newCustomerIds, setNewCustomerIds] = useState(new Set());
-  
-  // Tích hợp Socket.IO
-  const { isConnected, registerHandler, unregisterHandler } = useSocketContext();  const { clearCustomerNotifications } = useNotifications();
+  const ITEMS_PER_PAGE = 5;  // Tích hợp Socket.IO
+  const { isConnected, registerHandler, unregisterHandler } = useSocketContext();
+  const { clearCustomerNotifications, newCustomerIds, removeNewCustomerId } = useNotifications();
 
   // Định nghĩa hàm fetchCustomers trước khi sử dụng trong useEffect
   const fetchCustomers = useCallback(async () => {
@@ -62,13 +59,7 @@ const StaffCustomers = () => {
           // Nếu có nhiều hơn số lượng trang, loại bỏ khách hàng cuối cùng
           return newCustomers.length > 10 ? newCustomers.slice(0, 10) : newCustomers;
         });
-        
-        // Đánh dấu khách hàng này là mới để hiển thị badge
-        setNewCustomerIds(prev => {
-          const updated = new Set(prev);
-          updated.add(data.user._id);
-          return updated;
-        });
+          // Badge management is now handled by NotificationContext
       } else {
         // Nếu không ở trang đầu hoặc đang tìm kiếm, chỉ cập nhật log
         console.log('Khách hàng mới đã thêm nhưng không hiển thị do phân trang/tìm kiếm');
@@ -127,14 +118,9 @@ const StaffCustomers = () => {
       });
       
       setIsModalOpen(true);
-      
-      // Loại bỏ badge NEW nếu đã xem
+        // Loại bỏ badge NEW nếu đã xem
       if (newCustomerIds.has(id)) {
-        setNewCustomerIds(prev => {
-          const updated = new Set(prev);
-          updated.delete(id);
-          return updated;
-        });
+        removeNewCustomerId(id);
         
         // Xóa badge thông báo
         clearCustomerNotifications();

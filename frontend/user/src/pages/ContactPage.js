@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../css/ContactPage.css';
+import '../css/modal-fix.css';
 import { getUserProfile, isAuthenticated } from '../services/authService';
 import { submitContactForm } from '../services/contactService';
 
@@ -92,19 +93,42 @@ const ContactPage = () => {
       {/* Modal for submission status */}
       {showModal && (
         <>
-          <div className="modal-backdrop fade show"></div> {/* Backdrop */}
-          <div className="modal fade show d-block" tabIndex="-1" role="dialog">
-            <div className="modal-dialog modal-dialog-centered" role="document">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">Thank You!</h5>
-                  <button type="button" className="btn-close" onClick={handleCloseModal} aria-label="Close"></button>
+          <div className="modal-backdrop fade show"></div> {/* Backdrop */}          <div className="modal fade show d-block modal-centered" tabIndex="-1" role="dialog" style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: '100vw',
+              height: '100vh',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+              zIndex: 1050
+            }}><div className="modal-dialog" style={{ 
+              margin: '0 auto', 
+              maxWidth: '500px', 
+              width: '90%'
+            }}><div className="modal-content border-0 shadow-lg" style={{margin: 'auto auto'}}>
+                <div className="modal-body" style={{ paddingTop: '30px', position: 'relative' }}>                  <div className="check-icon-circle">
+                    <i className="bi bi-check-lg"></i>
+                  </div>                  
+                  <h2>
+                    Thank You For Your Message!
+                  </h2>
+                  <p className="message-text">
+                    Your message has been submitted successfully.
+                  </p>
                 </div>
-                <div className="modal-body">
-                  <p>{formStatus.message}</p>
-                </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-primary" onClick={handleCloseModal}>Done</button>
+                <div className="modal-footer border-0 justify-content-center pb-4">
+                  <button 
+                    type="button" 
+                    className="btn contact-success-btn" 
+                    onClick={handleCloseModal}
+                  >
+                    DONE
+                  </button>
                 </div>
               </div>
             </div>
@@ -185,8 +209,7 @@ const ContactPage = () => {
                       required
                       disabled={isSubmitting}
                     ></textarea>
-                  </div>
-                  <button
+                  </div>                  <button
                     type="submit"
                     className="btn btn-lg w-100 contact-submit-btn"
                     disabled={isSubmitting}

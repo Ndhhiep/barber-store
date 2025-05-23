@@ -9,34 +9,32 @@ const StaffContacts = () => {
   const [error, setError] = useState(null);
   const [selectedContact, setSelectedContact] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  // State để theo dõi new contact IDs
-  const [newContactIds, setNewContactIds] = useState(new Set());
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   
   // Tích hợp Socket.IO
   const { isConnected, registerHandler, unregisterHandler } = useSocketContext();
-  const { clearContactNotifications } = useNotifications();
-  useEffect(() => {
+  // Sử dụng context để theo dõi new contact IDs
+  const { clearContactNotifications, newContactIds, removeNewContactId } = useNotifications();
+    useEffect(() => {
     fetchContacts();
-    // Xóa thông báo liên hệ khi trang được tải
+    // Reset navigation notification count but keep individual message badges
     clearContactNotifications();
   }, [clearContactNotifications]);
-  
-  // Xử lý sự kiện Socket.IO cho cập nhật thời gian thực
+    // Xử lý sự kiện Socket.IO cho cập nhật thời gian thực
   useEffect(() => {
-    if (!isConnected) return;
-    
-    // Xử lý sự kiện liên hệ mới
+    if (!isConnected) return;    // Xử lý sự kiện liên hệ mới
     const handleNewContact = (data) => {
       console.log('New contact received via socket:', data);
       // Thêm liên hệ mới vào danh sách
       if (data && data.contact) {
         setContacts(prevContacts => [data.contact, ...prevContacts]);
-        // Đánh dấu liên hệ này là mới để hiển thị badge
-        setNewContactIds(prev => {
-          const updated = new Set(prev);
-          updated.add(data.contact._id);
-          return updated;
-        });
+        // Set to first page to show the new contact
+        setCurrentPage(1);
+        // Note: Badge management is handled by NotificationContext
+        // New contacts will automatically get badges via the context
       }
     };
     
@@ -65,7 +63,7 @@ const StaffContacts = () => {
       } else {
         console.error('Unexpected API response structure:', response);
         setContacts([]);
-        setError('Dữ liệu liên hệ có định dạng không đúng.');
+        setError('Contact data has an invalid format.');
       }
       
       setError(null);
@@ -75,21 +73,18 @@ const StaffContacts = () => {
     } finally {
       setLoading(false);
     }
-  };
-    const handleViewContact = (contact) => {
+  };  const handleViewContact = (contact) => {
     setSelectedContact(contact);
     setShowModal(true);
     
-    // Xóa badge NEW nếu liên hệ này được đánh dấu mới
+    // Xóa badge NEW chỉ cho liên hệ được click
     if (newContactIds.has(contact._id)) {
-      setNewContactIds(prev => {
-        const updated = new Set(prev);
-        updated.delete(contact._id);
-        return updated;
-      });
+      // Use context method to remove badge only for this contact
+      removeNewContactId(contact._id);
       
-      // Xóa badge thông báo ở nút điều hướng
-      clearContactNotifications();
+      // Giảm số lượng thông báo ở nút điều hướng nếu cần
+      // Không xóa toàn bộ thông báo vì có thể còn các contacts khác chưa đọc
+      // clearContactNotifications();
     }
     
     // Nếu trạng thái liên hệ là 'new', cập nhật thành 'read'
@@ -122,8 +117,7 @@ const StaffContacts = () => {
     const options = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
-  
-  const getStatusBadgeColor = (status) => {
+    const getStatusBadgeColor = (status) => {
     switch(status) {
       case 'new':
         return 'warning';
@@ -137,6 +131,25 @@ const StaffContacts = () => {
         return 'primary';
     }
   };
+  
+  // Pagination logic
+  const indexOfLastContact = currentPage * itemsPerPage;
+  const indexOfFirstContact = indexOfLastContact - itemsPerPage;
+  const currentContacts = contacts.slice(indexOfFirstContact, indexOfLastContact);
+  const totalPages = Math.ceil(contacts.length / itemsPerPage);
+  
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // Previous page
+  const goToPreviousPage = () => {
+    setCurrentPage(prevPage => Math.max(prevPage - 1, 1));
+  };
+  
+  // Next page
+  const goToNextPage = () => {
+    setCurrentPage(prevPage => Math.min(prevPage + 1, totalPages));
+  };
 
   return (
     <div className="container mt-4">
@@ -148,9 +161,21 @@ const StaffContacts = () => {
           <div className="spinner-border" role="status"></div>
         </div>
       ) : (
-        <div className="card mt-4">
-          <div className="card-header">
-            <span>All Messages</span>
+        <div className="card mt-4">          <div className="card-header d-flex justify-content-between align-items-center">
+            <div>
+              <span>All Messages </span>
+              {/* Show the number of new contacts as a badge */}
+              {newContactIds.size > 0 && (
+                <span className="badge bg-danger ms-2">{newContactIds.size} New</span>
+              )}
+            </div>
+            <span className="text-muted small">
+              {contacts.length > 0 ? (
+                <>Showing {indexOfFirstContact + 1}-{Math.min(indexOfLastContact, contacts.length)} of {contacts.length} messages</>
+              ) : (
+                'No messages'
+              )}
+            </span>
           </div>
           <div className="card-body">
             {contacts.length > 0 ? (
@@ -166,13 +191,11 @@ const StaffContacts = () => {
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {contacts.map(contact => (
-                      <tr key={contact._id} className={newContactIds.has(contact._id) ? 'table-warning' : ''}>
-                        <td>{contact._id.slice(-6).toUpperCase()}
+                  </thead>                  <tbody>
+                    {currentContacts.map(contact => (
+                      <tr key={contact._id} className={newContactIds.has(contact._id) ? 'table-warning' : ''}>                        <td>{contact._id.slice(-6).toUpperCase()}
                           {newContactIds.has(contact._id) && (
-                            <span className="badge bg-danger ms-2 animate__animated animate__fadeIn animate__pulse animate__infinite">NEW</span>
+                            <span className="badge bg-danger ms-2" style={{ padding: '0.25em 0.6em', fontWeight: 'bold' }}>NEW</span>
                           )}
                         </td>
                         <td>{contact.name}</td>
@@ -198,6 +221,36 @@ const StaffContacts = () => {
                     ))}
                   </tbody>
                 </table>
+                
+                {/* Pagination */}
+                {contacts.length > itemsPerPage && (
+                  <nav aria-label="Contact pagination" className="mt-4">
+                    <ul className="pagination justify-content-center">
+                      <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                        <button className="page-link" onClick={goToPreviousPage}>
+                          Previous
+                        </button>
+                      </li>
+                      
+                      {[...Array(totalPages).keys()].map(number => (
+                        <li key={number + 1} className={`page-item ${currentPage === number + 1 ? 'active' : ''}`}>
+                          <button 
+                            className="page-link" 
+                            onClick={() => paginate(number + 1)}
+                          >
+                            {number + 1}
+                          </button>
+                        </li>
+                      ))}
+                      
+                      <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                        <button className="page-link" onClick={goToNextPage}>
+                          Next
+                        </button>
+                      </li>
+                    </ul>
+                  </nav>
+                )}
               </div>
             ) : (
               <p className="text-center">No contacts found.</p>

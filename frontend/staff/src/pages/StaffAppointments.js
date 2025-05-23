@@ -8,11 +8,7 @@ const StaffAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeFilter, setActiveFilter] = useState('all');
-  // Thêm state mới để theo dõi booking mới
-  const [newBookingIds, setNewBookingIds] = useState(new Set());
-  
-  // State cho modal chi tiết appointment
+  const [activeFilter, setActiveFilter] = useState('all');  // State cho modal chi tiết appointment
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   
@@ -27,7 +23,7 @@ const StaffAppointments = () => {
   const { isConnected, registerHandler, unregisterHandler } = useSocketContext();
   
   // Sử dụng NotificationContext để xóa thông báo khi truy cập trang appointments
-  const { clearBookingNotifications } = useNotifications();
+  const { clearBookingNotifications, newBookingIds, removeNewBookingId } = useNotifications();
   
   // Định nghĩa hàm fetchAppointments trước khi sử dụng
   const fetchAppointments = useCallback(async () => {
@@ -185,11 +181,7 @@ const StaffAppointments = () => {
                 return timeB - timeA; // Sắp xếp theo giờ giảm dần
               });
             });
-            
-            // Đánh dấu booking này là mới
-            setNewBookingIds(prev => new Set(prev).add(newBooking._id));
-            // Không tự động bỏ đánh dấu "NEW" cho booking này
-            // Đã loại bỏ setTimeout để chỉ xóa đánh dấu khi người dùng click vào
+              // Badge management is now handled by NotificationContext
           } catch (err) {
             console.error('Error fetching complete booking data:', err);
             // Nếu không lấy được thông tin đầy đủ, vẫn hiển thị dữ liệu có sẵn
@@ -220,8 +212,7 @@ const StaffAppointments = () => {
             };
             
             console.log('Using fallback booking data:', fallbackBooking);
-            
-            setAppointments(prev => {
+              setAppointments(prev => {
               const updatedAppointments = [...prev, fallbackBooking];
               return updatedAppointments.sort((a, b) => {
                 const dateA = new Date(a.date);
@@ -235,9 +226,8 @@ const StaffAppointments = () => {
               });
             });
             
-            setNewBookingIds(prev => new Set(prev).add(newBooking._id));
-            // Không tự động bỏ đánh dấu "NEW" cho booking này
-            // Đã loại bỏ setTimeout để chỉ xóa đánh dấu khi người dùng click vào
+            // Badge management is now handled by NotificationContext
+            // No need to manually add new booking IDs here as it's done in the context
           }
         }
       } 
@@ -316,14 +306,9 @@ const StaffAppointments = () => {
   const handleViewAppointment = (appointment) => {
     // Chuẩn hóa dữ liệu appointment trước khi hiển thị
     const normalizedAppointment = normalizeBookingData(appointment);
-    
-    // Xóa đánh dấu 'NEW' nếu có
+      // Xóa đánh dấu 'NEW' nếu có
     if (newBookingIds.has(appointment._id)) {
-      setNewBookingIds(prev => {
-        const updated = new Set(prev);
-        updated.delete(appointment._id);
-        return updated;
-      });
+      removeNewBookingId(appointment._id);
     }
     
     setSelectedAppointment(normalizedAppointment);
