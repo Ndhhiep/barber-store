@@ -30,7 +30,6 @@ const StaffAppointments = () => {
   
   // Sử dụng NotificationContext để xóa thông báo khi truy cập trang appointments
   const { clearBookingNotifications, newBookingIds, removeNewBookingId } = useNotifications();
-  
   // Định nghĩa hàm fetchAppointments trước khi sử dụng
   const fetchAppointments = useCallback(async () => {
     try {
@@ -64,26 +63,18 @@ const StaffAppointments = () => {
         const timeB = new Date(`2000-01-01T${b.time}`);
         return timeB - timeA; // Sắp xếp theo giờ giảm dần
       });
-        setAppointments(sortedAppointments);
-        // Apply phone search filter if it exists
-      if (phoneSearchQuery) {
-        const filtered = sortedAppointments.filter(appointment => {
-          const phone = appointment.phone || appointment.userPhone || '';
-          return phone.toLowerCase().includes(phoneSearchQuery.toLowerCase());
-        });
-        setFilteredAppointments(filtered);
-      } else {
+        
+      // Update the appointments state without filtering first
+      setAppointments(sortedAppointments);
+      
+      // Let the dedicated phone search effect handle the filtering
+      // This prevents duplicate filtering logic
+      if (!phoneSearchQuery) {
         setFilteredAppointments(sortedAppointments);
       }
       
-      // Set total pages from filtered appointments if searching, otherwise from original response
-      if (phoneSearchQuery) {
-        const filteredLength = sortedAppointments.filter(appointment => {
-          const phone = appointment.phone || appointment.userPhone || '';
-          return phone.toLowerCase().includes(phoneSearchQuery.toLowerCase());
-        }).length;
-        setTotalPages(Math.max(1, Math.ceil(filteredLength / APPOINTMENTS_PER_PAGE)));
-      } else if (response.totalPages) {
+      // Set total pages
+      if (response.totalPages) {
         setTotalPages(response.totalPages);
       } else if (response.totalCount) {
         // Calculate total pages if only total count is provided
@@ -100,8 +91,8 @@ const StaffAppointments = () => {
     } finally {
       setLoading(false);
     }
-  }, [activeFilter, currentPage, APPOINTMENTS_PER_PAGE]);
-    // Xóa thông báo đặt lịch khi component mount
+  }, [activeFilter, currentPage, APPOINTMENTS_PER_PAGE, phoneSearchQuery]); // These are the only dependencies needed
+  // Xóa thông báo đặt lịch khi component mount
   useEffect(() => {
     clearBookingNotifications();
     
@@ -142,30 +133,61 @@ const StaffAppointments = () => {
       document.removeEventListener('mousedown', handleClickAnywhere);
     };
   }, [clearBookingNotifications, showDatePicker]);
+    // Handle phone search filter separately to avoid full data reload
   useEffect(() => {
-    // If filter is specific-date, don't fetch from server - we're filtering client-side
+    if (!appointments.length) {
+      return; // Skip when no appointments loaded
+    }
+    
+    // If we have a specific date filter active, that effect will handle filtering
     if (activeFilter === 'specific-date') {
-      // Apply date filter to existing appointments
-      if (selectedDate) {
-        const filtered = appointments.filter(appointment => {
-          const appointmentDate = new Date(appointment.date);
-          const selectedDateObj = new Date(selectedDate);
-          
-          return (
-            appointmentDate.getFullYear() === selectedDateObj.getFullYear() &&
-            appointmentDate.getMonth() === selectedDateObj.getMonth() &&
-            appointmentDate.getDate() === selectedDateObj.getDate()
-          );
-        });
-        
-        setFilteredAppointments(filtered);
-        setTotalPages(Math.max(1, Math.ceil(filtered.length / APPOINTMENTS_PER_PAGE)));
-      }
-    } else {
+      return;
+    }
+    
+    if (!phoneSearchQuery.trim()) {
+      // Apply all appointments when query is empty (no filtering needed)
+      setFilteredAppointments(appointments);
+      return;
+    }
+    
+    // Filter by phone
+    const filtered = appointments.filter(appointment => {
+      const phone = appointment.phone || appointment.userPhone || '';
+      return phone.toLowerCase().includes(phoneSearchQuery.toLowerCase());
+    });
+    
+    setFilteredAppointments(filtered);
+    setTotalPages(Math.max(1, Math.ceil(filtered.length / APPOINTMENTS_PER_PAGE)));
+  }, [phoneSearchQuery, appointments, activeFilter, APPOINTMENTS_PER_PAGE]);
+    // This effect handles API calls when filter changes
+useEffect(() => {
+    // Only fetch from server when not using specific date filter
+    if (activeFilter !== 'specific-date') {
       fetchAppointments();
     }
-  }, [activeFilter, currentPage, fetchAppointments, selectedDate]);
-    // Xử lý sự kiện cập nhật booking từ Socket.IO
+  }, [activeFilter, currentPage, fetchAppointments, APPOINTMENTS_PER_PAGE]);
+
+  // This separate effect handles client-side date filtering
+  useEffect(() => {
+    // Only run this effect when we have a specific date filter
+    if (activeFilter === 'specific-date' && selectedDate && appointments.length > 0) {
+      const filtered = appointments.filter(appointment => {
+        const appointmentDate = new Date(appointment.date);
+        const selectedDateObj = new Date(selectedDate);
+        
+        return (
+          appointmentDate.getFullYear() === selectedDateObj.getFullYear() &&
+          appointmentDate.getMonth() === selectedDateObj.getMonth() &&
+          appointmentDate.getDate() === selectedDateObj.getDate()
+        );
+      });
+      
+      setFilteredAppointments(filtered);
+      setTotalPages(Math.max(1, Math.ceil(filtered.length / APPOINTMENTS_PER_PAGE)));
+    }
+  }, [activeFilter, selectedDate, appointments, APPOINTMENTS_PER_PAGE]); // Include appointments as dependency in this specific effect
+  
+  // Xử lý sự kiện cập nhật booking từ Socket.IO
   const handleNewBooking = useCallback(async (data) => {
     try {
       console.log('Received new booking event:', data);      
@@ -181,27 +203,35 @@ const StaffAppointments = () => {
         const newBooking = normalizeBookingData(rawBooking);
         console.log('Normalized booking data:', newBooking);
         
-        let shouldAdd = false;
+        // Use function to get current filter value at execution time rather than 
+        // depending on the activeFilter state variable in the dependency array
+        const shouldAddBasedOnFilter = () => {
+          // Get current filter value at execution time
+          const currentFilter = activeFilter;
+          
+          if (currentFilter === 'all') {
+            return true;
+          } else if (currentFilter === 'today') {
+            const today = new Date().toISOString().split('T')[0];
+            const bookingDate = new Date(newBooking.date).toISOString().split('T')[0];
+            return bookingDate === today;
+          } else if (currentFilter === 'week') {
+            const now = new Date();
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - now.getDay());
+            weekStart.setHours(0, 0, 0, 0);
+            
+            const weekEnd = new Date(now);
+            weekEnd.setDate(now.getDate() + (6 - now.getDay()));
+            weekEnd.setHours(23, 59, 59, 999);
+            
+            const bookingDate = new Date(newBooking.date);
+            return bookingDate >= weekStart && bookingDate <= weekEnd;
+          }
+          return false;
+        };
         
-        if (activeFilter === 'all') {
-          shouldAdd = true;
-        } else if (activeFilter === 'today') {
-          const today = new Date().toISOString().split('T')[0];
-          const bookingDate = new Date(newBooking.date).toISOString().split('T')[0];
-          shouldAdd = bookingDate === today;
-        } else if (activeFilter === 'week') {
-          const now = new Date();
-          const weekStart = new Date(now);
-          weekStart.setDate(now.getDate() - now.getDay());
-          weekStart.setHours(0, 0, 0, 0);
-          
-          const weekEnd = new Date(now);
-          weekEnd.setDate(now.getDate() + (6 - now.getDay()));
-          weekEnd.setHours(23, 59, 59, 999);
-          
-          const bookingDate = new Date(newBooking.date);
-          shouldAdd = bookingDate >= weekStart && bookingDate <= weekEnd;
-        }
+        const shouldAdd = shouldAddBasedOnFilter();
         
         if (shouldAdd) {
           // Lấy chi tiết booking đầy đủ từ server
@@ -291,13 +321,14 @@ const StaffAppointments = () => {
       }      // Nếu là sự kiện cập nhật
       else if (data.operationType === 'update' && data.documentId) {
         // Nếu là sự kiện cập nhật, cập nhật booking trong state
-        const updatedAppointments = appointments.map(appointment => 
-          appointment._id === data.documentId 
-            ? { ...appointment, ...(data.updateDescription?.updatedFields || {}) } 
-            : appointment
-        );
-        
-        setAppointments(updatedAppointments);
+        setAppointments(prevAppointments => {
+          const updatedAppointments = prevAppointments.map(appointment => 
+            appointment._id === data.documentId 
+              ? { ...appointment, ...(data.updateDescription?.updatedFields || {}) } 
+              : appointment
+          );
+          return updatedAppointments;
+        });
         
         // Apply the same update to filteredAppointments
         setFilteredAppointments(prev => 
@@ -307,12 +338,11 @@ const StaffAppointments = () => {
               : appointment
           )
         );
-      }
-    } catch (err) {
+      }    } catch (err) {
       console.error('Error processing booking data:', err);
       // Chỉ ghi log lỗi, không cập nhật state
     }
-  }, [activeFilter]);
+  }, [activeFilter]); // State setter functions are stable and don't need to be in dependencies
   
   // Lắng nghe sự kiện booking mới từ Socket.IO
   useEffect(() => {
@@ -328,7 +358,9 @@ const StaffAppointments = () => {
       console.log('Cleaning up socket listeners in StaffAppointments');
       unregisterHandler('newBooking', handleNewBooking);
     };
-  }, [isConnected, registerHandler, unregisterHandler, handleNewBooking]);    const handleStatusUpdate = async (id, newStatus) => {
+  }, [isConnected, registerHandler, unregisterHandler, handleNewBooking]);
+  
+  const handleStatusUpdate = async (id, newStatus) => {
     try {
       await staffAppointmentService.updateAppointmentStatus(id, newStatus);
       
@@ -365,32 +397,18 @@ const StaffAppointments = () => {
       setCurrentPage(page);
     }
   };
-    // Handle date selection
+  // Handle date selection
   const handleDateSelect = (date) => {
+    // First change state that will trigger effect
     setSelectedDate(date);
     setActiveFilter('specific-date');
     setCurrentPage(1); // Reset to first page
     setShowDatePicker(false);
     
-    // Filter appointments by selected date
-    const filtered = appointments.filter(appointment => {
-      const appointmentDate = new Date(appointment.date);
-      
-      return (
-        appointmentDate.getFullYear() === date.getFullYear() &&
-        appointmentDate.getMonth() === date.getMonth() &&
-        appointmentDate.getDate() === date.getDate()
-      );
-    });
-    
-    setFilteredAppointments(filtered);
-  };
-    // Toggle date picker visibility
-  const toggleDatePicker = () => {
-    setShowDatePicker(!showDatePicker);
-  };
-  
-  // Handle filter change with page reset
+    // Filter will be done by the useEffect - don't duplicate state updates
+    // Let the useEffect handle filtering to avoid multiple renders
+  };// Toggle date picker functionality incorporated directly where needed
+    // Handle filter change with page reset
   const handleFilterChange = (filter) => {
     setActiveFilter(filter);
     setCurrentPage(1); // Reset to first page when changing filters
@@ -400,31 +418,15 @@ const StaffAppointments = () => {
       setSelectedDate(null);
     }
     
-    // Re-apply phone search filter if it exists
-    if (phoneSearchQuery) {
-      handlePhoneSearch(phoneSearchQuery);
-    } else {
-      setFilteredAppointments(appointments);
-    }
-  };
-    // Handle phone search
+    // The useEffect will handle filtering based on the changed state
+    // Don't manually update filteredAppointments here to avoid multiple renders
+  };    // Handle phone search
   const handlePhoneSearch = (query) => {
     setPhoneSearchQuery(query);
     setCurrentPage(1); // Reset to first page when searching
     
-    if (!query.trim()) {
-      // If search query is empty, show all appointments based on current filter
-      setFilteredAppointments(appointments);
-      return;
-    }
-    
-    // Filter appointments by phone number containing the search query
-    const filtered = appointments.filter(appointment => {
-      const phone = appointment.phone || appointment.userPhone || '';
-      return phone.toLowerCase().includes(query.toLowerCase());
-    });
-    
-    setFilteredAppointments(filtered);
+    // Let fetchAppointments handle the filtering based on phoneSearchQuery
+    // This will be picked up by useEffect through the fetchAppointments dependency
   };
     // Hiển thị modal chi tiết appointment
   const handleViewAppointment = (appointment) => {

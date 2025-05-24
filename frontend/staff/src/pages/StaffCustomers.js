@@ -15,8 +15,7 @@ const StaffCustomers = () => {
   const [activeTab, setActiveTab] = useState('info');
   // Pagination states for bookings and orders
   const [bookingsPage, setBookingsPage] = useState(1);
-  const [ordersPage, setOrdersPage] = useState(1);
-  const ITEMS_PER_PAGE = 5;  // Tích hợp Socket.IO
+  const [ordersPage, setOrdersPage] = useState(1);  const ITEMS_PER_PAGE = 5;  // Tích hợp Socket.IO
   const { isConnected, registerHandler, unregisterHandler } = useSocketContext();
   const { clearCustomerNotifications, newCustomerIds, removeNewCustomerId } = useNotifications();
 
@@ -42,8 +41,7 @@ const StaffCustomers = () => {
     // Xóa thông báo khách hàng khi trang được tải
     clearCustomerNotifications();
   }, [searchTerm, currentPage, clearCustomerNotifications, fetchCustomers]);
-  
-  // Xử lý sự kiện khách hàng mới từ Socket.IO
+    // Xử lý sự kiện khách hàng mới từ Socket.IO
   useEffect(() => {
     if (!isConnected) return;
     
@@ -51,15 +49,25 @@ const StaffCustomers = () => {
     const handleNewCustomer = (data) => {
       console.log('New customer received via socket:', data);
       
-      // Chỉ thêm khách hàng mới nếu đang ở trang đầu và không trong chế độ tìm kiếm
-      if (data && data.user && currentPage === 1 && !searchTerm) {
+      // Extract customer data - could be in data.user or data.customer
+      const customerData = data.user || data.customer;
+      
+      if (!customerData || !customerData._id) {
+        console.error('Invalid customer data received:', data);
+        return;
+      }
+        // We'll use a different approach since we don't want to directly manipulate the Set
+      // The customer is already being marked as new by NotificationContext's handleNewCustomer
+      
+      // If we're on the first page with no search filter, add to visible list
+      if (currentPage === 1 && !searchTerm) {
+        // Add to customer list
         setCustomers(prevCustomers => {
           // Thêm khách hàng mới vào đầu danh sách
-          const newCustomers = [data.user, ...prevCustomers];
+          const newCustomers = [customerData, ...prevCustomers];
           // Nếu có nhiều hơn số lượng trang, loại bỏ khách hàng cuối cùng
           return newCustomers.length > 10 ? newCustomers.slice(0, 10) : newCustomers;
         });
-          // Badge management is now handled by NotificationContext
       } else {
         // Nếu không ở trang đầu hoặc đang tìm kiếm, chỉ cập nhật log
         console.log('Khách hàng mới đã thêm nhưng không hiển thị do phân trang/tìm kiếm');
@@ -117,13 +125,15 @@ const StaffCustomers = () => {
         orders: orders.orders || []
       });
       
-      setIsModalOpen(true);
-        // Loại bỏ badge NEW nếu đã xem
+      setIsModalOpen(true);        // Loại bỏ badge NEW nếu đã xem
       if (newCustomerIds.has(id)) {
+        // Remove badge from this specific customer
         removeNewCustomerId(id);
         
-        // Xóa badge thông báo
-        clearCustomerNotifications();
+        // If there are no more new customers, clear the notification in the nav button
+        if (newCustomerIds.size <= 1) {
+          clearCustomerNotifications();
+        }
       }
       
       // Đánh dấu khách hàng đã xem (nếu cần)

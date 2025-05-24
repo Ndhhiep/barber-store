@@ -98,17 +98,18 @@ export const NotificationProvider = ({ children }) => {  // Trạng thái cho th
       }, 5 * 60 * 1000);
     }
   }, []);
-  
-  // Handler cho sự kiện newCustomer
+    // Handler cho sự kiện newCustomer
   const handleNewCustomer = useCallback((data) => {
     console.log('Thông báo khách hàng mới nhận được:', data);
-    if (data.customer && data.customer._id) {
+    // Check for both user and customer in data as the socket may emit either format
+    const customerData = data.user || data.customer;
+    if (customerData && customerData._id) {
       setCustomerNotifications((prev) => prev + 1);
       
       // Store the new customer ID for badge display
       setNewCustomerIds(prev => {
         const updated = new Set(prev);
-        updated.add(data.customer._id);
+        updated.add(customerData._id);
         return updated;
       });
       
@@ -116,8 +117,8 @@ export const NotificationProvider = ({ children }) => {  // Trạng thái cho th
       setTimeout(() => {
         setNewCustomerIds(prev => {
           const updated = new Set(prev);
-          if (updated.has(data.customer._id)) {
-            updated.delete(data.customer._id);
+          if (updated.has(customerData._id)) {
+            updated.delete(customerData._id);
           }
           return updated;
         });
@@ -226,6 +227,7 @@ export const NotificationProvider = ({ children }) => {  // Trạng thái cho th
     removeNewBookingId,
     removeNewContactId,
     removeNewCustomerId,
+    setNewCustomerIds, // Add setter for customers
     isNewOrder
   };
 

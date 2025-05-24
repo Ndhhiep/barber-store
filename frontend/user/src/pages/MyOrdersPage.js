@@ -9,6 +9,10 @@ const MyOrdersPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  // Add pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ordersPerPage] = useState(5);
+  
   const navigate = useNavigate();
 
   // Fetch all orders for the current user
@@ -25,10 +29,13 @@ const MyOrdersPage = () => {
         const result = await orderService.getMyOrders();
         
         if (result.success) {
-          setOrders(result.data);
+          // Sort orders by date (most recent first)
+          const sortedOrders = result.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          setOrders(sortedOrders);
+          
           // If we have orders, select the first one for display
-          if (result.data.length > 0) {
-            setSelectedOrder(result.data[0]);
+          if (sortedOrders.length > 0) {
+            setSelectedOrder(sortedOrders[0]);
           }
         } else {
           throw new Error(result.message || 'Failed to fetch orders');
@@ -103,6 +110,22 @@ const MyOrdersPage = () => {
     );
   }
 
+  // Calculate pagination indexes
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
+  const totalPages = Math.ceil(orders.length / ordersPerPage);
+
+  // Change page
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    // Select the first order of the new page if available
+    const newPageOrders = orders.slice((pageNumber - 1) * ordersPerPage, pageNumber * ordersPerPage);
+    if (newPageOrders.length > 0) {
+      fetchOrderById(newPageOrders[0]._id);
+    }
+  };
+
   return (
     <div className="container my-orders-container my-5">
       <h1 className="text-center mb-4">My Orders</h1>
@@ -112,22 +135,20 @@ const MyOrdersPage = () => {
           {error}
         </div>
       )}
-      
-      {orders.length === 0 && !error ? (
+        {orders.length === 0 && !error ? (
         <div className="text-center py-5">
           <h3 className="mb-4">You don't have any orders yet.</h3>
           <Link to="/products" className="btn btn-primary">Shop Now</Link>
         </div>
-      ) : (
-        <div className="row">
+      ) : (        <div className="row equal-height">
           {/* Order List */}
-          <div className="col-md-4 mb-4">
+          <div className="col-md-4">
             <div className="card order-list-card">
               <div className="card-header">
                 <h5 className="mb-0">Your Orders</h5>
               </div>
               <div className="list-group list-group-flush">
-                {orders.map((order) => (
+                {currentOrders.map((order) => (
                   <button 
                     key={order._id} 
                     className={`list-group-item list-group-item-action ${selectedOrder && selectedOrder._id === order._id ? 'active' : ''}`}
@@ -141,45 +162,93 @@ const MyOrdersPage = () => {
                     <p className="mb-1">${order.totalAmount.toFixed(2)} - {order.items.length} items</p>
                     <small>{formatDate(order.createdAt)}</small>
                   </button>
-                ))}
+                ))}              </div>              
+              {/* Pagination Controls */}
+              <div className="card-footer">
+                {totalPages > 1 ? (
+                  <nav>
+                    <ul className="pagination pagination-sm justify-content-center mb-0">
+                      <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                        <button 
+                          className="page-link" 
+                          onClick={() => paginate(currentPage - 1)}
+                          disabled={currentPage === 1}
+                        >
+                          &laquo;
+                        </button>
+                      </li>
+                      
+                      {[...Array(totalPages)].map((_, index) => (
+                        <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
+                          <button 
+                            className="page-link"
+                            onClick={() => paginate(index + 1)}
+                          >
+                            {index + 1}
+                          </button>
+                        </li>
+                      ))}
+                      
+                      <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                        <button 
+                          className="page-link" 
+                          onClick={() => paginate(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                        >
+                          &raquo;
+                        </button>
+                      </li>
+                    </ul>
+                  </nav>
+                ) : (
+                  <small className="text-muted">Showing all orders</small>
+                )}
               </div>
             </div>
           </div>
           
           {/* Order Details */}
-          <div className="col-md-8">
-            {loading && selectedOrder ? (
-              <div className="order-detail-placeholder">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
+          <div className="col-md-8">            {loading && selectedOrder ? (
+              <div className="card order-detail-card">
+                <div className="card-body d-flex flex-column justify-content-center align-items-center">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <p className="mt-3">Loading order details...</p>
                 </div>
-                <p className="mt-3">Loading order details...</p>
-              </div>
-            ) : error ? (
-              <div className="alert alert-danger" role="alert">
-                <div className="d-flex align-items-center mb-2">
-                  <i className="bi bi-exclamation-triangle-fill me-2" style={{ fontSize: "1.5rem" }}></i>
-                  <h5 className="mb-0">Error Loading Order</h5>
+                <div className="card-footer">
+                  <small className="text-muted">Loading order information...</small>
                 </div>
-                <p>{error}</p>
-                <p className="mb-0">
-                  <button className="btn btn-outline-primary btn-sm" onClick={() => setError(null)}>
-                    <i className="bi bi-arrow-left me-1"></i> Return to Orders
-                  </button>
-                </p>
+              </div>            ) : error ? (
+              <div className="card order-detail-card">
+                <div className="card-body d-flex flex-column">
+                  <div className="alert alert-danger" role="alert">
+                    <div className="d-flex align-items-center mb-2">
+                      <i className="bi bi-exclamation-triangle-fill me-2" style={{ fontSize: "1.5rem" }}></i>
+                      <h5 className="mb-0">Error Loading Order</h5>
+                    </div>
+                    <p>{error}</p>
+                    <p className="mb-0">
+                      <button className="btn btn-outline-primary btn-sm" onClick={() => setError(null)}>
+                        <i className="bi bi-arrow-left me-1"></i> Return to Orders
+                      </button>
+                    </p>
+                  </div>
+                </div>
+                <div className="card-footer">
+                  <small className="text-muted">An error occurred while loading order details</small>
+                </div>
               </div>
-            ) : selectedOrder ? (
-              <div className="card order-detail-card">                <div className="card-header d-flex justify-content-between align-items-center">
+            ) : selectedOrder ? (              <div className="card order-detail-card">
+                <div className="card-header d-flex justify-content-between align-items-center">
                   <div>
                     <h5 className="mb-0" style={{fontFamily: 'sans-serif'}}>Order ID: {selectedOrder._id.substring(selectedOrder._id.length - 6)}</h5>
                     <small className="text-muted">Placed on {formatDate(selectedOrder.createdAt)}</small>
                   </div>
                   <span className={`badge ${getStatusBadgeColor(selectedOrder.status)}`}>
                     {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
-                  </span>
-                </div>
-                
-                <div className="card-body">
+                  </span>                </div>
+                <div className="card-body d-flex flex-column">
                   <div className="row mb-3">
                     <div className="col-md-6">
                       <h6>Customer Information</h6>
@@ -243,27 +312,33 @@ const MyOrdersPage = () => {
                       <h6>Notes</h6>
                       <p className="mb-0">{selectedOrder.notes}</p>
                     </div>
-                  )}
-                </div>
-                
-                {selectedOrder.status === 'pending' && (
-                  <div className="card-footer">
-                    <div className="alert alert-info mb-0" role="alert">
-                      <i className="bi bi-info-circle me-2"></i>
+                  )}                </div>
+                <div className="card-footer">
+                  {selectedOrder.status === 'pending' ? (
+                    <div className="alert alert-info mb-0 py-1" role="alert">
+                      <i className="bi bi-info-circle me-1"></i>
                       Your order is being processed. We'll update you when it ships.
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <small className="text-muted">Order status: {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}</small>
+                  )}
+                </div>
               </div>
-            ) : (
-              <div className="text-center my-5">
-                <h3>No Order Selected</h3>
-                <p className="mt-3">Please select an order from the list to view details.</p>
+            ) : (              <div className="card order-detail-card">
+                <div className="card-body d-flex flex-column justify-content-center align-items-center">
+                  <h3>No Order Selected</h3>
+                  <p className="mt-3">Please select an order from the list to view details.</p>
+                </div>
+                <div className="card-footer">
+                  <small className="text-muted">Select an order to view details</small>
+                </div>
               </div>
             )}
           </div>
         </div>
       )}
+      
+      
     </div>
   );
 };
