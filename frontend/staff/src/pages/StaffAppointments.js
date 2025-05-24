@@ -3,14 +3,20 @@ import staffAppointmentService from '../services/staffAppointmentService';
 import { useSocketContext } from '../context/SocketContext';
 import { useNotifications } from '../context/NotificationContext';
 import normalizeBookingData from '../utils/bookingDataNormalizer';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const StaffAppointments = () => {
   const [appointments, setAppointments] = useState([]);
+  const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeFilter, setActiveFilter] = useState('all');  // State cho modal chi tiết appointment
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [phoneSearchQuery, setPhoneSearchQuery] = useState('');
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   
   // State phân trang
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,11 +64,26 @@ const StaffAppointments = () => {
         const timeB = new Date(`2000-01-01T${b.time}`);
         return timeB - timeA; // Sắp xếp theo giờ giảm dần
       });
+        setAppointments(sortedAppointments);
+        // Apply phone search filter if it exists
+      if (phoneSearchQuery) {
+        const filtered = sortedAppointments.filter(appointment => {
+          const phone = appointment.phone || appointment.userPhone || '';
+          return phone.toLowerCase().includes(phoneSearchQuery.toLowerCase());
+        });
+        setFilteredAppointments(filtered);
+      } else {
+        setFilteredAppointments(sortedAppointments);
+      }
       
-      setAppointments(sortedAppointments);
-      
-      // Set total pages from response
-      if (response.totalPages) {
+      // Set total pages from filtered appointments if searching, otherwise from original response
+      if (phoneSearchQuery) {
+        const filteredLength = sortedAppointments.filter(appointment => {
+          const phone = appointment.phone || appointment.userPhone || '';
+          return phone.toLowerCase().includes(phoneSearchQuery.toLowerCase());
+        }).length;
+        setTotalPages(Math.max(1, Math.ceil(filteredLength / APPOINTMENTS_PER_PAGE)));
+      } else if (response.totalPages) {
         setTotalPages(response.totalPages);
       } else if (response.totalCount) {
         // Calculate total pages if only total count is provided
@@ -80,14 +101,28 @@ const StaffAppointments = () => {
       setLoading(false);
     }
   }, [activeFilter, currentPage, APPOINTMENTS_PER_PAGE]);
-  
-  // Xóa thông báo đặt lịch khi component mount
+    // Xóa thông báo đặt lịch khi component mount
   useEffect(() => {
     clearBookingNotifications();
     
-    // Đăng ký event listener để xóa thông báo khi click bất kỳ đâu trên trang
-    const handleClickAnywhere = () => {
+    // Đăng ký event listener để xóa thông báo và date picker khi click bất kỳ đâu trên trang
+    const handleClickAnywhere = (event) => {
       clearBookingNotifications();
+      
+      // Close date picker when clicking outside
+      if (showDatePicker) {
+        const datePickerElements = document.querySelectorAll('.date-picker-dropdown, .date-filter button');
+        let clickedInside = false;
+        datePickerElements.forEach(element => {
+          if (element.contains(event.target)) {
+            clickedInside = true;
+          }
+        });
+        
+        if (!clickedInside) {
+          setShowDatePicker(false);
+        }
+      }
     };
     
     // Đăng ký event listener
@@ -96,17 +131,40 @@ const StaffAppointments = () => {
       containerElement.addEventListener('click', handleClickAnywhere);
     }
     
+    // Add document-level event listener to catch all clicks
+    document.addEventListener('mousedown', handleClickAnywhere);
+    
     // Cleanup event listener khi component unmount
     return () => {
       if (containerElement) {
         containerElement.removeEventListener('click', handleClickAnywhere);
       }
+      document.removeEventListener('mousedown', handleClickAnywhere);
     };
-  }, [clearBookingNotifications]);
-
+  }, [clearBookingNotifications, showDatePicker]);
   useEffect(() => {
-    fetchAppointments();
-  }, [activeFilter, currentPage, fetchAppointments]);
+    // If filter is specific-date, don't fetch from server - we're filtering client-side
+    if (activeFilter === 'specific-date') {
+      // Apply date filter to existing appointments
+      if (selectedDate) {
+        const filtered = appointments.filter(appointment => {
+          const appointmentDate = new Date(appointment.date);
+          const selectedDateObj = new Date(selectedDate);
+          
+          return (
+            appointmentDate.getFullYear() === selectedDateObj.getFullYear() &&
+            appointmentDate.getMonth() === selectedDateObj.getMonth() &&
+            appointmentDate.getDate() === selectedDateObj.getDate()
+          );
+        });
+        
+        setFilteredAppointments(filtered);
+        setTotalPages(Math.max(1, Math.ceil(filtered.length / APPOINTMENTS_PER_PAGE)));
+      }
+    } else {
+      fetchAppointments();
+    }
+  }, [activeFilter, currentPage, fetchAppointments, selectedDate]);
     // Xử lý sự kiện cập nhật booking từ Socket.IO
   const handleNewBooking = useCallback(async (data) => {
     try {
@@ -230,11 +288,19 @@ const StaffAppointments = () => {
             // No need to manually add new booking IDs here as it's done in the context
           }
         }
-      } 
-      // Nếu là sự kiện cập nhật
+      }      // Nếu là sự kiện cập nhật
       else if (data.operationType === 'update' && data.documentId) {
         // Nếu là sự kiện cập nhật, cập nhật booking trong state
-        setAppointments(prev => 
+        const updatedAppointments = appointments.map(appointment => 
+          appointment._id === data.documentId 
+            ? { ...appointment, ...(data.updateDescription?.updatedFields || {}) } 
+            : appointment
+        );
+        
+        setAppointments(updatedAppointments);
+        
+        // Apply the same update to filteredAppointments
+        setFilteredAppointments(prev => 
           prev.map(appointment => 
             appointment._id === data.documentId 
               ? { ...appointment, ...(data.updateDescription?.updatedFields || {}) } 
@@ -262,17 +328,21 @@ const StaffAppointments = () => {
       console.log('Cleaning up socket listeners in StaffAppointments');
       unregisterHandler('newBooking', handleNewBooking);
     };
-  }, [isConnected, registerHandler, unregisterHandler, handleNewBooking]);
-    const handleStatusUpdate = async (id, newStatus) => {
+  }, [isConnected, registerHandler, unregisterHandler, handleNewBooking]);    const handleStatusUpdate = async (id, newStatus) => {
     try {
       await staffAppointmentService.updateAppointmentStatus(id, newStatus);
       
       // Update the local state to reflect the change
-      setAppointments(
-        appointments.map(appointment => 
+      const updatedAppointments = appointments.map(appointment => 
+        appointment._id === id ? { ...appointment, status: newStatus } : appointment
+      );
+      setAppointments(updatedAppointments);
+      
+      // Also update filtered appointments if needed
+      setFilteredAppointments(
+        filteredAppointments.map(appointment => 
           appointment._id === id ? { ...appointment, status: newStatus } : appointment
         )
-        // Không cần sắp xếp lại vì việc cập nhật status không ảnh hưởng đến thứ tự ngày/giờ
       );
       
     } catch (err) {
@@ -289,18 +359,72 @@ const StaffAppointments = () => {
     const formatTime = (timeString) => {
     return new Date(`2000-01-01T${timeString}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
-  
-  // Handle page change for pagination
+    // Handle page change for pagination
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
+  };
+    // Handle date selection
+  const handleDateSelect = (date) => {
+    setSelectedDate(date);
+    setActiveFilter('specific-date');
+    setCurrentPage(1); // Reset to first page
+    setShowDatePicker(false);
+    
+    // Filter appointments by selected date
+    const filtered = appointments.filter(appointment => {
+      const appointmentDate = new Date(appointment.date);
+      
+      return (
+        appointmentDate.getFullYear() === date.getFullYear() &&
+        appointmentDate.getMonth() === date.getMonth() &&
+        appointmentDate.getDate() === date.getDate()
+      );
+    });
+    
+    setFilteredAppointments(filtered);
+  };
+    // Toggle date picker visibility
+  const toggleDatePicker = () => {
+    setShowDatePicker(!showDatePicker);
   };
   
   // Handle filter change with page reset
   const handleFilterChange = (filter) => {
     setActiveFilter(filter);
     setCurrentPage(1); // Reset to first page when changing filters
+    
+    // If switching to a preset filter from specific date, clear the selected date
+    if (filter !== 'specific-date') {
+      setSelectedDate(null);
+    }
+    
+    // Re-apply phone search filter if it exists
+    if (phoneSearchQuery) {
+      handlePhoneSearch(phoneSearchQuery);
+    } else {
+      setFilteredAppointments(appointments);
+    }
+  };
+    // Handle phone search
+  const handlePhoneSearch = (query) => {
+    setPhoneSearchQuery(query);
+    setCurrentPage(1); // Reset to first page when searching
+    
+    if (!query.trim()) {
+      // If search query is empty, show all appointments based on current filter
+      setFilteredAppointments(appointments);
+      return;
+    }
+    
+    // Filter appointments by phone number containing the search query
+    const filtered = appointments.filter(appointment => {
+      const phone = appointment.phone || appointment.userPhone || '';
+      return phone.toLowerCase().includes(query.toLowerCase());
+    });
+    
+    setFilteredAppointments(filtered);
   };
     // Hiển thị modal chi tiết appointment
   const handleViewAppointment = (appointment) => {
@@ -336,32 +460,68 @@ const StaffAppointments = () => {
       
       <div className="row mb-4 mt-4">
         <div className="col">
-          <div className="card">
-            <div className="card-header d-flex justify-content-between align-items-center">
+          <div className="card">            <div className="card-header d-flex justify-content-between align-items-center">
               <span>All Appointments</span>
-              <div>
-                <select
-                  className="form-select form-select-sm w-auto"
-                  value={activeFilter}
-                  onChange={e => handleFilterChange(e.target.value)}
-                >
-                  <option value="today">Today</option>
-                  <option value="week">This Week</option>
-                  <option value="all">All</option>
-                </select>
-              </div>
+              <div className="d-flex align-items-center">
+                <div className="input-group me-2" style={{ maxWidth: '250px' }}>
+                  <input
+                    type="text"
+                    className="form-control form-control-sm"
+                    placeholder="Search by phone..."
+                    id="phoneSearchInput"
+                    onChange={(e) => handlePhoneSearch(e.target.value)}
+                  />
+                  <button className="btn btn-sm btn-outline-secondary" type="button">
+                    <i className="bi bi-search"></i>
+                  </button>
+                </div>                <div className="date-filter position-relative">                  <button 
+                    className={`btn btn-sm ${activeFilter === 'specific-date' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                    onClick={() => setShowDatePicker(!showDatePicker)}
+                    title="Filter by date"
+                  >
+                    <i className="bi bi-calendar3"></i>
+                  </button>
+                    {showDatePicker && (
+                    <div className="position-absolute bg-white shadow rounded p-2 mt-1 date-picker-dropdown" style={{ zIndex: 1000, right: 0 }}>
+                      <DatePicker
+                        selected={selectedDate}
+                        onChange={handleDateSelect}
+                        inline
+                        calendarClassName="custom-calendar-style"
+                        todayButton="Today"
+                      />
+                      <div className="d-flex mt-2 justify-content-between">
+                        <button 
+                          className="btn btn-sm btn-outline-secondary" 
+                          onClick={() => {
+                            setSelectedDate(null);
+                            handleFilterChange('all');
+                            setShowDatePicker(false);
+                          }}
+                          title="Clear filter"
+                        >
+                          Clear
+                        </button>
+                        <button 
+                          className="btn btn-sm btn-primary" 
+                          onClick={() => setShowDatePicker(false)}
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>                  )}
+                  </div>
+                </div>
             </div>
-            <div className="card-body">
-              {loading ? (
+            <div className="card-body">{loading ? (
                 <div className="text-center my-3"><div className="spinner-border" role="status"></div></div>
-              ) : appointments.length > 0 ? (
+              ) : filteredAppointments.length > 0 ? (
                 <div className="table-responsive">
-                  <table className="table table-hover">
-                    <thead>
+                  <table className="table table-hover">                    <thead>
                       <tr>
                         <th>ID</th>
                         <th>Customer</th>
-                        <th>Service</th>
+                        <th>Phone</th>
                         <th>Date</th>
                         <th>Time</th>
                         <th>Status</th>
@@ -369,15 +529,14 @@ const StaffAppointments = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {appointments.map(appointment => (
-                        <tr key={appointment._id} className={newBookingIds.has(appointment._id) ? 'table-warning' : ''}>
-                          <td>{appointment._id.slice(-6).toUpperCase()}
+                      {filteredAppointments.map(appointment => (
+                        <tr key={appointment._id} className={newBookingIds.has(appointment._id) ? 'table-warning' : ''}>                          <td>{appointment._id.slice(-6).toUpperCase()}
                             {newBookingIds.has(appointment._id) && (
                               <span className="badge bg-danger ms-2 animate__animated animate__fadeIn animate__pulse animate__infinite">NEW</span>
                             )}
                           </td>
                           <td>{appointment.userName || 'N/A'}</td>
-                          <td>{appointment.serviceName}</td>
+                          <td>{appointment.phone || 'N/A'}</td>
                           <td>{formatDate(appointment.date)}</td>
                           <td>{formatTime(appointment.time)}</td>
                           <td>
@@ -400,9 +559,13 @@ const StaffAppointments = () => {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
-                </div>              ) : (
-                <p className="text-center">No appointments found for the selected filter.</p>
+                  </table>                </div>              ) : (                <p className="text-center">
+                  {phoneSearchQuery 
+                    ? `No appointments found with phone number containing "${phoneSearchQuery}".` 
+                    : activeFilter === 'specific-date'
+                      ? `No appointments found for ${selectedDate ? new Date(selectedDate).toLocaleDateString() : 'the selected date'}.`
+                      : `No appointments found for the selected time period.`}
+                </p>
               )}
             </div>
             {totalPages > 1 && (

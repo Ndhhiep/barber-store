@@ -625,13 +625,12 @@ const CartPage = () => {
             <h5>Order Confirmation</h5>
             <button className="close-btn" onClick={handleCloseSuccessModal}>&times;</button>
           </div>
-          <div className="modal-body text-center py-4">
-            <div className="success-icon mb-3">
+          <div className="modal-body text-center py-4">            <div className="success-icon mb-3">
               <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '3rem' }}></i>
             </div>
             <h4 className="mb-3">Thank You For Your Order!</h4>
             <p className="mb-4">Your order has been submitted successfully.</p>
-            <p className="mb-4"><strong>Order ID:</strong> {successOrderId}</p>
+            <p className="mb-4"><strong>Order ID:</strong> {successOrderId && successOrderId.slice(-6)}</p>
             <div className="d-grid">
               <button className="btn checkout-btn" onClick={handleCloseSuccessModal}>
                 Continue Shopping

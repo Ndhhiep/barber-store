@@ -299,9 +299,9 @@ const StaffOrders = () => {  // State cho dữ liệu và UI
                           </td>
                           <td>{order.customerInfo.name || 'N/A'}</td>
                           <td>{formatDate(order.createdAt)}</td>
-                          <td>${order.totalAmount?.toFixed(2)}</td>
-                          <td>
+                          <td>${order.totalAmount?.toFixed(2)}</td>                          <td>
                             <span className={`badge bg-${
+                              order.status === 'pending' ? 'warning' :
                               order.status === 'processing' ? 'info' : 
                               order.status === 'shipped' ? 'primary' : 
                               order.status === 'delivered' ? 'success' : 
@@ -413,9 +413,9 @@ const StaffOrders = () => {  // State cho dữ liệu và UI
                     </div>
 
                     <div className="row">
-                      <div className="col-4 fw-bold">Status:</div>                      
-                      <div className="col-8 ps-3">
+                      <div className="col-4 fw-bold">Status:</div>                        <div className="col-8 ps-3">
                         <span className={`badge bg-${
+                          viewOrder.status === 'pending' ? 'warning' :
                           viewOrder.status === 'processing' ? 'info' : 
                           viewOrder.status === 'shipped' ? 'primary' : 
                           viewOrder.status === 'delivered' ? 'success' : 
