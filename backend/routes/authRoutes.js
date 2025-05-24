@@ -12,6 +12,7 @@ router.patch('/reset-password/:token', authController.resetPassword);
 router.use(authController.protect); // Tất cả các route sau middleware này yêu cầu xác thực
 router.get('/me', authController.getMe);
 router.patch('/update-password', authController.updatePassword);
+router.put('/update-profile', authController.updateProfile);
 
 // Các route dành cho staff - Lấy danh sách tất cả người dùng
 router.get('/users', authController.restrictTo('admin', 'manager', 'barber', 'staff'), authController.getAllUsers);

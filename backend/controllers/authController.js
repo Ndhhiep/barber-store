@@ -317,6 +317,53 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
+// Cập nhật thông tin người dùng (trừ mật khẩu)
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+    
+    // Kiểm tra xem có dữ liệu cập nhật không
+    if (!name && !phone) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Please provide at least one field to update'
+      });
+    }
+    
+    // Chuẩn bị dữ liệu cập nhật
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (phone) updateData.phone = phone;
+    
+    // Cập nhật thông tin người dùng (không cập nhật mật khẩu)
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      updateData,
+      { new: true, runValidators: true }
+    ).select('-password -passwordResetToken -passwordResetExpires');
+    
+    if (!updatedUser) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'User not found'
+      });
+    }
+    
+    res.status(200).json({
+      status: 'success',
+      message: 'Profile updated successfully',
+      data: {
+        user: updatedUser
+      }
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: 'fail',
+      message: error.message
+    });
+  }
+};
+
 // Lấy tất cả người dùng với phân trang và tìm kiếm - cho quyền truy cập nhân viên
 exports.getAllUsers = async (req, res) => {
   try {

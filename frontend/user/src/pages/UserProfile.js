@@ -151,15 +151,33 @@ const UserProfile = () => {
         updateData.currentPassword = userData.currentPassword;
         updateData.newPassword = userData.newPassword;
       }
+        let response;
       
-      const response = await fetch('http://localhost:5000/api/auth/update-profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(updateData)
-      });
+      // If the user is changing their password
+      if (userData.currentPassword && userData.newPassword) {
+        // Separate call to update password
+        response = await fetch('http://localhost:5000/api/auth/update-password', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            currentPassword: userData.currentPassword,
+            newPassword: userData.newPassword
+          })
+        });
+      } else {
+        // Regular profile update (name, phone)
+        response = await fetch('http://localhost:5000/api/auth/update-profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(updateData)
+        });
+      }
       
       const data = await response.json();
       
