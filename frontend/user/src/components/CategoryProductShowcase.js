@@ -6,17 +6,30 @@ const CategoryProductShowcase = () => {
   const [showcaseData, setShowcaseData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   useEffect(() => {
     const fetchShowcaseData = async () => {
       setLoading(true);
       setError(null);
       try {
         const response = await fetch('/api/products/showcase-by-category');
+        
+        // Log the raw response for debugging
+        const responseText = await response.text();
+        console.log('Raw API response:', responseText);
+        
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json();
+        
+        // Try to parse JSON only after getting the text
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.error("JSON parsing error:", jsonError);
+          throw new Error('Invalid JSON response from server. The API might be returning HTML instead of JSON.');
+        }
+        
         setShowcaseData(data);
       } catch (err) {
         console.error("Fetch error:", err);
