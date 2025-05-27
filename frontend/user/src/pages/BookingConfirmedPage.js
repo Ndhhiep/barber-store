@@ -73,23 +73,21 @@ const BookingConfirmedPage = () => {
       }));
     }
   }, [location.search, validateBookingToken]); // Updated to use functional update for setBookingStatus
-
   return (
-    <div className="py-5 booking-page-bg">
+    <div className="py-3 py-md-5 booking-page-bg">
       <div className="container booking-page-container">
         <div className="row justify-content-center">
-          <div className="col-md-8 col-lg-6">
+          <div className="col-12 col-md-8 col-lg-6">
             <div className="card booking-card shadow">
-              <div className="card-body p-4 p-md-5" >
-                {isValidatingToken ? (
-                  <div className="py-5 text-center">
+              <div className="card-body p-3 p-md-4 p-lg-5" >                {isValidatingToken ? (
+                  <div className="py-4 py-md-5 text-center">
                     <div className="spinner-border text-primary" role="status">
                       <span className="visually-hidden">Loading...</span>
                     </div>
                     <p className="mt-3">Validating your booking confirmation...</p>
                   </div>
                 ) : bookingStatus.error ? (
-                  <div className="py-5 text-center">
+                  <div className="py-4 py-md-5 text-center">
                     <div className="text-danger mb-4">
                       <i className="bi bi-exclamation-circle" style={{fontSize: "3rem"}}></i>
                     </div>
@@ -149,11 +147,10 @@ const BookingConfirmedPage = () => {
                     <div className="alert alert-info mb-4">
                       <i className="bi bi-info-circle me-2"></i>
                       Your booking have been confirmed ! Now you can close this page. 
-                    </div>
-                    <div className="d-grid gap-2 d-md-flex justify-content-md-center">
+                    </div>                    <div className="d-grid gap-2 d-md-flex justify-content-md-center">
                       <button
                         type="button"
-                        className="btn booking-btn px-4"
+                        className="btn booking-btn px-3 px-md-4"
                         onClick={() => navigate('/')}
                       >
                         <i className="bi bi-house me-2"></i>
@@ -161,7 +158,7 @@ const BookingConfirmedPage = () => {
                       </button>
                       <button
                         type="button"
-                        className="btn btn-outline-secondary booking-outline-btn px-4"
+                        className="btn btn-outline-secondary booking-outline-btn px-3 px-md-4"
                         onClick={() => navigate('/booking')}
                       >
                         <i className="bi bi-calendar-plus me-2"></i>

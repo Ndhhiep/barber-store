@@ -125,24 +125,25 @@ const MyOrdersPage = () => {
       fetchOrderById(newPageOrders[0]._id);
     }
   };
-
   return (
-    <div className="container my-orders-container my-5">
-      <h1 className="text-center mb-4">My Orders</h1>
+    <div className="container my-orders-container my-3 my-md-5">
+      <h1 className="text-center mb-3 mb-md-4">My Orders</h1>
       
       {error && !orders.length && (
         <div className="alert alert-danger" role="alert">
           {error}
         </div>
       )}
-        {orders.length === 0 && !error ? (
-        <div className="text-center py-5">
-          <h3 className="mb-4">You don't have any orders yet.</h3>
+      
+      {orders.length === 0 && !error ? (
+        <div className="text-center py-4 py-md-5">
+          <h3 className="mb-3 mb-md-4">You don't have any orders yet.</h3>
           <Link to="/products" className="btn btn-primary">Shop Now</Link>
         </div>
-      ) : (        <div className="row equal-height">
+      ) : (
+        <div className="row equal-height">
           {/* Order List */}
-          <div className="col-md-4">
+          <div className="col-12 col-md-4 mb-3 mb-md-0">
             <div className="card order-list-card">
               <div className="card-header">
                 <h5 className="mb-0">Your Orders</h5>
@@ -205,10 +206,10 @@ const MyOrdersPage = () => {
                 )}
               </div>
             </div>
-          </div>
-          
+          </div>          
           {/* Order Details */}
-          <div className="col-md-8">            {loading && selectedOrder ? (
+          <div className="col-12 col-md-8">
+            {loading && selectedOrder ? (
               <div className="card order-detail-card">
                 <div className="card-body d-flex flex-column justify-content-center align-items-center">
                   <div className="spinner-border text-primary" role="status">
@@ -219,7 +220,8 @@ const MyOrdersPage = () => {
                 <div className="card-footer">
                   <small className="text-muted">Loading order information...</small>
                 </div>
-              </div>            ) : error ? (
+              </div>
+            ) : error ? (
               <div className="card order-detail-card">
                 <div className="card-body d-flex flex-column">
                   <div className="alert alert-danger" role="alert">

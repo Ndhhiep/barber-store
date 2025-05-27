@@ -137,6 +137,7 @@
 .contact-success-btn:hover {
   background-color: #7a664d !important;
   border-color: #7a664d !important;
+  color: white !important;
   transform: translateY(-2px);
   box-shadow: 0 6px 15px rgba(141, 119, 92, 0.4) !important;
 }

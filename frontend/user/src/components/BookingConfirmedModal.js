@@ -1,5 +1,15 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import '../css/modal-fix.css';
+import '../css/BookingConfirmedModal.css';
+
+// Add custom styles to ensure vertical centering
+const modalStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  height: '100%'
+};
 
 const BookingConfirmedModal = ({
   bookingStatus,
@@ -10,12 +20,11 @@ const BookingConfirmedModal = ({
   isLoggedIn,
   userData
 }) => {
-  const navigate = useNavigate();
-
-  return (
-    <div className="modal show d-block booking-confirmed-modal" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-      <div className="modal-dialog modal-dialog-centered modal-lg">
-        <div className="modal-content" style={{ maxWidth: '700px', margin: '0 auto' }}>
+  const navigate = useNavigate();  
+    return (
+    <div className="modal show d-block booking-confirmed-modal modal-centered" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', ...modalStyle }}>
+      <div className="modal-dialog modal-lg" style={{ margin: 'auto', position: 'relative' }}>
+        <div className="modal-content mx-3 mx-md-0" style={{ maxWidth: '700px', margin: '0 auto', transform: 'none' }}>
           <div className="modal-header border-0 p-0 m-0">
             <button
               type="button"
@@ -43,45 +52,45 @@ const BookingConfirmedModal = ({
             <h2 className="h3 confirmation-title">Booking Confirmed!</h2>
             <p className="mb-4">
               Thank you for confirming your booking with The Gentleman's Cut. Your appointment is now confirmed and added to our schedule.
-            </p>
-            <div className="booking-info-container p-4 mb-4 bg-light rounded">
-              <table className="table table-borderless mb-0">
-                <tbody>
-                  <tr>
-                    <td width="20%" className="fw-bold text-end">Date:</td>
-                    <td>
-                      <span className="booking-info-value">{bookingStatus.confirmedDate}</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td width="20%" className="fw-bold text-end">Time:</td>
-                    <td>
-                      <span className="booking-info-value">{bookingStatus.confirmedTime}</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td width="20%" className="fw-bold text-end">Service:</td>
-                    <td>
-                      <span className="booking-info-value">{bookingStatus.confirmedService}</span>
-                    </td>
-                  </tr>
-                  {setSelectedBarberName && (
+            </p>            <div className="booking-info-container p-3 p-md-4 mb-4 bg-light rounded">
+              <div className="table-responsive">
+                <table className="table table-borderless mb-0">
+                  <tbody>
                     <tr>
-                      <td width="20%" className="fw-bold text-end">Barber:</td>
+                      <td className="fw-bold text-end text-md-end text-start" style={{ width: '30%' }}>Date:</td>
                       <td>
-                        <span className="booking-info-value">{setSelectedBarberName}</span>
+                        <span className="booking-info-value">{bookingStatus.confirmedDate}</span>
                       </td>
                     </tr>
-                  )}
-                </tbody>
-              </table>
+                    <tr>
+                      <td className="fw-bold text-end text-md-end text-start">Time:</td>
+                      <td>
+                        <span className="booking-info-value">{bookingStatus.confirmedTime}</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="fw-bold text-end text-md-end text-start">Service:</td>
+                      <td>
+                        <span className="booking-info-value">{bookingStatus.confirmedService}</span>
+                      </td>
+                    </tr>
+                    {setSelectedBarberName && (
+                      <tr>
+                        <td className="fw-bold text-end text-md-end text-start">Barber:</td>
+                        <td>
+                          <span className="booking-info-value">{setSelectedBarberName}</span>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-          <div className="modal-footer border-0">
-            <div className="d-flex justify-content-between w-100">
+          </div>          <div className="modal-footer border-0 p-3">
+            <div className="d-flex flex-column flex-md-row justify-content-between w-100 gap-2">
               <button
                 type="button"
-                className="btn btn-outline-secondary booking-outline-btn px-4"
+                className="btn btn-outline-secondary booking-outline-btn px-4 order-2 order-md-1"
                 onClick={() => {
                   setShowBookingConfirmedModal(false);
                   setBookingStatus({
@@ -101,9 +110,9 @@ const BookingConfirmedModal = ({
               </button>
               <button
                 type="button"
-                className="btn booking-btn px-4"
+                className="btn booking-btn px-4 order-1 order-md-2"
                 onClick={() => {
-                  setShowBookingConfirmedModal(false);                  setBookingData({
+                  setShowBookingConfirmedModal(false);setBookingData({
                     service: '',
                     barber_id: '',
                     date: '',

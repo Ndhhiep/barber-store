@@ -57,10 +57,19 @@
 
 /* CTA button */
 .cta-button {
-  background-color: #8B775C;
-  color: #fff;
+  border: 1px solid #8B775C;
+  color: #8B775C;
   font-family: 'Playfair Display, serif';
   border-radius: 0;
   padding-left: 3rem;
   padding-right: 3rem;
+  background-color: transparent;
+  transition: all 0.3s ease;
+  border-radius: 5px;
+}
+
+.cta-button:hover {
+  background-color: #8B775C;
+  color: #fff;
+  transform: translateY(-2px);
 }

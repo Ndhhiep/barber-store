@@ -10,8 +10,31 @@ const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const { itemCount } = useCart();
   const navigate = useNavigate();
-
   const handleNavCollapse = () => setIsNavCollapsed(!isNavCollapsed);
+  
+  // Function to close navbar when nav link is clicked
+  const closeNavbar = () => {
+    setIsNavCollapsed(true);
+  };
+
+  // Close navbar when clicking outside (for mobile)
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!isNavCollapsed && window.innerWidth <= 991) {
+        const navbar = document.getElementById('navbarNav');
+        const toggler = document.querySelector('.navbar-toggler');
+        
+        if (navbar && !navbar.contains(event.target) && !toggler.contains(event.target)) {
+          closeNavbar();
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isNavCollapsed]);
 
   // Check authentication status when component mounts
   useEffect(() => {
@@ -47,11 +70,16 @@ const Header = () => {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-  return (
+  }, []);  return (
     <>
       {/* Header placeholder that appears when header becomes fixed */}
       {isScrolled && <div style={{ height: '80px' }}></div>}
+      
+      {/* Mobile navbar backdrop */}
+      <div 
+        className={`navbar-backdrop ${!isNavCollapsed ? 'show' : ''}`}
+        onClick={closeNavbar}
+      ></div>
       
       <header className={`navbar navbar-expand-lg header-navbar ${isScrolled ? 'sticky-header' : ''}`}>
         <div className="header-container container-fluid px-2 px-sm-3 px-md-4">
@@ -64,9 +92,8 @@ const Header = () => {
               The Gentleman's Cut
             </span>
           </NavLink>
-          
-          <button 
-            className="navbar-toggler header-toggler" 
+            <button 
+            className="navbar-toggler header-toggler position-relative" 
             type="button" 
             data-bs-toggle="collapse" 
             data-bs-target="#navbarNav"
@@ -76,72 +103,108 @@ const Header = () => {
             onClick={handleNavCollapse}
           >
             <span className="navbar-toggler-icon header-toggler-icon"></span>
+            {itemCount > 0 && (
+              <span className="toggle-cart-badge">
+                {itemCount}
+                <span className="visually-hidden">items in cart</span>
+              </span>
+            )}
           </button>
-          
-          <div 
-            className={`${isNavCollapsed ? 'collapse' : ''} navbar-collapse`} 
+            <div 
+            className={`navbar-collapse ${!isNavCollapsed ? 'show' : ''}`} 
             id="navbarNav"
-          >
-            {/* Main Navigation - Centered */}
+          >{/* Main Navigation - Centered */}
             <ul className="navbar-nav mx-auto header-nav">
               <li className="nav-item">
-                <NavLink to="/" className={({isActive}) => 
-                  `nav-link header-nav-link ${isActive ? 'active' : ''}`} end>
+                <NavLink 
+                  to="/" 
+                  className={({isActive}) => 
+                    `nav-link header-nav-link ${isActive ? 'active' : ''}`} 
+                  end
+                  onClick={closeNavbar}
+                >
                   Home
                 </NavLink>
               </li>
               <li className="nav-item">
-                <NavLink to="/about" className={({isActive}) => 
-                  `nav-link header-nav-link ${isActive ? 'active' : ''}`}>
+                <NavLink 
+                  to="/about" 
+                  className={({isActive}) => 
+                    `nav-link header-nav-link ${isActive ? 'active' : ''}`}
+                  onClick={closeNavbar}
+                >
                   About
                 </NavLink>
               </li>
               <li className="nav-item">
-                <NavLink to="/services" className={({isActive}) => 
-                  `nav-link header-nav-link ${isActive ? 'active' : ''}`}>
+                <NavLink 
+                  to="/services" 
+                  className={({isActive}) => 
+                    `nav-link header-nav-link ${isActive ? 'active' : ''}`}
+                  onClick={closeNavbar}
+                >
                   Services
                 </NavLink>
               </li>
               <li className="nav-item">
-                <NavLink to="/team" className={({isActive}) => 
-                  `nav-link header-nav-link ${isActive ? 'active' : ''}`}>
+                <NavLink 
+                  to="/team" 
+                  className={({isActive}) => 
+                    `nav-link header-nav-link ${isActive ? 'active' : ''}`}
+                  onClick={closeNavbar}
+                >
                   Our Team
                 </NavLink>
               </li>
               <li className="nav-item">
-                <NavLink to="/products" className={({isActive}) => 
-                  `nav-link header-nav-link ${isActive ? 'active' : ''}`}>
+                <NavLink 
+                  to="/products" 
+                  className={({isActive}) => 
+                    `nav-link header-nav-link ${isActive ? 'active' : ''}`}
+                  onClick={closeNavbar}
+                >
                   Products
                 </NavLink>
-              </li>
-              <li className="nav-item">
-                <NavLink to="/contact" className={({isActive}) => 
-                  `nav-link header-nav-link ${isActive ? 'active' : ''}`}>
+              </li>              <li className="nav-item">
+                <NavLink 
+                  to="/contact" 
+                  className={({isActive}) => 
+                    `nav-link header-nav-link ${isActive ? 'active' : ''}`}
+                  onClick={closeNavbar}
+                >
                   Contact
+                </NavLink>
+              </li>
+                {/* Cart - Mobile and Desktop */}
+              <li className="nav-item">
+                <NavLink 
+                  to="/cart" 
+                  className={({isActive}) => 
+                    `nav-link header-nav-link cart-btn ${isActive ? 'active' : ''}`}
+                  onClick={closeNavbar}
+                >
+                  <i className="bi bi-cart3 cart-icon"></i>
+                  {itemCount > 0 && (
+                    <span className="cart-badge">
+                      {itemCount}
+                      <span className="visually-hidden">items in cart</span>
+                    </span>
+                  )}
                 </NavLink>
               </li>
               
               {/* Mobile Only Book Appointment Button */}
               <li className="nav-item d-lg-none">
-                <NavLink to="/booking" className="btn header-book-btn w-100 mt-3">
+                <NavLink 
+                  to="/booking" 
+                  className="btn header-book-btn w-100 mt-3"
+                  onClick={closeNavbar}
+                >
                   BOOK APPOINTMENT
                 </NavLink>
               </li>
-            </ul>
-            
-            {/* Right Side Elements - Cart, User and Book Button */}
+            </ul>              {/* Right Side Elements - User and Book Button */}
             <div className="d-flex align-items-center">
-              {/* Cart button */}
-              <NavLink to="/cart" className="position-relative cart-btn me-3">
-                <i className="bi bi-cart3 fs-5"></i>
-                {itemCount > 0 && (
-                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                    {itemCount}
-                    <span className="visually-hidden">items in cart</span>
-                  </span>
-                )}
-              </NavLink>
-
               {/* User Authentication Icon */}
               {isLoggedIn ? (
                 <div className="dropdown me-3">
@@ -156,17 +219,29 @@ const Header = () => {
                   </button>
                   <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                     <li>
-                      <NavLink to="/user-profile" className="dropdown-item my-info">
+                      <NavLink 
+                        to="/user-profile" 
+                        className="dropdown-item my-info"
+                        onClick={closeNavbar}
+                      >
                         <i className="bi bi-person me-2"></i>My Information
                       </NavLink>
                     </li>
                     <li>
-                      <NavLink to="/my-bookings" className="dropdown-item">
+                      <NavLink 
+                        to="/my-bookings" 
+                        className="dropdown-item"
+                        onClick={closeNavbar}
+                      >
                         <i className="bi bi-calendar-check me-2"></i>My Bookings
                       </NavLink>
                     </li>
                     <li>
-                      <NavLink to="/my-orders" className="dropdown-item">
+                      <NavLink 
+                        to="/my-orders" 
+                        className="dropdown-item"
+                        onClick={closeNavbar}
+                      >
                         <i className="bi bi-bag-check me-2"></i>My Orders
                       </NavLink>
                     </li>
@@ -174,7 +249,10 @@ const Header = () => {
                     <li>
                       <button 
                         className="dropdown-item text-danger" 
-                        onClick={handleLogout}
+                        onClick={() => {
+                          handleLogout();
+                          closeNavbar();
+                        }}
                       >
                         <i className="bi bi-box-arrow-right me-2"></i>Logout
                       </button>
@@ -186,13 +264,18 @@ const Header = () => {
                   to="/login" 
                   className="btn btn-outline-dark me-3 d-none d-lg-block"
                   id="login-btn"
+                  onClick={closeNavbar}
                 >
                   Login
                 </NavLink>
               )}
               
               {/* Book Appointment Button - Right side */}
-              <NavLink to="/booking" className="btn book-appointment-btn d-none d-lg-block">
+              <NavLink 
+                to="/booking" 
+                className="btn book-appointment-btn d-none d-lg-block"
+                onClick={closeNavbar}
+              >
                 BOOK APPOINTMENT
               </NavLink>
             </div>

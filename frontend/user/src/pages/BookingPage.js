@@ -489,11 +489,10 @@ const BookingPage = () => {
   };
   
   return (
-    <div className="booking-page">
-      {/* Page Title Section */}
-      <div className="page-title-section py-5">
+    <div className="booking-page">      {/* Page Title Section */}
+      <div className="page-title-section py-4 py-md-5">
         <div className="container text-center">
-          <h1 className="display-4 mb-3 page-title">Book Your Appointment</h1>
+          <h1 className="display-5 display-md-4 mb-3 page-title">Book Your Appointment</h1>
           <hr/>
           <p className="page-subtitle">Schedule your visit to The Gentleman's Cut for a premium grooming experience.</p>
         </div>
@@ -511,12 +510,11 @@ const BookingPage = () => {
         isLoggedIn={isLoggedIn}
         userData={userData}
       />}
-      
-      <div className="container booking-page-container" style={{ marginTop: '50px' }}>
+        <div className="container booking-page-container" style={{ marginTop: '30px' }}>
         <div className="row justify-content-center">
-          <div className="col-lg-10">
+          <div className="col-12 col-lg-10 col-xl-8">
             <div className="card booking-card" style={{borderRadius: '5px' }}>
-              <div className="card-body p-4 p-md-5">
+              <div className="card-body p-3 p-md-4 p-lg-5">
                 {isValidatingToken && (
                   <div className="py-5 text-center">
                     <div className="spinner-border text-primary" role="status">
@@ -551,14 +549,12 @@ const BookingPage = () => {
                           </div>
                         </div>
                       </div>
-                    )}
-
-                    <div className="row">                      {/* Service Details Section */}
-                      <div className="col-12 mb-4">                        <h3 className="h5 mb-3 booking-section-title">
+                    )}                    <div className="row g-3 g-md-4">                      {/* Service Details Section */}
+                      <div className="col-12 mb-3 mb-md-4">                        <h3 className="h6 h-md-5 mb-3 booking-section-title">
                           <i className="bi bi-calendar2-check me-2"></i>Service Details
                         </h3>
-                        <div className="card p-4 booking-section-card no-hover-effect">
-                          <div className="row">                            <div className="col-12 mb-4">
+                        <div className="card p-3 p-md-4 booking-section-card no-hover-effect">
+                          <div className="row g-3">                            <div className="col-12 mb-3 mb-md-4">
                               <label htmlFor="service" className="form-label fw-bold">
                                 <i className="bi bi-scissors me-2"></i>Select Service*
                               </label>                              
@@ -587,11 +583,10 @@ const BookingPage = () => {
                               <small className="text-muted mt-1 d-block">
                                 Choose the service you'd like to book
                               </small>
-                            </div>
-                              <div className="col-12 mb-4">
+                            </div>                              <div className="col-12 mb-3 mb-md-4">
                               <label htmlFor="barber" className="form-label fw-bold">
                                 <i className="bi bi-person-badge me-2"></i>Select Barber*
-                              </label>                              
+                              </label>
                               <div className="input-group no-hover-effect">
                                                                
                                 <select
@@ -621,8 +616,7 @@ const BookingPage = () => {
                               <small className="text-muted mt-1 d-block">
                                 Choose your preferred barber
                               </small>
-                            </div>
-                              <div className="col-12 mb-4">
+                            </div>                              <div className="col-12 mb-3 mb-md-4">
                               <label htmlFor="date" className="form-label fw-bold">
                                 <i className="bi bi-calendar3 me-2"></i>Preferred Date*
                               </label>
@@ -643,8 +637,7 @@ const BookingPage = () => {
                               <small className="text-muted mt-1 d-block">
                                 Select your preferred appointment date
                               </small>
-                            </div>
-                              <div className="col-12 mb-4">
+                            </div>                              <div className="col-12 mb-3 mb-md-4">
                               <label htmlFor="time" className="form-label fw-bold">
                                 <i className="bi bi-clock me-2"></i>Available Time Slots*
                               </label>
@@ -675,12 +668,11 @@ const BookingPage = () => {
                                         </div>
                                         <span className="text-primary fw-medium">Loading available time slots...</span>
                                       </div>
-                                    ) : (
-                                      <div className="row g-2">
+                                    ) : (                                      <div className="row g-2">
                                         {(timeSlotStatuses.length > 0 ? timeSlotStatuses.map(slot => slot.start_time) : timeSlots).map((time, index) => {
                                           const disabled = isTimeSlotDisabled(time);
                                           return (
-                                            <div key={index} className="col-6 col-md-3">
+                                            <div key={index} className="col-6 col-sm-4 col-md-3 col-lg-2">
                                               <button
                                                 type="button"
                                                 className={`btn time-slot-btn w-100 ${bookingData.time === time ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
@@ -721,14 +713,13 @@ const BookingPage = () => {
                             </div>
                           </div>
                         </div>
-                      </div>
-                        {/* Personal Information Section */}
-                      <div className="col-12 mb-4">
-                        <h3 className="h5 mb-3 booking-section-title">
+                      </div>                        {/* Personal Information Section */}
+                      <div className="col-12 mb-3 mb-md-4">
+                        <h3 className="h6 h-md-5 mb-3 booking-section-title">
                           <i className="bi bi-person-circle me-2"></i>Your Information
                         </h3>
-                        <div className="card p-4 booking-section-card shadow-sm">
-                          <div className="row">
+                        <div className="card p-3 p-md-4 booking-section-card shadow-sm">
+                          <div className="row g-3">
                             <div className="col-12 mb-3">
                               <label htmlFor="name" className="form-label fw-bold">Full Name*</label>
                               <div className="input-group shadow-sm">
@@ -746,9 +737,8 @@ const BookingPage = () => {
                                   style={{outline: 'none', boxShadow: 'none'}}
                                 />
                               </div>
-                            </div>
-                            
-                            <div className="col-md-6 mb-3">
+                            </div>                            
+                            <div className="col-12 col-md-6 mb-3">
                               <label htmlFor="phone" className="form-label fw-bold">Phone Number*</label>
                               <div className="input-group shadow-sm">
                                 <span className="input-group-text bg-white border-end-0">
@@ -765,9 +755,8 @@ const BookingPage = () => {
                                   style={{outline: 'none', boxShadow: 'none'}}
                                 />
                               </div>
-                            </div>
-                            
-                            <div className="col-md-6 mb-3">
+                            </div>                            
+                            <div className="col-12 col-md-6 mb-3">
                               <label htmlFor="email" className="form-label fw-bold">Email Address*</label>
                               <div className="input-group shadow-sm">
                                 <span className="input-group-text bg-white border-end-0">

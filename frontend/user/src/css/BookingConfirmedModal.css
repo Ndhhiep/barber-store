@@ -1,0 +1,33 @@
+/* Specific styles for the booking confirmed modal */
+.booking-confirmed-modal.modal-centered {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 100vh !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.booking-confirmed-modal .modal-dialog {
+  margin: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  max-height: 90vh;
+  width: 100%;
+}
+
+.booking-confirmed-modal .modal-content {
+  margin: 0 auto !important;
+  transform: none !important;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Ensure modal is centered on all screen sizes */
+@media (max-width: 767px) {
+  .booking-confirmed-modal .modal-content {
+    max-height: 80vh;
+  }
+}

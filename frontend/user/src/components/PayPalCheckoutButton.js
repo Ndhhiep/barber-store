@@ -36,31 +36,32 @@ const PayPalCheckoutButton = ({ totalAmount, onSuccess, onError, onCancel }) => 
   const onPayPalCancel = (data) => {
     console.log('Payment cancelled by user:', data);
     onCancel();
-  };
-  return (
-    <PayPalScriptProvider options={{ 
-      "client-id": process.env.REACT_APP_PAYPAL_CLIENT_ID || 'Af45d1ZnjKzeBvq9HfXTLcjlFe5mWTD1c06MLI3Pjm5RGvNqgwyLR0iHNq38AnxzOX9AbMTDu2kEveQs',
-      currency: 'USD',
-      intent: 'capture',
-      components: 'buttons',
-      locale: 'en_US',
-    
-    }}>
-      <PayPalButtons
-        style={{
-          layout: 'horizontal',
-          color: 'gold',
-          shape: 'rect',
-          label: 'pay',
-          transition: 'none', // Remove ease-in-out effect
-          tagline: 'false'
-        }}
-        createOrder={createOrder}
-        onApprove={onApprove}
-        onError={onPayPalError}
-        onCancel={onPayPalCancel}
-      />
-    </PayPalScriptProvider>
+  };  return (
+    <div className="paypal-checkout-wrapper w-100">
+      <PayPalScriptProvider options={{ 
+        "client-id": process.env.REACT_APP_PAYPAL_CLIENT_ID || 'Af45d1ZnjKzeBvq9HfXTLcjlFe5mWTD1c06MLI3Pjm5RGvNqgwyLR0iHNq38AnxzOX9AbMTDu2kEveQs',
+        currency: 'USD',
+        intent: 'capture',
+        components: 'buttons',
+        locale: 'en_US',
+      
+      }}>
+        <PayPalButtons
+          style={{
+            layout: 'horizontal',
+            color: 'gold',
+            shape: 'rect',
+            label: 'pay',
+            transition: 'none', // Remove ease-in-out effect
+            tagline: 'false'
+          }}
+          createOrder={createOrder}
+          onApprove={onApprove}
+          onError={onPayPalError}
+          onCancel={onPayPalCancel}
+        />
+      </PayPalScriptProvider>
+    </div>
   );
 };
 

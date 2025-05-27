@@ -1,0 +1,207 @@
+/* Responsive enhancements for all components */
+
+/* General responsive utilities */
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Product Card responsive enhancements */
+.product-card {
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 576px) {
+  .product-card {
+    margin-bottom: 1rem;
+  }
+  
+  .product-card .card-img-top {
+    height: 180px !important;
+  }
+  
+  .product-card .card-title {
+    font-size: 1.1rem !important;
+    height: auto !important;
+    -webkit-line-clamp: 1 !important;
+  }
+  
+  .product-card .card-text {
+    height: 60px !important;
+    -webkit-line-clamp: 2 !important;
+  }
+}
+
+/* Product Search responsive enhancements */
+.product-search-container {
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .product-search-container {
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* Category Product Showcase responsive enhancements */
+.category-showcase .display-4 {
+  font-size: 2.5rem;
+}
+
+@media (max-width: 768px) {
+  .category-showcase .display-4 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .category-showcase .display-4 {
+    font-size: 1.75rem;
+  }
+}
+
+/* Modal responsive enhancements */
+@media (max-width: 768px) {
+  .booking-confirmed-modal .modal-content {
+    margin: 1rem;
+    max-width: none;
+  }
+  
+  .booking-confirmed-modal .modal-body {
+    padding: 1.5rem 1rem;
+  }
+  
+  .booking-confirmed-modal .confirmation-icon {
+    margin-bottom: 1.5rem;
+  }
+  
+  .booking-confirmed-modal .confirmation-icon i {
+    font-size: 3rem !important;
+  }
+  
+  .booking-confirmed-modal h2 {
+    font-size: 1.5rem;
+  }
+}
+
+/* PayPal Button responsive wrapper */
+.paypal-checkout-wrapper {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+@media (max-width: 576px) {
+  .paypal-checkout-wrapper {
+    max-width: 100%;
+  }
+}
+
+/* Footer responsive enhancements */
+@media (max-width: 768px) {
+  .footer .col-md-4 {
+    text-align: center !important;
+    margin-bottom: 2rem;
+  }
+  
+  .footer .col-md-8 {
+    text-align: center !important;
+  }
+  
+  .footer-social-container {
+    text-align: center !important;
+    margin-top: 1rem;
+  }
+}
+
+/* Spacing utilities for mobile */
+@media (max-width: 576px) {
+  .container-fluid {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  section.py-5 {
+    padding-top: 3rem !important;
+    padding-bottom: 3rem !important;
+  }
+}
+
+/* Button responsive behavior */
+@media (max-width: 576px) {
+  .btn {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+  }
+  
+  .btn-lg {
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+  }
+}
+
+/* Table responsive behavior */
+@media (max-width: 576px) {
+  .table-responsive table td:first-child {
+    width: 40% !important;
+    font-weight: bold;
+  }
+  
+  .table-responsive table td {
+    padding: 0.5rem 0.25rem;
+    border: none;
+  }
+}
+
+/* Additional responsive utilities */
+@media (max-width: 768px) {
+  /* Adjust grid spacing for tablets */
+  .row.g-3 {
+    --bs-gutter-x: 1rem;
+    --bs-gutter-y: 1rem;
+  }
+  
+  /* Improve card layouts on tablets */
+  .card-body {
+    padding: 1rem !important;
+  }
+  
+  /* Responsive text sizing */
+  .display-4 {
+    font-size: 2rem !important;
+  }
+  
+  .display-5 {
+    font-size: 1.75rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  /* Mobile-specific adjustments */
+  .row.g-3 {
+    --bs-gutter-x: 0.75rem;
+    --bs-gutter-y: 0.75rem;
+  }
+  
+  /* Smaller card padding on mobile */
+  .card-body {
+    padding: 0.75rem !important;
+  }
+  
+  /* Responsive image sizing */
+  .img-fluid {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Button sizing on mobile */
+  .btn-lg {
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+  }
+  
+  /* Responsive text sizing for mobile */
+  .lead {
+    font-size: 1rem !important;
+  }
+}

@@ -44,9 +44,8 @@ const CategoryProductShowcase = () => {
 
   return (
     <section className="py-5 category-showcase">
-      <div className="container">        
-        <div className="text-center mb-5">
-          <h1 className="display-4" style={{ fontFamily: 'Playfair Display, serif' }}>Our Products</h1>
+      <div className="container">          <div className="text-center mb-4 mb-md-5">
+          <h1 className="display-4 display-md-3" style={{ fontFamily: 'Playfair Display, serif' }}>Our Products</h1>
           <p className="lead">Discover our premium collection of professional hair and beard care products</p>
         </div>
         
@@ -54,10 +53,10 @@ const CategoryProductShowcase = () => {
             <h2 className="text-start mb-4" style={{ fontFamily: 'Playfair Display, serif' }}>
               {categoryData.category} {/* Assuming category is the name string */}
             </h2>
-            <hr className="mb-4" />
-            <div className="row justify-content-center">              {categoryData.products.map((product) => (
+            <hr className="mb-4" />            <div className="row g-3 g-md-4 justify-content-center">
+              {categoryData.products.map((product) => (
                 // Use Bootstrap columns for responsiveness
-                <div key={product._id} className="col-lg-4 col-md-6 mb-4 d-flex justify-content-center">
+                <div key={product._id} className="col-12 col-sm-6 col-lg-4 d-flex justify-content-center">
                   <ProductCard product={product} />
                 </div>
               ))}

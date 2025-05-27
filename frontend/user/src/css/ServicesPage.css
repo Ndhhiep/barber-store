@@ -43,7 +43,7 @@
 
 .book-btn {
   background-color: #2B2A2A;
-  color: #D9D0C7;
+  color: #ffffff;
   border-radius: 0;
   font-family: 'Lato', sans-serif;
   padding: 0.5rem 1.5rem;
@@ -51,8 +51,8 @@
 }
 
 .book-btn:hover {
-  background-color: #383736;
-  color: #D9D0C7;
+  background-color: #8B775C;
+  color: #ffffff;
 }
 
 /* What to Expect Section */

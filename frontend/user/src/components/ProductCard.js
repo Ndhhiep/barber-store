@@ -16,12 +16,11 @@ const ProductCard = ({ product }) => {
   const handleAddToCart = (e) => {
     e.preventDefault(); // Prevent navigation when clicking the button
     addToCart(product);
-  };
-  return (    <div 
-      className="card h-100 shadow-sm product-card" 
+  };  return (
+    <div 
+      className="card h-100 shadow-sm product-card w-100" 
       style={{ 
-        width: '24em', 
-        margin: '0.5rem',
+        maxWidth: '24em',
         borderRadius: '15px',
         transition: 'all 0.3s ease',
         transform: isHovered ? 'translateY(-5px)' : 'translateY(0)',
@@ -31,13 +30,12 @@ const ProductCard = ({ product }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Link to={`/products/${product._id}`}> 
-        <img 
+      <Link to={`/products/${product._id}`}>        <img 
           src={product.imgURL || '/assets/placeholder.png'} // Use the correct field name imgURL
-          className="card-img-top" 
+          className="card-img-top img-fluid" 
           alt={product.name} 
           style={{ 
-            height: '250px', 
+            height: '200px', 
             objectFit: 'contain',
             borderTopLeftRadius: '15px',
             borderTopRightRadius: '15px',

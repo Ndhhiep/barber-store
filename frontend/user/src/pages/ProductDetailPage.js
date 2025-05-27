@@ -75,10 +75,9 @@ const ProductDetailPage = () => {
       </div>
     );
   }
-
   return (
-    <div className="container py-5">
-      <nav aria-label="breadcrumb" className="mb-4">
+    <div className="container py-3 py-md-5">
+      <nav aria-label="breadcrumb" className="mb-3 mb-md-4">
         <ol className="breadcrumb">
           <li className="breadcrumb-item"><Link to="/">Home</Link></li>
           <li className="breadcrumb-item"><Link to="/products">Products</Link></li>
@@ -88,28 +87,27 @@ const ProductDetailPage = () => {
 
       <div className="card border-0 shadow-sm">
         <div className="row g-0">
-          <div className="col-md-6" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div className="col-12 col-md-6" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <img 
               src={product?.imgURL || '/assets/placeholder.png'} 
               alt={product?.name}
               className="img-fluid rounded-start product-detail-image" 
               style={{ maxHeight: '500px', objectFit: 'contain', width: '70%' }}
-            />
-          </div>
-          <div className="col-md-6">
-            <div className="card-body p-4">
+            />          </div>
+          <div className="col-12 col-md-6">
+            <div className="card-body p-3 p-md-4">
               <h1 className="card-title mb-3" style={{ fontFamily: 'roboto' }}>{product?.name}</h1>
               <div className="mb-3">
                 <span className="badge bg-secondary">{product?.category}</span>
               </div>
-              <h3 className="text-primary mb-4" style={{fontFamily: 'roboto'}}>${product?.price?.toFixed(2)}</h3>
+              <h3 className="text-primary mb-3 mb-md-4" style={{fontFamily: 'roboto'}}>${product?.price?.toFixed(2)}</h3>
               
-              <div className="mb-4">
+              <div className="mb-3 mb-md-4">
                 <h5 className="text-muted mb-2">Description</h5>
                 <p className="card-text">{product?.description}</p>
               </div>
               
-              <div className="mb-4">
+              <div className="mb-3 mb-md-4">
                 {product?.quantity > 0 ? (
                   <div className="d-flex align-items-center mb-2">
                     <span className="badge bg-success me-2">In Stock</span>
@@ -118,18 +116,17 @@ const ProductDetailPage = () => {
                 ) : (
                   <span className="badge bg-danger">Out of Stock</span>
                 )}
-              </div>
-              
-              <div className="d-flex gap-3">
+              </div>              
+              <div className="d-flex flex-column flex-sm-row gap-3">
                 <button 
-                  className="btn btn-primary"
+                  className="btn btn-primary flex-fill flex-sm-grow-0"
                   disabled={!product?.quantity || product?.quantity <= 0}
                   onClick={handleAddToCart}
                 >
                   <i className="bi bi-cart-plus me-2"></i>Add to Cart
                 </button>
                 
-                <Link to="/products" className="btn btn-outline-secondary">
+                <Link to="/products" className="btn btn-outline-secondary flex-fill flex-sm-grow-0">
                   Back to Products
                 </Link>
               </div>

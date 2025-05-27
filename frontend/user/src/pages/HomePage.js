@@ -16,26 +16,24 @@ const HomePage = () => {
         <div className="hero-overlay" style={{backgroundColor: 'rgba(0,0,0,0.4)'}}></div>
         <div className="container px-4 hero-content">
           <div className="row justify-content-center">
-            <div className="col-lg-10">              
-              <h1 className="display-2 fw-bold mb-4 hero-title" >
+            <div className="col-12 col-lg-10">              
+              <h1 className="display-3 display-md-2 fw-bold mb-4 hero-title" >
                 Timeless Style, Modern Craftsmanship
               </h1>
-              <p className="lead mb-5 hero-description">
+              <p className="lead mb-4 mb-md-5 hero-description">
                 Experience the art of traditional barbering in a classic environment where expertise meets exceptional service.
               </p>
-              <Link to="/booking" className="btn btn-lg px-5 py-3 mb-2 btn-book">
+              <Link to="/booking" className="btn btn-lg px-4 px-md-5 py-3 mb-2 btn-book">
                 Book Your Appointment
               </Link>
             </div>
           </div>
         </div>
-      </section>
-
-      {/* About Us Snippet */}
-      <section className="py-5 bg-light home-about-snippet">
+      </section>      {/* About Us Snippet */}
+      <section className="py-4 py-md-5 bg-light home-about-snippet">
         <div className="container">
           <div className="row align-items-center">
-            <div className="col-lg-6 mb-4 mb-lg-0">
+            <div className="col-12 col-lg-6 mb-4 mb-lg-0">
               <div className="about-image-container">
                 <img 
                   src="/assets/home02.avif" 
@@ -45,35 +43,34 @@ const HomePage = () => {
                 <div className="image-border-decoration"></div>
               </div>
             </div>
-            <div className="col-lg-6 px-lg-5">
-              <h2 className="h1 mb-4">
+            <div className="col-12 col-lg-6 px-lg-5">
+              <h2 className="h1 mb-3 mb-md-4 text-center text-lg-start">
                 The Gentleman's Cut Experience
-              </h2>
-              <p className="lead mb-4">
+              </h2>              <p className="lead mb-3 mb-md-4 text-center text-lg-start">
                 Since 2015, we've been dedicated to the art of men's grooming, providing exceptional haircuts and beard services in a sophisticated environment.
               </p>
-              <p className="mb-4">
+              <p className="mb-3 mb-md-4 text-center text-lg-start">
                 Our skilled barbers combine traditional techniques with modern styles, ensuring you leave looking and feeling your best.
               </p>
-              <Link to="/about" className="btn btn-outline-dark btn-learn-more">
-                Learn More About Us
-              </Link>
+              <div className="text-center text-lg-start">
+                <Link to="/about" className="btn btn-outline-dark btn-learn-more">
+                  Learn More About Us
+                </Link>
+              </div>
             </div>
           </div>
         </div>
-      </section>
-
-      {/* Services Overview */}
-      <section className="py-5 home-services-overview">
+      </section>      {/* Services Overview */}
+      <section className="py-4 py-md-5 home-services-overview">
         <div className="container">
-          <div className="text-center mb-5">
-            <h2 className="display-5 mb-3">Our Services</h2>
+          <div className="text-center mb-4 mb-md-5">
+            <h2 className="display-6 display-md-5 mb-3">Our Services</h2>
             <p className="lead text-muted">Premium grooming services for the discerning gentleman</p>
           </div>
           
-          <div className="row">
+          <div className="row g-3 g-md-4">
             {/* Service 1 */}
-            <div className="col-md-4 mb-4">
+            <div className="col-12 col-md-6 col-lg-4 mb-3 mb-md-4">
               <div className="card h-100 service-card">
                 <div className="card-body p-4 text-center d-flex flex-column">
                   <div className="service-icon-wrapper">
@@ -103,9 +100,8 @@ const HomePage = () => {
                 </div>
               </div>
             </div>
-            
-            {/* Service 2 */}
-            <div className="col-md-4 mb-4">
+              {/* Service 2 */}
+            <div className="col-12 col-md-6 col-lg-4 mb-3 mb-md-4">
               <div className="card h-100 service-card">
                 <div className="card-body p-4 text-center d-flex flex-column">
                   <div className="service-icon-wrapper">
@@ -135,9 +131,8 @@ const HomePage = () => {
                 </div>
               </div>
             </div>
-            
-            {/* Service 3 */}
-            <div className="col-md-4 mb-4">
+              {/* Service 3 */}
+            <div className="col-12 col-md-6 col-lg-4 mb-3 mb-md-4">
               <div className="card h-100 service-card">
                 <div className="card-body p-4 text-center d-flex flex-column">
                   <div className="service-icon-wrapper">

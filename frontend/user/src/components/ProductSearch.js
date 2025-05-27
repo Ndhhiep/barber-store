@@ -67,9 +67,8 @@ const ProductSearch = ({
     const activeCategories = newAllSelectedState ? [...categories] : [];
     onCategoryFilter(activeCategories);
   };
-
   return (
-    <div className="product-search-container" style={{
+    <div className="product-search-container w-100" style={{
       backgroundColor: '#fff', 
       padding: '0', 
       borderRadius: '8px', 
@@ -79,9 +78,8 @@ const ProductSearch = ({
     }}>
       {/* Orange top border - using the site's accent color */}
       <div style={{ height: '4px', backgroundColor: '#D4A96A', width: '100%' }}></div>
-      
-      {/* Search section */}
-      <div style={{ padding: '15px 20px' }}>
+        {/* Search section */}
+      <div className="p-3 p-md-4">
         <div className="input-group">
           <div className="position-relative w-100">
             <input
@@ -106,9 +104,8 @@ const ProductSearch = ({
       
       {/* Divider - using a more subtle gold color to match the site's theme */}
       <div style={{ height: '1px', backgroundColor: '#D4A96A', opacity: '0.3', width: '90%', margin: '0 auto' }}></div>
-      
-      {/* Categories section */}
-      <div style={{ padding: '15px 20px' }}>
+        {/* Categories section */}
+      <div className="p-3 p-md-4">
         {/* All Categories checkbox */}
         <div className="form-check mb-3">
           <input

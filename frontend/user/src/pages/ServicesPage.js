@@ -30,14 +30,14 @@ const ServicesPage = () => {
   }, []);
   return (
     <div className="services-page">      {/* Page Title Section */}      <section className="page-title-section">
-        <div className="container py-4">
-          <h1 className="display-4 mb-3 page-title">Our Services</h1>
+        <div className="container py-3 py-md-4">
+          <h1 className="display-5 display-md-4 mb-3 page-title">Our Services</h1>
           <hr />
           <p className="page-subtitle">Discover premium grooming services designed for the modern gentleman</p>
         </div>
       </section>
       
-      <div className="container py-5">
+      <div className="container py-4 py-md-5">
         
         {/* Services Section */}
         {loading ? (
@@ -54,16 +54,15 @@ const ServicesPage = () => {
         ) : services.length === 0 ? (
           <div className="alert alert-info text-center" role="alert">
             No services available at this time. Please check back later.
-          </div>
-        ) : (
-          <div className="row g-4">
+          </div>        ) : (
+          <div className="row g-3 g-md-4">
             {services.map(service => (
-              <div key={service._id} className="col-md-6">
+              <div key={service._id} className="col-12 col-md-6 col-lg-6">
                 <div className="card h-100 shadow-sm service-card">
-                  <div className="card-body p-4">
-                    <div className="d-flex justify-content-between align-items-start mb-3">
-                      <h3 className="h4 service-name">{service.name}</h3>
-                      <div className="d-flex flex-column align-items-end">
+                  <div className="card-body p-3 p-md-4">
+                    <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start mb-3">
+                      <h3 className="h5 h-md-4 service-name mb-2 mb-sm-0">{service.name}</h3>
+                      <div className="d-flex flex-column align-items-start align-sm-end">
                         <span className="service-price mb-1">${service.price}</span>
                         <span className="text-muted service-duration">
                           30 min
@@ -71,7 +70,7 @@ const ServicesPage = () => {
                       </div>
                     </div>
                     <p className="card-text mb-3 service-description">{service.description}</p>
-                    <div className="d-flex justify-content-end">
+                    <div className="d-flex justify-content-end justify-sm-end">
                       <Link to="/booking" className="btn btn-sm book-btn">
                         BOOK NOW
                       </Link>
@@ -84,10 +83,10 @@ const ServicesPage = () => {
         )}
         
         {/* Additional Information Section */}
-        <div className="row mt-5 pt-4">          <div className="col-lg-6 mb-4">
-            <div className="card border-0 shadow-sm h-100 what-to-expect">
-              <div className="card-body p-4">
-                <h3 className="h4 mb-4 text-white">What to Expect</h3>
+        <div className="row mt-4 mt-md-5 pt-3 pt-md-4">
+          <div className="col-12 col-lg-6 mb-3 mb-md-4">
+            <div className="card border-0 shadow-sm h-100 what-to-expect">              <div className="card-body p-3 p-md-4">
+                <h3 className="h5 h-md-4 mb-3 mb-md-4 text-white">What to Expect</h3>
                 <ul className="list-unstyled mb-0">                  <li className="mb-3 d-flex align-items-center">
                     <span className="material-symbols-outlined expect-icon">check_circle</span>
                     <span>Complimentary consultation before every service</span>
@@ -110,10 +109,10 @@ const ServicesPage = () => {
                 </ul>
               </div>
             </div>
-          </div>            <div className="col-lg-6 mb-4">
+          </div>            <div className="col-12 col-lg-6 mb-3 mb-md-4">
             <div className="card border-0 shadow-sm h-100 grooming-policies">
-              <div className="card-body p-4">
-                <h3 className="h4 mb-4">Grooming Policies</h3>
+              <div className="card-body p-3 p-md-4">
+                <h3 className="h5 h-md-4 mb-3 mb-md-4">Grooming Policies</h3>
                 <ul className="list-unstyled mb-0">
                   <li className="mb-3 d-flex align-items-center">
                     <i className="bi bi-info-circle me-2 info-icon"></i>
@@ -139,13 +138,12 @@ const ServicesPage = () => {
             </div>
           </div>
         </div>
-        
-        {/* Call to Action */}
-        <div className="text-center mt-5 pt-3">
-          <p className="lead mb-4 cta-text">Ready to experience the difference?</p>
-          <Link to="/booking" className="btn btn-lg px-5 cta-btn">
+          {/* Call to Action */}
+        <div className="text-center mt-4 mt-md-5 pt-2 pt-md-3">
+          <p className="lead mb-3 mb-md-4 cta-text">Ready to experience the difference?</p>
+          <Link to="/booking" className="btn btn-lg px-4 px-md-5 cta-btn">
             Book Your Appointment
-          </Link>        </div>
+          </Link></div>
       </div>
     </div>
   );

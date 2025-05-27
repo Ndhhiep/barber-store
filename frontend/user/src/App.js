@@ -26,12 +26,11 @@ function AppContent() {
   
   // Check whether to show user header
   const showUserHeader = !hideHeaderPaths.includes(location.pathname);
-    return (
-    <SocketProvider>
+    return (    <SocketProvider>
       <CartProvider>
         <div className="App">
           {showUserHeader && <Header />}
-          <main>
+          <main className="flex-grow-1">
             <Routes>
               {/* User routes */}
               <Route path="/*" element={<UserRoutes />} />

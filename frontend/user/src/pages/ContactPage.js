@@ -134,21 +134,19 @@ const ContactPage = () => {
             </div>
           </div>
         </>
-      )}
-
-      {/* Page Title Section */}
+      )}      {/* Page Title Section */}
       <section className="page-title-section">
-        <div className="container py-4">
-          <h1 className="display-4 mb-3 page-title">Contact Us</h1>
+        <div className="container py-3 py-md-4">
+          <h1 className="display-5 display-md-4 mb-3 page-title">Contact Us</h1>
           <hr />
           <p className="page-subtitle">We're here to assist with your questions and appointment needs</p>
         </div>
       </section>
 
-      <div className="container py-5">
-        <div className="row g-5">
+      <div className="container py-4 py-md-5">
+        <div className="row g-4 g-md-5">
           {/* Contact Form */}
-          <div className="col-lg-6 mb-5 mb-lg-0">
+          <div className="col-12 col-lg-6 mb-4 mb-lg-0">
             <div className="card h-100 contact-card">
               <div className="card-body p-4 p-md-5">
                 <h2 className="h3 mb-4 contact-card-title">Send Us a Message</h2>
@@ -224,12 +222,10 @@ const ContactPage = () => {
                 </form>
               </div>
             </div>
-          </div>
-
-          {/* Contact Information */}
-          <div className="col-lg-6">
+          </div>          {/* Contact Information */}
+          <div className="col-12 col-lg-6">
             {/* Map */}
-            <div className="mb-5">
+            <div className="mb-4 mb-md-5">
               <div className="ratio ratio-4x3 shadow border map-container">
                 <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.6175894047037!2d-73.98784992379569!3d40.74844627138319!2m3!1f0!2f0!3f0!3m2!1i1024!1i768!4f13.1!3m3!1m2!1s0x89c259a9b30eac9f%3A0xaca8b8855e681b70!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1682185886343!5m2!1sen!2sus" 
                   allowFullScreen="" 
@@ -243,12 +239,12 @@ const ContactPage = () => {
 
             {/* Info Card */}
             <div className="card shadow-sm contact-info-card">
-              <div className="card-body p-4 p-md-5">
-                <h2 className="h3 mb-4 contact-info-card-title">Our Information</h2>
+              <div className="card-body p-3 p-md-4 p-lg-5">
+                <h2 className="h4 h-md-3 mb-3 mb-md-4 contact-info-card-title">Our Information</h2>
                 
-                <div className="d-flex mb-4">
+                <div className="d-flex mb-3 mb-md-4">
                   <div className="contact-info-icon-container">
-                    <i className="bi bi-geo-alt fs-4"></i>
+                    <i className="bi bi-geo-alt fs-5 fs-md-4"></i>
                   </div>
                   <div>
                     <h3 className="h5 contact-info-heading">Address</h3>
@@ -262,9 +258,7 @@ const ContactPage = () => {
                   </div>
                   <div>
                     <h3 className="h5 contact-info-heading">Hours</h3>
-                    <p className="mb-1">Monday - Friday: 9:00 AM - 7:00 PM</p>
-                    <p className="mb-1">Saturday: 10:00 AM - 6:00 PM</p>
-                    <p>Sunday: Closed</p>
+                    <p className="mb-1">Monday - Sunday: 9:00 AM - 7:00 PM</p>
                   </div>
                 </div>
                 

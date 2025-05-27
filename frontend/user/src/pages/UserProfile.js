@@ -213,10 +213,9 @@ const UserProfile = () => {
       setError(err.message || 'Failed to update profile. Please try again.');
     }
   };
-
   if (loading) {
     return (
-      <div className="user-profile-container text-center py-5">
+      <div className="user-profile-container text-center py-3 py-md-5">
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
@@ -226,7 +225,7 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="user-profile-container my-5">
+    <div className="user-profile-container my-3 my-md-5">
       <h1>My Information</h1>
       
       {error && (
@@ -244,9 +243,8 @@ const UserProfile = () => {
       <div className="profile-card">
         <form onSubmit={handleSubmit}>
           <div className="profile-section">
-            <h3>Personal Information</h3>
-            <div className="row">
-              <div className="col-md-6">
+            <h3>Personal Information</h3>            <div className="row">
+              <div className="col-12 col-md-6 mb-3">
                 <div className="form-group">
                   <label htmlFor="name">Full Name</label>
                   <input
@@ -261,7 +259,7 @@ const UserProfile = () => {
                   />
                 </div>
               </div>
-              <div className="col-md-6">
+              <div className="col-12 col-md-6 mb-3">
                 <div className="form-group">
                   <label htmlFor="email">Email Address</label>
                   <input
@@ -278,7 +276,7 @@ const UserProfile = () => {
               </div>
             </div>
             <div className="row">
-              <div className="col-md-6">
+              <div className="col-12 col-md-6 mb-3">
                 <div className="form-group">
                   <label htmlFor="phone">Phone Number</label>
                   <input
@@ -297,9 +295,8 @@ const UserProfile = () => {
           
           {isEditing && (
             <div className="profile-section">
-              <h3>Change Password</h3>
-              <div className="row">
-                <div className="col-md-6">
+              <h3>Change Password</h3>              <div className="row">
+                <div className="col-12 col-md-6 mb-3">
                   <div className="form-group">
                     <label htmlFor="currentPassword">Current Password</label>
                     <input
@@ -315,7 +312,7 @@ const UserProfile = () => {
                 </div>
               </div>
               <div className="row">
-                <div className="col-md-6">
+                <div className="col-12 col-md-6 mb-3">
                   <div className="form-group">
                     <label htmlFor="newPassword">New Password</label>
                     <input
@@ -329,7 +326,7 @@ const UserProfile = () => {
                     />
                   </div>
                 </div>
-                <div className="col-md-6">
+                <div className="col-12 col-md-6 mb-3">
                   <div className="form-group">
                     <label htmlFor="confirmPassword">Confirm New Password</label>
                     <input
@@ -346,8 +343,7 @@ const UserProfile = () => {
               </div>
             </div>
           )}
-          
-          <div className="profile-buttons">
+            <div className="profile-buttons">
             {!isEditing ? (
               <button 
                 type="button" 
@@ -357,7 +353,7 @@ const UserProfile = () => {
                 Edit Profile
               </button>
             ) : (
-              <>
+              <div className="d-flex flex-column flex-sm-row gap-3">
                 <button 
                   type="button" 
                   className="btn cancel-btn"
@@ -371,7 +367,7 @@ const UserProfile = () => {
                 >
                   Save Changes
                 </button>
-              </>
+              </div>
             )}
           </div>
         </form>

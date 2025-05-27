@@ -11,6 +11,9 @@ const MyBookingsPage = () => {
   const [serverOnline, setServerOnline] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState(null);
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [bookingsPerPage] = useState(6);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -57,6 +60,33 @@ const MyBookingsPage = () => {
     
     fetchBookings();
   }, [navigate]);
+
+  // Pagination functionality
+  const indexOfLastBooking = currentPage * bookingsPerPage;
+  const indexOfFirstBooking = indexOfLastBooking - bookingsPerPage;
+  const currentBookings = bookings.slice(indexOfFirstBooking, indexOfLastBooking);
+  
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // Go to next page
+  const nextPage = () => {
+    if(currentPage < Math.ceil(bookings.length / bookingsPerPage)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+  
+  // Go to previous page
+  const prevPage = () => {
+    if(currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  // Reset to page 1 when bookings change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [bookings.length]);
 
   const retryConnection = async () => {
     setIsLoading(true);
@@ -145,10 +175,9 @@ const MyBookingsPage = () => {
       closeCancelModal();
     }
   };
-
   if (isLoading) {
     return (
-      <div className="container py-5 text-center">
+      <div className="container py-3 py-md-5 text-center">
         <div className="spinner-border" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
@@ -159,7 +188,7 @@ const MyBookingsPage = () => {
 
   if (!serverOnline) {
     return (
-      <div className="container py-5">
+      <div className="container py-3 py-md-5">
         <div className="alert alert-danger" role="alert">
           <h4 className="alert-heading">Connection Error!</h4>
           <p>{error || 'Cannot connect to the server. Please check if the backend server is running.'}</p>
@@ -179,10 +208,9 @@ const MyBookingsPage = () => {
       </div>
     );
   }
-
   if (error) {
     return (
-      <div className="container py-5">
+      <div className="container py-3 py-md-5">
         <div className="alert alert-danger" role="alert">
           {error}
           <div className="mt-3">
@@ -204,13 +232,13 @@ const MyBookingsPage = () => {
       
       {bookings.length === 0 ? (
         <div className="empty-bookings-message">
-          <h3 className="mb-4">You don't have any bookings yet.</h3>
+          <h3 className="mb-3 mb-md-4">You don't have any bookings yet.</h3>
           <Link to="/booking" className="btn btn-primary">Book an Appointment</Link>
         </div>
       ) : (
         <div className="row">
-          {bookings.map((booking) => (
-            <div className="col-md-6 col-lg-4 mb-4" key={booking._id}>
+          {currentBookings.map((booking) => (
+            <div className="col-12 col-md-6 col-lg-4 mb-3 mb-md-4" key={booking._id}>
               <div className="card booking-card">
                 <div className="card-header d-flex justify-content-between align-items-center">
                   <h5 className="mb-0">{booking.service}</h5>
@@ -243,6 +271,46 @@ const MyBookingsPage = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+      
+      {/* Pagination controls */}
+      {bookings.length > bookingsPerPage && (
+        <div className="pagination-container mt-4 d-flex justify-content-center">
+          <ul className="pagination">
+            <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+              <button 
+                className="page-link" 
+                onClick={prevPage} 
+                disabled={currentPage === 1}
+                aria-label="Previous"
+              >
+                <span aria-hidden="true">&laquo;</span>
+              </button>
+            </li>
+            
+            {Array(Math.ceil(bookings.length / bookingsPerPage)).fill().map((_, index) => (
+              <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
+                <button 
+                  className="page-link" 
+                  onClick={() => paginate(index + 1)}
+                >
+                  {index + 1}
+                </button>
+              </li>
+            ))}
+            
+            <li className={`page-item ${currentPage === Math.ceil(bookings.length / bookingsPerPage) ? 'disabled' : ''}`}>
+              <button 
+                className="page-link" 
+                onClick={nextPage} 
+                disabled={currentPage === Math.ceil(bookings.length / bookingsPerPage)}
+                aria-label="Next"
+              >
+                <span aria-hidden="true">&raquo;</span>
+              </button>
+            </li>
+          </ul>
         </div>
       )}
         {/* Confirmation Modal */}

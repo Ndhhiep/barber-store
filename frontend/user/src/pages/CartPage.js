@@ -153,12 +153,12 @@ const CartPage = () => {
         console.warn('Error fetching user data:', error);
       }
     };
-    
-    // Execute the user data fetch
+      // Execute the user data fetch
     fetchUserData();
     
     // Show modal immediately (the data will populate as it loads)
-    setShowModal(true);  };
+    setShowModal(true);
+  };
   
   const handleCloseModal = () => {
     setShowModal(false);
@@ -325,38 +325,86 @@ const CartPage = () => {
       setOrderError(error.message || 'An error occurred while processing your order. Please try again.');
     } finally {
       setIsSubmitting(false);
-    }
-  };
+    }  };
 
-  // Rest of the component remains unchanged
   return (
-    <div className="container py-5 cart-container">
+    <div className="container py-3 py-md-5 cart-container">
       {serverStatus === 'error' && (
-        <div className="alert alert-warning mb-4" role="alert">
+        <div className="alert alert-warning mb-3 mb-md-4" role="alert">
           <strong>Warning:</strong> Unable to connect to the server. Some features may not work.
         </div>
       )}
       
       {cartItems.length === 0 ? (
         // ... existing empty cart code ...
-        <div className="text-center py-5">
-          <div className="mb-4">
+        <div className="text-center py-4 py-md-5">
+          <div className="mb-3 mb-md-4">
             <i className="bi bi-cart3 empty-cart-icon"></i>
           </div>
-          <h3 className="mb-4">Your cart is empty</h3>
-          <p className="text-muted mb-4">Looks like you haven't added any products to your cart yet.</p>
+          <h3 className="mb-3 mb-md-4">Your cart is empty</h3>
+          <p className="text-muted mb-3 mb-md-4">Looks like you haven't added any products to your cart yet.</p>
           <Link to="/products" className="btn btn-primary">
             Browse Products
           </Link>
         </div>
       ) : (
         // ... existing cart items code ...
-        <div className="row" id="cart-container">
+        <div className="row g-3 g-md-4" id="cart-container">
           {/* Left side - Cart Items */}
-          <div className="col-lg-8 mb-4">
-            <div className="card border-0 shadow-sm mb-4">
+          <div className="col-12 col-lg-8 mb-3 mb-md-4">
+            <div className="card border-0 shadow-sm mb-3 mb-md-4">
               <div className="card-body p-0">
-                <div className="table-responsive">
+                {/* Mobile view - stack items vertically */}
+                <div className="d-lg-none">
+                  {cartItems.map((item) => (
+                    <div key={item.product._id} className="border-bottom p-3">
+                      <div className="row align-items-center">
+                        <div className="col-3">
+                          <img 
+                            src={item.product.imgURL || '/assets/placeholder.png'} 
+                            alt={item.product.name}
+                            className="img-fluid rounded product-image"
+                          />
+                        </div>
+                        <div className="col-9">
+                          <h6 className="mb-1">{item.product.name}</h6>
+                          <p className="text-muted small mb-2">{item.product.category}</p>
+                          <div className="d-flex justify-content-between align-items-center">
+                            <span className="fw-bold">${item.product.price}</span>
+                            <div className="btn-group btn-group-sm">
+                              <button 
+                                className="btn btn-outline-secondary"
+                                onClick={() => updateQuantity(item.product._id, item.quantity - 1)}
+                                disabled={item.quantity <= 1}
+                              >
+                                -
+                              </button>
+                              <span className="btn btn-outline-secondary disabled">{item.quantity}</span>
+                              <button 
+                                className="btn btn-outline-secondary"
+                                onClick={() => updateQuantity(item.product._id, item.quantity + 1)}
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                          <div className="d-flex justify-content-between align-items-center mt-2">
+                            <span className="fw-bold">Total: ${(item.product.price * item.quantity).toFixed(2)}</span>
+                            <button 
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() => removeFromCart(item.product._id)}
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Desktop view - table layout */}
+                <div className="table-responsive d-none d-lg-block">
                   <table className="table table-borderless align-middle mb-0">
                     <thead className="bg-light">
                       <tr>
@@ -433,12 +481,11 @@ const CartPage = () => {
                 ← Continue Shopping
               </Link>
             </div>
-          </div>
-            {/* Right side - Order Summary with position: sticky */}
-          <div className="col-lg-4">
+          </div>            {/* Right side - Order Summary with position: sticky */}
+          <div className="col-12 col-lg-4">
             <div id="order-summary">
-              <div className="card border-0 shadow-sm mb-4 order-summary-card">
-                <div className="card-body d-flex flex-column">
+              <div className="card border-0 shadow-sm mb-3 mb-md-4 order-summary-card">
+                <div className="card-body d-flex flex-column p-3 p-md-4">
                   <h5 className="card-title mb-3">Order Summary</h5>
                   <div className="d-flex justify-content-between mb-2">
                     <span>Subtotal:</span>
@@ -449,7 +496,7 @@ const CartPage = () => {
                     <span>Calculated at checkout</span>
                   </div>
                   <hr />
-                  <div className="d-flex justify-content-between mb-4">
+                  <div className="d-flex justify-content-between mb-3 mb-md-4">
                     <span className="fw-bold">Total:</span>
                     <span className="fw-bold fs-5">${totalCost.toFixed(2)}</span>
                   </div>
@@ -474,144 +521,146 @@ const CartPage = () => {
           </div>
         </div>
       )}
-      
-      {/* Checkout Modal */}
+        {/* Checkout Modal */}
       <div className={`checkout-modal ${showModal ? 'show' : ''}`}>
         <div className="modal-content">
-          <div className="modal-header">
-            <h5>Complete Your Order</h5>
-            <button className="close-btn" onClick={handleCloseModal}>&times;</button>
+          <div className="modal-header d-flex justify-content-between align-items-center">
+            <h5 className="mb-0">Complete Your Order</h5>
+            <button className="close-btn btn" onClick={handleCloseModal}>&times;</button>
           </div>
           {orderError && (
-            <div className="alert alert-danger" role="alert">
+            <div className="alert alert-danger mx-3" role="alert">
               {orderError}
             </div>
           )}
-          <form onSubmit={handleSubmitOrder}>
-            <div className="form-group">
-              <label htmlFor="name">Full Name:</label>
-              <input
-                type="text"
-                className="form-control"
-                id="name"
-                name="name"
-                value={checkoutInfo.name}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="phone">Phone Number:</label>
-              <input
-                type="tel"
-                className="form-control"
-                id="phone"
-                name="phone"
-                value={checkoutInfo.phone}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="email">Email:</label>
-              <input
-                type="email"
-                className="form-control"
-                id="email"
-                name="email"
-                value={checkoutInfo.email}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="address">Delivery Address:</label>
-              <textarea
-                className="form-control"
-                id="address"
-                name="address"
-                rows="3"
-                value={checkoutInfo.address}
-                onChange={handleInputChange}
-                required
-              ></textarea>
-            </div>
-            
-            
-            <div className="form-group">
-              <div className="mt-5">
-                {/* Form validation message */}
-                {(!checkoutInfo.name || !checkoutInfo.email || !checkoutInfo.phone || !checkoutInfo.address) && (
-                  <div className="alert alert-warning mb-3">
-                    <i className="bi bi-info-circle me-2"></i>
-                    Please fill in all required fields above before selecting a payment method.
-                  </div>
-                )}
-                
-                {/* PayPal Button - only enabled when form is valid */}
-                <div className="paypal-section">
-                  <div className="paypal-button-container" 
-                      style={{ opacity: (!checkoutInfo.name || !checkoutInfo.email || !checkoutInfo.phone || !checkoutInfo.address) ? 0.5 : 1 }}>                    <PayPalCheckoutButton
-                      totalAmount={totalCost}
-                      onSuccess={(details) => {
-                        console.log('PayPal payment successful:', details);
-                          // Check if the form is filled correctly
-                        const { name, email, phone, address } = checkoutInfo;
-                        if (!name || !email || !phone || !address) {
-                          setOrderError('Please fill in all required fields (Name, Email, Phone, and Address) before completing payment.');
-                          return;
-                        }
-                        
-                        // Set payment processing details
-                        setPaymentProcessing(details);
-                        
-                        // Create a complete checkout info object with payment method
-                        const updatedCheckoutInfo = {
-                          ...checkoutInfo,
-                          paymentMethod: 'paypal'
-                        };
-                        
-                        // Update the state
-                        setCheckoutInfo(updatedCheckoutInfo);
-                        
-                        // Wait for state updates to complete before submitting
-                        setTimeout(() => {
-                          // After successful PayPal payment, submit the order with payment details
-                          handleSubmitOrder({preventDefault: () => {}});
-                        }, 300);
-                      }}
-                      onError={(error) => {
-                        console.error('PayPal payment error:', error);
-                        setOrderError('Error ! Please try again.');
-                      }}
-                      onCancel={() => {
-                        console.log('PayPal payment cancelled');
-                      }}
-                    />
-                  </div>
+          <form onSubmit={handleSubmitOrder} className="p-3">
+            <div className="row g-3">
+              <div className="col-12 col-md-6">
+                <label htmlFor="name" className="form-label">Full Name:</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="name"
+                  name="name"
+                  value={checkoutInfo.name}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div className="col-12 col-md-6">
+                <label htmlFor="phone" className="form-label">Phone Number:</label>
+                <input
+                  type="tel"
+                  className="form-control"
+                  id="phone"
+                  name="phone"
+                  value={checkoutInfo.phone}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div className="col-12">
+                <label htmlFor="email" className="form-label">Email:</label>
+                <input
+                  type="email"
+                  className="form-control"
+                  id="email"
+                  name="email"
+                  value={checkoutInfo.email}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div className="col-12">
+                <label htmlFor="address" className="form-label">Delivery Address:</label>
+                <textarea
+                  className="form-control"
+                  id="address"
+                  name="address"
+                  rows="3"
+                  value={checkoutInfo.address}
+                  onChange={handleInputChange}
+                  required
+                ></textarea>
+              </div>
+            </div>            
+            {/* Payment section */}
+            <div className="mt-4">
+              <h6 className="mb-3">Payment Method</h6>
+              
+              {/* Form validation message */}
+              {(!checkoutInfo.name || !checkoutInfo.email || !checkoutInfo.phone || !checkoutInfo.address) && (
+                <div className="alert alert-warning mb-3">
+                  <i className="bi bi-info-circle me-2"></i>
+                  Please fill in all required fields above before selecting a payment method.
                 </div>
-                
-                {/* Divider with "or" text */}
-                <div className="payment-divider my-4">
-                  <span>OR</span>
-                </div>
-                  {/* Cash on Delivery Button */}
-                <div className="d-grid mt-3" style={{padding: '0 20px', borderRadius: '10px'}}>
-                  <button 
-                    type="submit" 
-                    className="btn checkout-btn"
-                    disabled={isSubmitting || !checkoutInfo.name || !checkoutInfo.email || !checkoutInfo.phone || !checkoutInfo.address}
-                    onClick={() => {
-                      // Check if the form is filled correctly - will be caught by the form validation
-                      setCheckoutInfo(prev => ({
-                        ...prev,
-                        paymentMethod: 'cod'
-                      }));
+              )}
+              
+              {/* PayPal Button - only enabled when form is valid */}
+              <div className="paypal-section mb-3">
+                <div className="paypal-button-container" 
+                    style={{ opacity: (!checkoutInfo.name || !checkoutInfo.email || !checkoutInfo.phone || !checkoutInfo.address) ? 0.5 : 1 }}>
+                  <PayPalCheckoutButton
+                    totalAmount={totalCost}
+                    onSuccess={(details) => {
+                      console.log('PayPal payment successful:', details);
+                        // Check if the form is filled correctly
+                      const { name, email, phone, address } = checkoutInfo;
+                      if (!name || !email || !phone || !address) {
+                        setOrderError('Please fill in all required fields (Name, Email, Phone, and Address) before completing payment.');
+                        return;
+                      }
+                      
+                      // Set payment processing details
+                      setPaymentProcessing(details);
+                      
+                      // Create a complete checkout info object with payment method
+                      const updatedCheckoutInfo = {
+                        ...checkoutInfo,
+                        paymentMethod: 'paypal'
+                      };
+                      
+                      // Update the state
+                      setCheckoutInfo(updatedCheckoutInfo);
+                      
+                      // Wait for state updates to complete before submitting
+                      setTimeout(() => {
+                        // After successful PayPal payment, submit the order with payment details
+                        handleSubmitOrder({preventDefault: () => {}});
+                      }, 300);
                     }}
-                  >
-                    {isSubmitting ? 'Processing...' : 'CASH ON DELIVERY'}
-                  </button>
+                    onError={(error) => {
+                      console.error('PayPal payment error:', error);
+                      setOrderError('Error ! Please try again.');
+                    }}
+                    onCancel={() => {
+                      console.log('PayPal payment cancelled');
+                    }}
+                  />
                 </div>
+              </div>
+              
+              {/* Divider with "or" text */}
+              <div className="text-center my-3">
+                <span className="text-muted">OR</span>
+                <hr className="my-2" />
+              </div>
+              
+              {/* Cash on Delivery Button */}
+              <div className="d-grid">
+                <button 
+                  type="submit" 
+                  className="btn btn-outline-primary"
+                  disabled={isSubmitting || !checkoutInfo.name || !checkoutInfo.email || !checkoutInfo.phone || !checkoutInfo.address}
+                  onClick={() => {
+                    setCheckoutInfo(prev => ({
+                      ...prev,
+                      paymentMethod: 'cod'
+                    }));
+                  }}
+                >
+                  {isSubmitting ? 'Processing...' : 'CASH ON DELIVERY'}
+                </button>
               </div>
             </div>
           </form>

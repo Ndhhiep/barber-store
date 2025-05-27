@@ -77,12 +77,11 @@ const LoginPage = () => {
     <div className="login-page" style={{ backgroundImage: 'url(/assets/login_background.webp)' }}>
       <div className="login-overlay"></div>
       
-      
-      <div className="container login-container">
-        <div className="row">
+        <div className="container login-container">
+        <div className="row justify-content-center align-items-center min-vh-100">
           {/* Left column with welcome text */}
-          <div className="col-lg-6 welcome-column">
-            <div className="welcome-content">
+          <div className="col-12 col-lg-6 welcome-column mb-4 mb-lg-0">
+            <div className="welcome-content text-center text-lg-start">
               <h1 className="welcome-title">Welcome to<br/>The Gentle</h1>
               <p className="welcome-text">
                 Experience premium grooming services in a classic barbershop atmosphere. 
@@ -92,10 +91,10 @@ const LoginPage = () => {
           </div>
           
           {/* Right column with login form */}
-          <div className="col-lg-6 form-column">
-            <div className="card login-card">
-              <div className="card-body p-4">
-                <h2 className="text-center mb-4">Sign in</h2>
+          <div className="col-12 col-lg-6 form-column">
+            <div className="card login-card mx-auto" style={{maxWidth: '480px'}}>
+              <div className="card-body p-3 p-md-4 p-lg-5">
+                <h2 className="text-center mb-3 mb-md-4">Sign in</h2>
                 
                 {error && (
                   <div className="alert alert-danger" role="alert">
@@ -147,10 +146,9 @@ const LoginPage = () => {
                       Lost your password?
                     </Link>
                   </div>
-                  
-                  <button
+                    <button
                     type="submit"
-                    className="btn btn-primary w-100 mb-3 sign-in-btn"
+                    className="btn btn-primary w-100 mb-3 mb-md-4 sign-in-btn"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -167,7 +165,7 @@ const LoginPage = () => {
                     </p>
                   </div>
                   
-                  <div className="text-center mt-4">
+                  <div className="text-center mt-3 mt-md-4">
                     <p className="terms-text">
                       By clicking on "Sign in now" you agree to our<br/>
                       <Link to="/terms" className="terms-link">Terms of Service</Link> | <Link to="/privacy" className="terms-link">Privacy Policy</Link>

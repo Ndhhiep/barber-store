@@ -66,18 +66,82 @@
 .header-toggler {
   border-color: #D9D0C7; /* var(--primary-light) */
   padding: 0.25rem 0.5rem;
+  position: relative;
 }
 
 .header-toggler-icon {
   filter: invert(1);
 }
 
+/* Toggle button cart badge styling */
+.toggle-cart-badge {
+  position: absolute !important;
+  top: -8px !important;
+  right: -8px !important;
+  background-color: #dc3545 !important;
+  color: white !important;
+  font-size: 0.6rem !important;
+  font-weight: 600 !important;
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 10 !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  min-width: 18px !important;
+  border: 2px solid white !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
 /* Mobile menu styling */
 @media (max-width: 991px) {
   .header-nav {
-    margin-top: 1rem;
-    padding: 0.5rem 0;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    margin-top: 0;
+    padding: 2rem 0;
+    border-top: none;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }    /* Mobile navbar slide animation from right */  .navbar-collapse {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 50vw;
+    height: 100vh;
+    background-color: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 2rem;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+    z-index: 1050;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+    overflow-y: auto;
+  }
+    /* Show navbar with slide animation */
+  .navbar-collapse.show {
+    transform: translateX(0);
+  }    /* Backdrop overlay */
+  .navbar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 50vw; /* Only cover the left side, not the navbar area */
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease-in-out;
+  }
+    .navbar-backdrop.show {
+    opacity: 1;
+    visibility: visible;
   }
 }
 
@@ -88,7 +152,14 @@
 
 @media (max-width: 991px) {
   .navbar-nav .nav-item {
-    margin: 0.25rem 0;
+    margin: 1rem 0;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .navbar-nav {
+    width: 100%;
+    align-items: center;
   }
 }
 
@@ -106,9 +177,29 @@
 
 @media (max-width: 991px) {
   .header-nav-link {
-    padding: 0.85rem 0; /* Increased from 0.75rem */
-    font-size: 1.15rem; /* Increased from 1rem */
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
     text-align: center;
+    width: 100%;
+    display: block;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    transition: all 0.3s ease;
+  }
+  
+  .header-nav-link:hover {
+    background-color: rgba(139, 119, 92, 0.1);
+    color: #8B775C !important;
+  }
+  
+  /* Cart link styling in mobile navbar */
+  .header-nav-link .badge {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    margin-left: 0.5rem;
+    font-size: 0.7rem;
   }
 }
 
@@ -152,15 +243,15 @@
 
 @media (max-width: 991px) {
   .header-nav-link::after {
-    bottom: -5px;
+    display: none; /* Hide underline on mobile sidebar */
   }
   
   .header-nav-link.active::after {
-    width: 60%;
+    display: none;
   }
   
   .header-nav-link:hover::after {
-    width: 60%;
+    display: none;
   }
 }
 
@@ -185,10 +276,11 @@
 
 @media (max-width: 991px) {
   .header-book-btn {
-    width: 100%;
-    margin-top: 0.75rem; /* Increased from 0.5rem */
-    padding: 0.85rem 1.25rem; /* Increased from 0.75rem 1rem */
-    font-size: 1.2rem; /* Added font size for mobile */
+    width: 80%;
+    margin: 2rem auto 1rem auto;
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
+    display: block;
   }
 }
 
@@ -212,12 +304,87 @@
 }
 
 
+/* Desktop user dropdown button styling */
+.user-dropdown-btn {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-dropdown-btn:hover {
+  background-color: rgba(139, 119, 92, 0.1);
+}
+
+/* Book appointment button styling */
+.book-appointment-btn {
+  border-color: #8b775c;
+  color: #8b775c;
+  font-family: 'Lato', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 0.65rem 1.5rem;
+  transition: all 0.3s ease;
+  letter-spacing: 0.5px;
+  border: 2px solid #8b775c;
+  border-radius: 4px;
+  background-color: transparent;
+  text-decoration: none;
+}
+
+.book-appointment-btn:hover {
+  background-color: #8b775c;
+  border-color: #8b775c;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(139, 119, 92, 0.25);
+}
+
 @media (max-width: 991px) {
   .login-btn {
-    width: 100%;
+    width: 80%;
     text-align: center;
-    margin: 0.5rem 0;
+    margin: 1rem auto;
     padding: 0.75rem 1.25rem;
+  }
+  
+  .cart-btn {
+    margin: 1rem auto;
+    font-size: 1.5rem;
+
+  }
+
+  .cart-icon{
+    color:#333333;
+  }
+  
+  .user-dropdown-btn {
+    margin: 1rem auto;
+    font-size: 1.2rem;
+  }
+  
+  .dropdown-menu {
+    position: static !important;
+    transform: none !important;
+    box-shadow: none;
+    border: 1px solid rgba(0,0,0,0.1);
+    margin: 1rem 0;
+    background-color: #f8f9fa;
+  }
+  
+  .dropdown-menu .dropdown-item {
+    color: #333;
+    background-color: transparent;
+    padding: 0.75rem 1rem;
+  }
+  
+  .dropdown-menu .dropdown-item:hover {
+    background-color: rgba(139, 119, 92, 0.1);
+    color: #8B775C;
   }
 }
 
@@ -226,6 +393,73 @@
   display: flex;
   align-items: center;
   height: 100%;
+}
+
+/* Cart badge positioning for navbar cart icon */
+.navbar-nav .cart-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #333333;
+  font-size: 1.4rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  padding: 0.5rem;
+}
+
+.navbar-nav .cart-btn:hover {
+  color: #8B775C;
+}
+
+/* Perfect circular cart badge */
+.cart-badge {
+  position: absolute !important;
+  top: -12px !important;
+  right: -8px !important;
+  background-color: #dc3545 !important;
+  color: white !important;
+  font-size: 0.65rem !important;
+  font-weight: 600 !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 10 !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  min-width: 20px !important;
+  border: 2px solid white !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+@media (max-width: 991px) {
+  .navbar-nav .cart-btn {
+    width: 100%;
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
+    text-align: center;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .navbar-nav .cart-btn:hover {
+    background-color: rgba(139, 119, 92, 0.1);
+    color: #8B775C !important;
+  }
+  
+  .cart-badge {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    margin-left: 0.5rem !important;
+    border: 1px solid white !important;
+  }
 }
 
 /* Cart button styling */
@@ -249,133 +483,9 @@
 
 .cart-btn .badge {
   font-size: 0.65rem;
-  padding: 0.25rem 0.45rem;
-}
-
-/* Vertical divider between cart and login button */
-.header-divider {
-  background-color: #D9D0C7;
-  opacity: 1;
-}
-
-/* Fix dropdown caret alignment with username */
-.dropdown-toggle::after {
-  display: none; /* Hide the dropdown caret icon */
-}
-
-.dropdown button {
-  white-space: nowrap;
-  display: inline-flex !important;
-  align-items: center !important;
-}
-
-.dropdown button span {
-  display: inline-block;
-  vertical-align: middle;
-}
-
-@media (max-width: 991px) {
-  .cart-btn {
-    margin-right: 0;
-  }
-}
-
-/* Dropdown menu styling */
-.dropdown-menu {
-  min-width: 200px; /* Tăng kích thước độ rộng của dropdown menu */
-  padding: 10px 0;
-  margin-top: 10px;
-  border: none;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
-  border-radius: 5px;
-  background-color: #2B2A2A;
-}
-
-/* Dropdown menu items styling */
-.dropdown-menu .dropdown-item {
-  color: #D9D0C7;
-  padding: 10px 20px;
-  font-family: 'Lato', sans-serif;
-  font-size: 1rem;
-  transition: all 0.2s ease;
-}
-
-.dropdown-menu .dropdown-item:hover {
-  background-color: #3a3939;
-  color: #8B775C;
-}
-
-.dropdown-menu .dropdown-item:active {
-  background-color: #8B775C;
-  color: #fff;
-}
-
-/* Adding divider between items */
-.dropdown-divider {
-  border-color: rgba(217, 208, 199, 0.2);
-  margin: 5px 0;
-}
-
-/* Fix dropdown button to keep text visible when open */
-.dropdown-toggle.show,
-.dropdown-toggle:focus {
-  color: #8B775C !important;
-}
-
-/* User dropdown button styling */
-.user-dropdown-btn {
-  display: flex;
-  align-items: center;
-  color: #333;
-  background: transparent;
-  border: none;
-  padding: 0.5rem 1rem;
-  font-family: 'Lato', sans-serif;
-  transition: all 0.3s ease;
-}
-
-.user-dropdown-btn:hover {
-  color: #8B775C;
-}
-
-.user-dropdown-btn .user-icon {
-  margin-right: 8px;
-  font-size: 1.2rem;
-}
-
-/* My Information link styling */
-.dropdown-item.my-info {
-  display: flex;
-  align-items: center;
-  font-weight: 500;
-  border-bottom: 1px solid rgba(217, 208, 199, 0.2);
-  margin-bottom: 5px;
-  padding-bottom: 12px;
-}
-
-.dropdown-item.my-info i {
-  margin-right: 8px;
-  font-size: 1.1rem;
-}
-
-/* Book Appointment Button - Right side */
-.book-appointment-btn {
-  background-color: transparent;
-  color: #8B775C;
-  border: 2px solid #8B775C;
-  border-radius: 4px;
-  font-family: 'Lato', sans-serif;
-  font-weight: 600;
-  padding: 8px 20px;
-  letter-spacing: 0.5px;
-  transition: all 0.3s ease;
-}
-
-.book-appointment-btn:hover {
-  background-color: #8B775C;
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(139, 119, 92, 0.25);
+  padding: 0.25rem 0.4rem;
+  top: -2px !important;
+  right: -6px !important;
 }
 
 /* Mobile Book Appointment Button */
@@ -391,5 +501,25 @@
 .nav-item .header-book-btn:hover {
   background-color: #8B775C;
   color: white;
+}
+
+/* Cart Badge Styling */
+.cart-badge-mobile {
+  font-size: 0.6rem !important;
+  padding: 0.25em 0.4em !important;
+  top: -5px !important;
+  right: -8px !important;
+  transform: none !important;
+  margin-left: 0 !important;
+}
+
+/* Ensure proper positioning for both mobile and desktop cart badges */
+.position-relative .badge.bg-danger {
+  z-index: 10;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 

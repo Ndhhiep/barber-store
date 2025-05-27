@@ -86,15 +86,14 @@ const RegisterPage = () => {
       setIsLoading(false);
     }
   };
-  
-  return (
-    <div className="py-5 login-page">
+    return (
+    <div className="py-4 py-md-5 login-page">
       <div className="container">
         <div className="row justify-content-center">
-          <div className="col-md-6 col-lg-5">
+          <div className="col-12 col-md-8 col-lg-6 col-xl-5">
             <div className="card login-card">
-              <div className="card-body p-4 p-md-5">
-                <h2 className="text-center mb-4">Create Account</h2>
+              <div className="card-body p-3 p-md-4 p-lg-5">
+                <h2 className="text-center mb-3 mb-md-4">Create Account</h2>
                 
                 {error && (
                   <div className="alert alert-danger" role="alert">
@@ -177,10 +176,9 @@ const RegisterPage = () => {
                       required
                     />
                   </div>
-                  
-                  <button
+                    <button
                     type="submit"
-                    className="btn btn-primary w-100 mb-3"
+                    className="btn btn-primary w-100 mb-3 mb-md-4"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -191,7 +189,7 @@ const RegisterPage = () => {
                     ) : 'Sign Up'}
                   </button>
                   
-                  <p className="text-center mt-4 mb-0">
+                  <p className="text-center mt-3 mt-md-4 mb-0">
                     Already have an account?{' '}
                     <Link 
                       to={redirect ? `/login?redirect=${redirect}` : '/login'}

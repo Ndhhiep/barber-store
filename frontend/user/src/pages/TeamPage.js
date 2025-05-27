@@ -51,15 +51,15 @@ const TeamPage = () => {
   const displayBarbers = barbers.length > 0 ? barbers : (error ? fallbackBarbers : []);
 
   return (    <div>      {/* Page Title Section */}      <section className="page-title-section">
-        <div className="container py-4">
-          <h1 className="display-4 mb-3 page-title">Meet Our Team</h1>
+        <div className="container py-3 py-md-4">
+          <h1 className="display-5 display-md-4 mb-3 page-title">Meet Our Team</h1>
           <hr />
           <p className="page-subtitle">Our skilled barbers are dedicated to delivering exceptional grooming experiences</p>
         </div>
       </section>
 
       {/* Team Members */}
-      <section className="py-5 team-section">
+      <section className="py-4 py-md-5 team-section">
         <div className="container">
           
 
@@ -74,11 +74,10 @@ const TeamPage = () => {
             <div className="alert alert-info text-center">
               No team members are currently available. Please check back later.
             </div>
-          ) : (
-            displayBarbers.map((barber, index) => (
-              <div key={barber._id} className="row align-items-center mb-5 pb-5 border-bottom">
-                <div className="col-lg-5 mb-4 mb-lg-0">
-                  <div className="position-relative">
+          ) : (            displayBarbers.map((barber, index) => (
+              <div key={barber._id} className="row align-items-center mb-3 mb-md-4 mb-lg-5 pb-3 pb-md-4 pb-lg-5 border-bottom">
+                <div className="col-12 col-lg-5 mb-3 mb-md-4 mb-lg-0">
+                  <div className="position-relative text-center">
                     <img 
                       src={barber.imgURL || `/assets/barber-${index + 1}.jpg`} 
                       alt={barber.name} 
@@ -93,20 +92,19 @@ const TeamPage = () => {
                     ></div>
                   </div>
                 </div>
-                <div className="col-lg-7 px-lg-5">
-                  <h2 className="h1 mb-2 team-member-name">
+                <div className="col-12 col-lg-7 px-lg-5 text-center text-lg-start">                  <h2 className="h2 h-lg-1 mb-2 team-member-name">
                     {barber.name}
                   </h2>
-                  <p className="text-accent mb-4 team-member-title">
+                  <p className="text-accent mb-3 mb-md-4 team-member-title">
                     {barber.title || barber.specialization || 'Barber'}
                   </p>
-                  <p className="lead mb-4">
+                  <p className="lead mb-3 mb-md-4">
                     {barber.description}
                   </p>
-                  <h3 className="h5 mb-3 specialties-heading">
+                  <h3 className="h5 mb-2 mb-md-3 specialties-heading">
                     Specialties
                   </h3>
-                  <ul className="list-unstyled mb-4">
+                  <ul className="list-unstyled mb-3 mb-md-4">
                     {(barber.expertise || []).map((skill, index) => (
                       <li key={index} className="mb-2 d-flex align-items-center">
                         <i className="bi bi-check-circle me-2 specialty-icon"></i>
@@ -125,13 +123,11 @@ const TeamPage = () => {
             ))
           )}
         </div>
-      </section>
-
-      {/* Join Our Team */}
-      <section className="py-5">
+      </section>      {/* Join Our Team */}
+      <section className="py-3 py-md-4 py-lg-5">
         <div className="container">
           <div className="row align-items-center">
-            <div className="col-lg-6 mb-4 mb-lg-0 order-lg-2">
+            <div className="col-12 col-lg-6 mb-3 mb-md-4 mb-lg-0 order-lg-2">
               <div className="position-relative">
                 <img 
                   src="/assets/team01.jfif" 
@@ -145,20 +141,19 @@ const TeamPage = () => {
                 <div className="join-team-image-border"></div>
               </div>
             </div>
-            <div className="col-lg-6 px-lg-5">
-              <h2 className="h1 mb-4 join-team-heading">
+            <div className="col-12 col-lg-6 px-lg-5 text-center text-lg-start">              <h2 className="h1 mb-3 mb-md-4 join-team-heading">
                 Join Our Team
               </h2>
-              <p className="lead mb-4">
+              <p className="lead mb-3 mb-md-4">
                 We're always looking for passionate, skilled barbers to join The Gentleman's Cut family.
               </p>
-              <p className="mb-4">
+              <p className="mb-3 mb-md-4">
                 If you're dedicated to the craft of barbering, have a great attitude, and want to work in a professional yet friendly environment, we'd love to hear from you.
               </p>
-              <h3 className="h5 mb-3 specialties-heading">
+              <h3 className="h5 mb-2 mb-md-3 specialties-heading">
                 What We Offer
               </h3>
-              <ul className="list-unstyled mb-4">
+              <ul className="list-unstyled mb-3 mb-md-4">
                 <li className="mb-2 d-flex align-items-center">
                   <i className="bi bi-check-circle me-2 specialty-icon"></i>
                   <span>Competitive commission structure</span>
