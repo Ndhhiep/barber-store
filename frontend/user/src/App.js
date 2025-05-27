@@ -26,7 +26,8 @@ function AppContent() {
   
   // Check whether to show user header
   const showUserHeader = !hideHeaderPaths.includes(location.pathname);
-    return (    <SocketProvider>
+    return (    
+    <SocketProvider>
       <CartProvider>
         <div className="App">
           {showUserHeader && <Header />}
