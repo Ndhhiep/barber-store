@@ -28,13 +28,32 @@ const server = http.createServer(app);
 
 // CORS configuration with specific options - định nghĩa một lần dùng chung
 const corsOptions = {
-  origin: [
-    'http://localhost:3000', 
-    'http://localhost:3001', 
-    'https://barber-store-ndhhieps-projects.vercel.app',
-    'https://barber-store.onrender.com',
-    'https://barber-store.vercel.app'
-  ], // Allow all frontend origins
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if (!origin) return callback(null, true);
+    
+    // List of allowed origins
+    const allowedOrigins = [
+      'http://localhost:3000', 
+      'http://localhost:3001',
+      'http://localhost:5173', // Vite dev server
+      'https://barber-store-ndhhieps-projects.vercel.app',
+      'https://barber-store.onrender.com',
+      'https://barber-store.vercel.app'
+    ];
+    
+    // Allow any Vercel preview domains
+    if (
+      origin.includes('vercel.app') || 
+      allowedOrigins.includes(origin) ||
+      // Allow any localhost origin in development
+      (process.env.NODE_ENV === 'development' && origin.includes('localhost'))
+    ) {
+      return callback(null, true);
+    }
+    
+    callback(new Error(`CORS policy: ${origin} is not allowed`));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // Added PATCH method
   allowedHeaders: ['Content-Type', 'Accept', 'Authorization'], // Allow these headers
   credentials: true, // Allow cookies

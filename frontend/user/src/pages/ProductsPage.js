@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ProductSearch from '../components/ProductSearch';
 import ProductCard from '../components/ProductCard';
+import { API_URL, getRequestConfig } from '../utils/apiConfig';
 import '../css/ProductsPage.css';
 
 const ProductsPage = () => {
@@ -10,16 +11,14 @@ const ProductsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeCategories, setActiveCategories] = useState([]);
-
-  useEffect(() => {
+  const [activeCategories, setActiveCategories] = useState([]);  useEffect(() => {
     const fetchProductsByCategory = async () => {
       try {
         setLoading(true);
         
-        // Use the API service or configured base URL
-        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-        const { data } = await axios.get(`${baseUrl}/products/categories`);
+        console.log("Using API URL for products:", API_URL);
+        
+        const { data } = await axios.get(`${API_URL}/products/categories`, getRequestConfig());
         
         console.log("Products API Response:", data);
         

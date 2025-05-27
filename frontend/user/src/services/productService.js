@@ -2,10 +2,9 @@
  * Service quản lý các API liên quan đến sản phẩm
  */
 import axios from 'axios';
+import { API_URL, getRequestConfig } from '../utils/apiConfig';
 
-const API_URL = process.env.REACT_APP_BACKEND_API_URL || 'http://localhost:5000/api'; // Use variable from .env file
-
-// Helper function to get auth headers
+// Helper function to get auth headers - maintained for backward compatibility
 const getAuthHeader = () => {
   const token = localStorage.getItem('token');
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -25,10 +24,11 @@ export const getProducts = async (filters = {}) => {
         queryParams.append(key, filters[key]);
       }
     });
-      const queryString = queryParams.toString();
+    const queryString = queryParams.toString();
     const endpoint = queryString ? `${API_URL}/products?${queryString}` : `${API_URL}/products`;
     
-    const response = await axios.get(endpoint);
+    // Use the shared API config
+    const response = await axios.get(endpoint, getRequestConfig());
     return response;
   } catch (error) {
     console.error('Get products error:', error);
@@ -43,7 +43,7 @@ export const getProducts = async (filters = {}) => {
  */
 export const getProductById = async (id) => {
   try {
-    const response = await axios.get(`${API_URL}/products/${id}`);
+    const response = await axios.get(`${API_URL}/products/${id}`, getRequestConfig());
     return response;
   } catch (error) {
     console.error(`Get product ${id} error:`, error);
@@ -79,11 +79,26 @@ export const searchProducts = async (keyword) => {
   }
 };
 
+/**
+ * Lấy sản phẩm showcase theo danh mục
+ * @returns {Promise<Array>} - Danh sách sản phẩm showcase theo danh mục
+ */
+export const getProductsByCategoryShowcase = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/products/showcase-by-category`, getRequestConfig());
+    return response.data;
+  } catch (error) {
+    console.error('Get products showcase by category error:', error);
+    throw error;
+  }
+};
+
 const productService = {
   getProducts,
   getProductById,
   getProductsByCategory,
-  searchProducts
+  searchProducts,
+  getProductsByCategoryShowcase
 };
 
 export default productService;

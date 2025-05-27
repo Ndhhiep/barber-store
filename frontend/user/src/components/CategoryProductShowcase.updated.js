@@ -1,23 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import ProductCard from './ProductCard';
-import { getProductsByCategoryShowcase } from '../services/productService';
+import ProductCard from './ProductCard'; // Assuming ProductCard is in the same directory
+import { getProductsByCategoryShowcase } from '../services/productService'; // Import the service
 
 const CategoryProductShowcase = () => {
   const [showcaseData, setShowcaseData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);  useEffect(() => {
+  const [error, setError] = useState(null);
+  
+  useEffect(() => {
     const fetchShowcaseData = async () => {
       setLoading(true);
       setError(null);
+      
       try {
-        console.log('Fetching showcase products by category');
-        
-        // Use our product service to get the showcase data
+        // Use the product service to fetch showcase data
         const data = await getProductsByCategoryShowcase();
         console.log('Showcase data received:', data?.length || 0, 'categories');
-        
-        setShowcaseData(data);} catch (err) {
+        setShowcaseData(data);
+      } catch (err) {
         console.error("Fetch error:", err);
         
         // If in development, use fallback sample data for easier testing
@@ -64,10 +65,10 @@ const CategoryProductShowcase = () => {
       } finally {
         setLoading(false);
       }
-    };    // Only fetch data if the environment variable is available
-    if (process.env.REACT_APP_BACKEND_API_URL) {
-      console.log('Backend API URL:', process.env.REACT_APP_BACKEND_API_URL);
-    }
+    };
+    
+    // Log the API URL being used
+    console.log('Backend API URL:', process.env.REACT_APP_BACKEND_API_URL);
     
     fetchShowcaseData();
   }, []); // Empty dependency array ensures this runs only once on mount
@@ -86,16 +87,19 @@ const CategoryProductShowcase = () => {
 
   return (
     <section className="py-5 category-showcase">
-      <div className="container">          <div className="text-center mb-4 mb-md-5">
+      <div className="container">
+        <div className="text-center mb-4 mb-md-5">
           <h1 className="display-4 display-md-3" style={{ fontFamily: 'Playfair Display, serif' }}>Our Products</h1>
           <p className="lead">Discover our premium collection of professional hair and beard care products</p>
         </div>
         
-        {showcaseData.map((categoryData) => (          <div key={categoryData.category} className="mb-5">
+        {showcaseData.map((categoryData) => (
+          <div key={categoryData.category} className="mb-5">
             <h2 className="text-start mb-4" style={{ fontFamily: 'Playfair Display, serif' }}>
               {categoryData.category} {/* Assuming category is the name string */}
             </h2>
-            <hr className="mb-4" />            <div className="row g-3 g-md-4 justify-content-center">
+            <hr className="mb-4" />
+            <div className="row g-3 g-md-4 justify-content-center">
               {categoryData.products.map((product) => (
                 // Use Bootstrap columns for responsiveness
                 <div key={product._id} className="col-12 col-sm-6 col-lg-4 d-flex justify-content-center">
