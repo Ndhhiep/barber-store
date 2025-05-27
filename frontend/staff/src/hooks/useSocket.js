@@ -7,7 +7,7 @@ import { io } from 'socket.io-client';
  * @param {Object} options - Tùy chọn cấu hình cho Socket.IO client
  * @returns {Object} - Trả về đối tượng socket và trạng thái kết nối
  */
-const useSocket = (url = 'http://localhost:5000', options = {}) => {
+const useSocket = (url = 'https://barber-store.onrender.com', options = {}) => {
   // Sử dụng useRef để giữ tham chiếu đến socket giữa các lần render
   const socketRef = useRef(null);
   // Sử dụng useRef để lưu trữ các handlers đã đăng ký
