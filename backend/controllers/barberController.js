@@ -322,32 +322,62 @@ const toggleBarberStatus = async (req, res) => {
  */
 const uploadBarberImage = async (req, res) => {
   try {
-    console.log('Upload request received. File:', req.file);
+    console.log('Upload request received');
     
-    // Kiểm tra xem file đã được tải lên Cloudinary chưa
-    if (!req.file || !req.file.path) {
-      console.error('No file uploaded or file path missing from Cloudinary response.');
+    // Check Cloudinary configuration first
+    const { checkCloudinaryConfig } = require('../utils/cloudinaryCheck');
+    const cloudinaryStatus = await checkCloudinaryConfig();
+    
+    if (!cloudinaryStatus.success) {
+      console.error('Cloudinary configuration issue:', cloudinaryStatus.message);
+      return res.status(500).json({
+        success: false,
+        message: 'CLOUDINARY_CONFIG_ERROR: Image service is not properly configured',
+        error: cloudinaryStatus.message
+      });
+    }
+    
+    // If no file was uploaded
+    if (!req.file) {
+      console.log('No file found in request');
       return res.status(400).json({
         success: false,
-        message: 'No file uploaded or upload failed. Please ensure a valid image is selected.'
+        message: 'Please upload an image file'
       });
     }
 
-    // File đã được tải lên Cloudinary, req.file.path chứa URL của ảnh
-    // URL này thường là req.file.secure_url nếu dùng Cloudinary, 
-    // nhưng multer-storage-cloudinary gán nó vào req.file.path
+    console.log('File uploaded successfully to Cloudinary:', {
+      path: req.file.path,
+      filename: req.file.filename,
+      size: req.file.size
+    });
+    
+    // File has been uploaded and processed by uploadMiddleware
     return res.status(200).json({
       success: true,
-      message: 'Image uploaded successfully to Cloudinary!',
-      imageUrl: req.file.path // Đây là URL của ảnh trên Cloudinary
+      data: {
+        url: req.file.path, // Cloudinary URL
+        public_id: req.file.filename // Cloudinary public ID for future reference/deletion
+      },
+      message: 'Image uploaded successfully'
     });
-
   } catch (error) {
-    console.error('Error during image upload process:', error);
+    console.error('Error uploading barber image:', error);
+    
+    // Check if it's a Cloudinary error
+    let errorMessage = 'Error uploading image';
+    if (error.message && error.message.includes('Cloudinary')) {
+      errorMessage = 'CLOUDINARY_ERROR: ' + error.message;
+    }
+    
+    // Detailed error response
     return res.status(500).json({
       success: false,
-      message: 'Server error during image upload.',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'An unexpected error occurred'
+      message: errorMessage,
+      error: process.env.NODE_ENV === 'development' ? {
+        message: error.message,
+        stack: error.stack
+      } : undefined
     });
   }
 };

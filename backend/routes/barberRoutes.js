@@ -16,8 +16,15 @@ router.post('/', protect, staffOnly, createBarber);
 router.put('/:id', protect, staffOnly, updateBarber);
 router.delete('/:id', protect, staffOnly, deleteBarber);
 
+// Check Cloudinary connection status (chỉ nhân viên)
+router.get('/check-cloudinary', protect, staffOnly, async (req, res) => {
+  const { checkCloudinaryConfig } = require('../utils/cloudinaryCheck');
+  const result = await checkCloudinaryConfig();
+  return res.status(result.success ? 200 : 500).json(result);
+});
+
 // Tải ảnh barber lên (chỉ nhân viên)
-router.post('/upload-image', protect, staffOnly, upload.single('image'), uploadBarberImage);
+router.post('/upload-image', protect, staffOnly, upload, uploadBarberImage);
 
 // Chuyển đổi trạng thái hoạt động của barber (chỉ nhân viên)
 router.patch('/:id/toggle-status', protect, staffOnly, toggleBarberStatus);

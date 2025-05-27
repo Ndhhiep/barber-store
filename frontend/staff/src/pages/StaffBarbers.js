@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import staffBarberService from '../services/staffBarberService';
+import { validateImageFile, diagnoseImageUploadIssue } from '../utils/imageUtils';
 
 const StaffBarbers = () => {
   const [barbers, setBarbers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false); // Add state for form submission loading
 
   const [editingBarber, setEditingBarber] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,23 +39,40 @@ const StaffBarbers = () => {
   useEffect(() => {
     fetchBarbers();
   }, []);
-
   const fetchBarbers = async () => {
     try {
       setLoading(true);
       const response = await staffBarberService.getAllBarbersForStaff();
       
       // Xử lý dữ liệu đơn giản với ghi log tối thiểu
+      let barbersList = [];
       if (response && response.success && response.data && Array.isArray(response.data.barbers)) {
-        setBarbers(response.data.barbers);
+        barbersList = response.data.barbers;
       } else if (response && Array.isArray(response.data)) {
-        setBarbers(response.data);
+        barbersList = response.data;
       } else if (response && Array.isArray(response)) {
-        setBarbers(response);
-      } else {
-        setBarbers([]);
+        barbersList = response;
       }
       
+      // Đảm bảo mỗi barber có cả hai trường hình ảnh để hiển thị đúng
+      const normalizedBarbers = barbersList.map(barber => {
+        // Tạo đối tượng mới với các trường hiện có
+        let normalizedBarber = {...barber};
+        
+        // Đảm bảo cả hai trường hình ảnh đều tồn tại
+        if (normalizedBarber.imgURL && !normalizedBarber.image_url) {
+          normalizedBarber.image_url = normalizedBarber.imgURL;
+        } else if (normalizedBarber.image_url && !normalizedBarber.imgURL) {
+          normalizedBarber.imgURL = normalizedBarber.image_url;
+        }
+        
+        return normalizedBarber;
+      });
+      
+      // In ra console để kiểm tra
+      console.log('Normalized barbers data:', normalizedBarbers.slice(0, 2)); // Chỉ in 2 barber đầu tiên để tránh làm tràn console
+      
+      setBarbers(normalizedBarbers);
       setError(null);
     } catch (err) {
       console.error('Error fetching barbers:', err.message);
@@ -63,21 +82,39 @@ const StaffBarbers = () => {
       setLoading(false);
     }
   };
-  
-  const handleImageChange = (e) => {
+    const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      console.log('Selected file:', file.name, 'Size:', (file.size / 1024).toFixed(2), 'KB');
+      console.log('Selected file:', file.name, 'Size:', (file.size / 1024).toFixed(2), 'KB', 'Type:', file.type);
       
-      // Lưu tệp vào formData
+      // Validate the image file first
+      const validation = validateImageFile(file);
+      
+      if (!validation.valid) {
+        setFormErrors({
+          ...formErrors,
+          image: validation.message
+        });
+        return;
+      }
+      
+      // Clear any previous errors
+      if (formErrors.image) {
+        setFormErrors({
+          ...formErrors,
+          image: null
+        });
+      }
+      
+      // Save file in formData
       setFormData(prev => ({ 
         ...prev, 
         imageFile: file,
-        // Xóa imageUrl vì đang tải lên tệp mới
+        // Clear imageUrl as we're uploading a new file
         imageUrl: '' 
       }));
       
-      // Tạo URL xem trước cho ảnh được chọn
+      // Create preview URL for selected image
       const previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
     }
@@ -195,16 +232,32 @@ const StaffBarbers = () => {
     }
   };
   
-  // Các hàm thêm/bớt chuyên môn đã bị loại bỏ
-  const validateForm = () => {
+  // Các hàm thêm/bớt chuyên môn đã bị loại bỏ  // Pre-check image rendering
+  const testImagePreview = (url) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = url;
+    });
+  };
+
+  const validateForm = async () => {
     const errors = {};
     
     if (!formData.name.trim()) errors.name = 'Barber name is required';
     if (!formData.description.trim()) errors.description = 'Description is required';
     
-    // Xác thực ảnh: cần imageFile hoặc imageUrl hiện có
+    // Image validation: need either imageFile or a valid imageUrl
     if (!formData.imageFile && !formData.imageUrl.trim()) {
       errors.image = 'Barber image is required';
+    } 
+    // If there's an imageUrl but no file, test if it can be loaded
+    else if (!formData.imageFile && formData.imageUrl.trim()) {
+      const imageValid = await testImagePreview(formData.imageUrl);
+      if (!imageValid) {
+        errors.image = 'The existing image URL is invalid. Please upload a new image.';
+      }
     }
     
     setFormErrors(errors);
@@ -212,30 +265,118 @@ const StaffBarbers = () => {
   };  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    // Show loading indicator while validating
+    setIsLoading(true);
+    const isValid = await validateForm();
+    
+    if (!isValid) {
+      setIsLoading(false);
+      return;
+    }
     
     try {
       let response;
       
-      // Hiển thị chỉ báo tải
+      // Show loading state
+      setIsLoading(true);
       setFormErrors({ ...formErrors});
       
-      if (editingBarber) {
-        response = await staffBarberService.updateBarber(editingBarber._id, formData);
+      if (editingBarber) {        response = await staffBarberService.updateBarber(editingBarber._id, formData);
+        
+        // Process the returned data to ensure proper image URL mapping
+        let updatedBarber;
+        
+        // Check how the data is structured in the response
+        if (response.data && response.data.data) {
+          // If response has data.data structure
+          updatedBarber = response.data.data;
+        } else {
+          // Direct data structure
+          updatedBarber = response.data;
+        }
+        
+        // Ensure both image URL fields exist for frontend compatibility
+        console.log('Original updated barber data:', updatedBarber);
+        
+        if (updatedBarber && updatedBarber.imgURL && !updatedBarber.image_url) {
+          updatedBarber.image_url = updatedBarber.imgURL;
+        } else if (updatedBarber && updatedBarber.image_url && !updatedBarber.imgURL) {
+          updatedBarber.imgURL = updatedBarber.image_url;
+        }
+        
+        console.log('Barber updated with image:', updatedBarber.imgURL || updatedBarber.image_url);
+        
         // Cập nhật danh sách barbers
         setBarbers(barbers.map(barber => 
-          barber._id === editingBarber._id ? response.data : barber
-        ));
-      } else {
-        response = await staffBarberService.createBarber(formData);
+          barber._id === editingBarber._id ? updatedBarber : barber
+        ));} else {        response = await staffBarberService.createBarber(formData);
+        
+        // Process the returned data to ensure proper image URL mapping
+        let newBarber;
+        
+        // Check how the data is structured in the response
+        if (response.data && response.data.data) {
+          // If response has data.data structure
+          newBarber = response.data.data;
+        } else {
+          // Direct data structure
+          newBarber = response.data;
+        }
+        
+        // Ensure both image URL fields exist for frontend compatibility
+        console.log('Original barber data received:', newBarber);
+        
+        if (newBarber && newBarber.imgURL && !newBarber.image_url) {
+          newBarber.image_url = newBarber.imgURL;
+        } else if (newBarber && newBarber.image_url && !newBarber.imgURL) {
+          newBarber.imgURL = newBarber.image_url;
+        }
+        
+        console.log('New barber added with image:', newBarber.imgURL || newBarber.image_url);
+        
         // Thêm barber mới vào danh sách
-        setBarbers([...barbers, response.data]);
+        setBarbers([...barbers, newBarber]);
       }
       
-      closeModal();
-    } catch (err) {
+      closeModal();    } catch (err) {
       console.error('Error saving barber:', err);
-      setFormErrors({ submit: err.message || 'Failed to save barber data' });
+      
+      // Detailed error handling
+      let errorMessage = 'Failed to save barber data';
+      
+      if (err.message) {
+        errorMessage = err.message;
+      }
+        // Enhanced handling for image upload errors with diagnostics
+      if (errorMessage.includes('image') || errorMessage.includes('upload') || errorMessage.includes('CLOUDINARY')) {
+        // Get a more specific diagnostic message about the image upload issue
+        const diagnosticMessage = diagnoseImageUploadIssue(err);
+        
+        setFormErrors({ 
+          submit: errorMessage,
+          image: diagnosticMessage || 'Error uploading image. Please try a different image or format.'
+        });
+        
+        // If it's specifically a Cloudinary error, check Cloudinary status
+        if (errorMessage.includes('Cloudinary') || errorMessage.includes('CLOUDINARY')) {
+          staffBarberService.checkCloudinaryStatus()
+            .then(result => {
+              if (!result.success) {
+                setFormErrors(prev => ({
+                  ...prev,
+                  submit: `Image service unavailable: ${result.message}. Please contact support.`
+                }));
+              }
+            })
+            .catch(statusError => {
+              console.error('Could not check Cloudinary status:', statusError);
+            });
+        }
+      } else {
+        setFormErrors({ submit: errorMessage });
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
   const handleDeleteBarber = async (id) => {
@@ -415,21 +556,7 @@ const StaffBarbers = () => {
                     />
                     {formErrors.email && <div className="invalid-feedback">{formErrors.email}</div>}
                   </div>
-                  
-                  <div className="mb-3">
-                    <label htmlFor="phone" className="form-label mb-1 fw-medium">Phone Number</label>
-                    <input
-                      type="tel"
-                      className={`form-control ${formErrors.phone ? 'is-invalid' : ''}`}
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="Enter phone number"
-                      required
-                    />
-                    {formErrors.phone && <div className="invalid-feedback">{formErrors.phone}</div>}
-                  </div>
+              
                     <div className="mb-3">
                     <label className="form-label mb-2 fw-medium">Specialties</label>
                     <div className="d-flex flex-wrap gap-2">
@@ -653,12 +780,18 @@ const StaffBarbers = () => {
                   </div>
                 </div>
                 
-                <div className="modal-footer border-0 justify-content-end pt-1">
-                  <button type="button" className="btn btn-sm btn-light" onClick={closeModal}>
+                <div className="modal-footer border-0 justify-content-end pt-1">                  <button type="button" className="btn btn-sm btn-light" onClick={closeModal} disabled={isLoading}>
                     Cancel
                   </button>
-                  <button type="submit" className="btn btn-sm btn-primary">
-                    {editingBarber ? 'Save Barber' : 'Add Barber'}
+                  <button type="submit" className="btn btn-sm btn-primary" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        Loading...
+                      </>
+                    ) : (
+                      editingBarber ? 'Save Barber' : 'Add Barber'
+                    )}
                   </button>
                 </div>
               </form>
