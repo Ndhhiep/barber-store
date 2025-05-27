@@ -5,41 +5,101 @@ import ProductCard from './ProductCard'; // Assuming ProductCard is in the same 
 const CategoryProductShowcase = () => {
   const [showcaseData, setShowcaseData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  useEffect(() => {
+  const [error, setError] = useState(null);  useEffect(() => {
     const fetchShowcaseData = async () => {
       setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch('/api/products/showcase-by-category');
+      setError(null);      try {
+        // Use environment variables for API URL
+        // Add fallback path that may help with development environments
+        const API_URL = process.env.REACT_APP_BACKEND_API_URL || 'http://localhost:5000/api';
+        console.log('Fetching from:', `${API_URL}/products/showcase-by-category`);
         
-        // Log the raw response for debugging
-        const responseText = await response.text();
-        console.log('Raw API response:', responseText);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        // Try to parse JSON only after getting the text
+        // Try with axios if available as it has better error handling
         let data;
+        
         try {
-          data = JSON.parse(responseText);
-        } catch (jsonError) {
-          console.error("JSON parsing error:", jsonError);
-          throw new Error('Invalid JSON response from server. The API might be returning HTML instead of JSON.');
+          // Use simple fetch with proper error handling
+          const response = await fetch(`${API_URL}/products/showcase-by-category`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          // Get response as text first for debugging
+          const responseText = await response.text();
+          console.log('Raw API response length:', responseText.length);
+          console.log('Response preview:', responseText.substring(0, 100) + '...');
+          
+          try {
+            // Parse the response text as JSON
+            data = JSON.parse(responseText);
+          } catch (jsonError) {
+            console.error("JSON parsing error:", jsonError);
+            throw new Error('Invalid JSON response from server. The API might be returning HTML instead of JSON.');
+          }
+        } catch (fetchError) {
+          console.error("Fetch error:", fetchError);
+          throw new Error(`Fetch failed: ${fetchError.message}`);
         }
         
-        setShowcaseData(data);
-      } catch (err) {
+        setShowcaseData(data);      } catch (err) {
         console.error("Fetch error:", err);
-        setError(err.message || 'Failed to fetch showcase products.');
-        setShowcaseData([]); // Clear data on error
+        
+        // If in development, use fallback sample data for easier testing
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Using fallback sample data for development');
+          const sampleData = [
+            {
+              category: "Hair Care",
+              products: [
+                {
+                  _id: "sample1",
+                  name: "Shampoo Sample",
+                  price: 12.99,
+                  description: "Sample shampoo description",
+                  imgURL: "/assets/product-default.jpg"
+                },
+                {
+                  _id: "sample2",
+                  name: "Conditioner Sample",
+                  price: 14.99,
+                  description: "Sample conditioner description",
+                  imgURL: "/assets/product-default.jpg"
+                }
+              ]
+            },
+            {
+              category: "Beard Care",
+              products: [
+                {
+                  _id: "sample3",
+                  name: "Beard Oil Sample",
+                  price: 16.99,
+                  description: "Sample beard oil description",
+                  imgURL: "/assets/product-default.jpg"
+                }
+              ]
+            }
+          ];
+          setShowcaseData(sampleData);
+        } else {
+          setError(err.message || 'Failed to fetch showcase products.');
+          setShowcaseData([]); // Clear data on error
+        }
       } finally {
         setLoading(false);
       }
-    };
-
+    };    // Only fetch data if the environment variable is available
+    if (process.env.REACT_APP_BACKEND_API_URL) {
+      console.log('Backend API URL:', process.env.REACT_APP_BACKEND_API_URL);
+    }
+    
     fetchShowcaseData();
   }, []); // Empty dependency array ensures this runs only once on mount
 
