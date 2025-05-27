@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { API_URL } from '../utils/apiConfig';
 import '../css/ProductsPage.css';
 
 const ProductDetailPage = () => {
@@ -14,7 +15,7 @@ const ProductDetailPage = () => {
     const fetchProductDetails = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/products/${id}`);
+        const response = await fetch(`${API_URL}/products/${id}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
