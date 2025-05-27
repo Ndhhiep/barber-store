@@ -36,7 +36,7 @@ const corsOptions = {
     const allowedOrigins = [
       'http://localhost:3000', 
       'http://localhost:3001',
-      'http://localhost:5173', // Vite dev server
+      'https://barber-store-staff.vercel.app',
       'https://barber-store-ndhhieps-projects.vercel.app',
       'https://barber-store.onrender.com',
       'https://barber-store.vercel.app'
