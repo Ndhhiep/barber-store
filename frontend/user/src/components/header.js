@@ -113,8 +113,80 @@ const Header = () => {
             <div 
             className={`navbar-collapse ${!isNavCollapsed ? 'show' : ''}`} 
             id="navbarNav"
-          >{/* Main Navigation - Centered */}
-            <ul className="navbar-nav mx-auto header-nav">
+          >
+            {/* Mobile User Authentication at top of navbar */}
+            <div className="d-lg-none mb-2">
+              {isLoggedIn ? (
+                <div className="dropdown d-flex justify-content-center">
+                  <button 
+                    className="mobile-user-dropdown-btn border-0 bg-transparent position-relative" 
+                    type="button"
+                    id="mobileNavbarDropdown" 
+                    data-bs-toggle="dropdown" 
+                    aria-expanded="false"
+                  >
+                    <i className="bi bi-person-circle user-icon fs-5"></i>
+                  </button>
+                  <ul className="dropdown-menu" aria-labelledby="mobileNavbarDropdown" style={{position: 'absolute', inset: '0px auto auto 50%', transform: 'translate(-50%, 0px)'}}>
+                    <li>
+                      <NavLink 
+                        to="/user-profile" 
+                        className="dropdown-item"
+                        onClick={closeNavbar}
+                      >
+                        <i className="bi bi-person me-2"></i>My Information
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink 
+                        to="/my-bookings" 
+                        className="dropdown-item"
+                        onClick={closeNavbar}
+                      >
+                        <i className="bi bi-calendar-check me-2"></i>My Bookings
+                      </NavLink>
+                    </li>
+                    <li>
+                      <NavLink 
+                        to="/my-orders" 
+                        className="dropdown-item"
+                        onClick={closeNavbar}
+                      >
+                        <i className="bi bi-bag-check me-2"></i>My Orders
+                      </NavLink>
+                    </li>
+                    <li><hr className="dropdown-divider" /></li>
+                    <li>
+                      <button 
+                        className="dropdown-item text-danger" 
+                        onClick={() => {
+                          handleLogout();
+                          closeNavbar();
+                        }}
+                      >
+                        <i className="bi bi-box-arrow-right me-2"></i>Logout
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              ) : (
+                <div className="d-flex justify-content-center">
+                  <NavLink 
+                    to="/login" 
+                    className="btn border-0 bg-transparent p-0"
+                    onClick={closeNavbar}
+                  >
+                    <i className="bi bi-person fs-5"></i>
+                  </NavLink>
+                </div>
+              )}
+            </div>
+            
+            {/* Divider in mobile */}
+            <hr className="d-lg-none my-1" />
+            
+            {/* Main Navigation - Centered */}
+            <ul className="navbar-nav mx-auto header-nav" style={{gap: '0'}}>
               <li className="nav-item">
                 <NavLink 
                   to="/" 
@@ -197,7 +269,7 @@ const Header = () => {
               <li className="nav-item d-lg-none">
                 <NavLink 
                   to="/booking" 
-                  className="btn header-book-btn w-100 mt-3"
+                  className="btn btn-sm header-book-btn w-100 mt-1 py-1"
                   onClick={closeNavbar}
                 >
                   BOOK APPOINTMENT
@@ -207,7 +279,7 @@ const Header = () => {
             <div className="d-flex align-items-center">
               {/* User Authentication Icon */}
               {isLoggedIn ? (
-                <div className="dropdown me-3">
+                <div className="dropdown me-3 d-none d-lg-block">
                   <button 
                     className="user-dropdown-btn" 
                     type="button"
@@ -273,8 +345,9 @@ const Header = () => {
               {/* Book Appointment Button - Right side */}
               <NavLink 
                 to="/booking" 
-                className="btn book-appointment-btn d-none d-lg-block"
+                className="btn btn-outline-dark d-none d-lg-block"
                 onClick={closeNavbar}
+                style={{ borderRadius: '5px' }}
               >
                 BOOK APPOINTMENT
               </NavLink>
