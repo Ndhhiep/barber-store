@@ -17,20 +17,38 @@ export const SocketProvider = ({ children }) => {
   // Use refs to prevent unnecessary re-renders
   const socketRef = useRef(null);
   const handlersRef = useRef(new Map());
-  
   // Initialize Socket.IO connection
   useEffect(() => {
     console.log('Initializing Socket.IO connection...');
     
     try {
-      // Create Socket.IO instance
-      const socketInstance = io('http://localhost:5000', {
+      // Determine the correct Socket.IO server URL based on environment
+      let socketURL;
+      
+      if (process.env.REACT_APP_SOCKET_URL) {
+        // Use specific Socket.IO URL if provided
+        socketURL = process.env.REACT_APP_SOCKET_URL;
+      } else if (process.env.REACT_APP_BACKEND_API_URL) {
+        // If only API URL is provided, derive Socket.IO URL from it (remove /api)
+        socketURL = process.env.REACT_APP_BACKEND_API_URL.replace('/api', '');
+      } else {
+        // Fallback based on current location
+        socketURL = window.location.origin.includes('localhost') 
+                  ? 'http://localhost:5000' 
+                  : window.location.origin;
+      }
+      
+      console.log(`Connecting to Socket.IO server at: ${socketURL}`);
+      
+      // Create Socket.IO instance with proper error handling
+      const socketInstance = io(socketURL, {
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
         autoConnect: true,
         transports: ['polling', 'websocket'],
         withCredentials: true,
-        timeout: 10000
+        timeout: 10000,
+        forceNew: true // Force a new connection to avoid reusing cached connection
       });
       
       socketRef.current = socketInstance;

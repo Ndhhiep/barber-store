@@ -2,7 +2,16 @@
  * Utility for checking server connectivity and providing feedback
  */
 
-const API_URL = 'http://localhost:5000'; // Base API URL
+// Determine the correct API URLs based on environment
+const BASE_URL = process.env.REACT_APP_SOCKET_URL || 
+               (window.location.origin.includes('localhost') ? 
+               'http://localhost:5000' : 
+               window.location.origin.replace('/api', '')); // Base URL without /api
+
+const API_URL = process.env.REACT_APP_BACKEND_API_URL || 
+               (window.location.origin.includes('localhost') ? 
+               'http://localhost:5000/api' : 
+               `${BASE_URL}/api`); // API URL
 
 /**
  * Check if the server is reachable
@@ -14,7 +23,10 @@ export const isServerOnline = async () => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
     
-    const response = await fetch(`${API_URL}/api`, {
+    // Construct the health check URL, avoiding double /api paths
+    const checkUrl = API_URL.includes('/api') ? API_URL : `${API_URL}/api`;
+    
+    const response = await fetch(checkUrl, {
       method: 'GET',
       signal: controller.signal,
     });
