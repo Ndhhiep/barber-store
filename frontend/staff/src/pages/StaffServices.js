@@ -7,11 +7,11 @@ const StaffServices = () => {
   const [error, setError] = useState(null);
   
   const [editingService, setEditingService] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({
+  const [isModalOpen, setIsModalOpen] = useState(false);  const [formData, setFormData] = useState({
     name: '',
     price: '',
     description: '',
+    duration: '',
     isActive: true
   });
   const [formErrors, setFormErrors] = useState({});
@@ -32,26 +32,25 @@ const StaffServices = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const openAddModal = () => {
+  };  const openAddModal = () => {
     setEditingService(null);
     setFormData({
       name: '',
       price: '',
       description: '',
+      duration: '30', // Default duration of 30 minutes
       isActive: true
     });
     setFormErrors({});
     setIsModalOpen(true);
   };
-
   const openEditModal = (service) => {
     setEditingService(service);
     setFormData({
       name: service.name,
       price: service.price,
       description: service.description,
+      duration: service.duration || 30,
       isActive: service.isActive !== undefined ? service.isActive : true
     });
     setFormErrors({});
@@ -75,7 +74,6 @@ const StaffServices = () => {
       setFormErrors(prev => ({ ...prev, [name]: null }));
     }
   };
-
   const validateForm = () => {
     const errors = {};
     
@@ -93,6 +91,12 @@ const StaffServices = () => {
       errors.description = 'Description is required';
     }
     
+    if (!formData.duration) {
+      errors.duration = 'Duration is required';
+    } else if (isNaN(formData.duration) || Number(formData.duration) < 15 || Number(formData.duration) > 240) {
+      errors.duration = 'Duration must be between 15 and 240 minutes';
+    }
+    
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -103,11 +107,11 @@ const StaffServices = () => {
     if (!validateForm()) {
       return;
     }
-    
-    const serviceData = {
+      const serviceData = {
       name: formData.name,
       price: Number(formData.price),
       description: formData.description,
+      duration: Number(formData.duration),
       isActive: formData.isActive
     };
     
@@ -162,21 +166,21 @@ const StaffServices = () => {
             </div>
           ) : services.length > 0 ? (
             <div className="table-responsive">
-              <table className="table table-hover">
-                <thead>
+              <table className="table table-hover">                <thead>
                   <tr>
                     <th>Name</th>
                     <th>Price</th>
+                    <th>Duration</th>
                     <th>Description</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {services.map(service => (
+                <tbody>                  {services.map(service => (
                     <tr key={service._id}>
                       <td>{service.name}</td>
                       <td>${service.price}</td>
+                      <td>{service.duration || 30} mins</td>
                       <td>
                         {service.description.length > 50 
                           ? `${service.description.substring(0, 50)}...` 
@@ -186,7 +190,7 @@ const StaffServices = () => {
                         <span className={`badge bg-${service.isActive ? 'success' : 'danger'}`}>
                           {service.isActive ? 'Active' : 'Inactive'}
                         </span>
-                      </td>                      <td>
+                      </td><td>
                         <div className="btn-group" role="group">
                           <button
                             className="btn btn-sm btn-primary"
@@ -265,9 +269,7 @@ const StaffServices = () => {
                       {formErrors.name && (
                         <div className="invalid-feedback">{formErrors.name}</div>
                       )}
-                    </div>
-
-                    <div className="mb-3">
+                    </div>                    <div className="mb-3">
                       <label htmlFor="price" className="form-label fw-bold">Price (USD):</label>
                       <input
                         type="number"
@@ -282,6 +284,25 @@ const StaffServices = () => {
                       {formErrors.price && (
                         <div className="invalid-feedback">{formErrors.price}</div>
                       )}
+                    </div>
+
+                    <div className="mb-3">
+                      <label htmlFor="duration" className="form-label fw-bold">Duration (minutes):</label>
+                      <input
+                        type="number"
+                        className={`form-control ${formErrors.duration ? 'is-invalid' : ''}`}
+                        id="duration"
+                        name="duration"
+                        value={formData.duration}
+                        onChange={handleChange}
+                        min="15"
+                        max="240"
+                        required
+                      />
+                      {formErrors.duration && (
+                        <div className="invalid-feedback">{formErrors.duration}</div>
+                      )}
+                      <div className="form-text">Duration must be between 15 and 240 minutes</div>
                     </div>
 
                     <div className="mb-3">

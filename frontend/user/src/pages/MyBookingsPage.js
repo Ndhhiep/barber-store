@@ -238,12 +238,19 @@ const MyBookingsPage = () => {
       ) : (
         <div className="row">
           {currentBookings.map((booking) => (
-            <div className="col-12 col-md-6 col-lg-4 mb-3 mb-md-4" key={booking._id}>
-              <div className="card booking-card">
+            <div className="col-12 col-md-6 col-lg-4 mb-3 mb-md-4" key={booking._id}>              <div className="card booking-card">
                 <div className="card-header d-flex justify-content-between align-items-center">
-                  <h5 className="mb-0">{booking.service}</h5>
+                  <div>
+                    <h5 className="mb-0">
+                      {booking.services && Array.isArray(booking.services) && booking.services.length > 0 ? (
+                        <span>{booking.services[0]}{booking.services.length > 1 && '...'}</span>
+                      ) : (
+                        <span>{booking.service || 'No service'}</span>
+                      )}
+                    </h5>
+                  </div>
                   {getStatusBadge(booking.status)}
-                </div>                <div className="card-body">
+                </div><div className="card-body">
                   <p className="mb-2"><strong>Date:</strong> {formatDate(booking.date)} at {booking.time}</p>
                   <p className="mb-2">
                     <strong>Barber:</strong> {

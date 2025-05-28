@@ -21,23 +21,37 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const todayBookings = await Booking.find({
+    tomorrow.setDate(tomorrow.getDate() + 1);    const todayBookings = await Booking.find({
       date: {
         $gte: today,
         $lt: tomorrow
       }
     }).populate('barber_id', 'name').lean();
-
+    
+    // Debug để xem raw data từ database
+    console.log('Raw today bookings from DB:', JSON.stringify(todayBookings, null, 2));
+    
     // Định dạng dữ liệu bookings để hiển thị
-    const formattedTodayBookings = todayBookings.map(booking => ({
-      _id: booking._id,
-      userName: booking.name || 'N/A',
-      serviceName: booking.service,
-      time: booking.time,
-      status: booking.status
-    }));
+    const formattedTodayBookings = todayBookings.map(booking => {
+      // Debug cho mỗi booking
+      console.log(`Processing booking ${booking._id}:`, {
+        has_services: Boolean(booking.services),
+        services_array: booking.services,
+        service_string: booking.service
+      });
+      
+      return {
+        _id: booking._id,
+        userName: booking.name || 'N/A',
+        service: booking.service || 'N/A', // Đảm bảo luôn có giá trị
+        services: Array.isArray(booking.services) ? booking.services : [], // Đảm bảo là array
+        serviceName: (Array.isArray(booking.services) && booking.services.length > 0)
+          ? booking.services.join(', ') // Hiển thị tất cả các dịch vụ nếu có nhiều dịch vụ
+          : booking.service || 'N/A', // Nếu không có mảng services, fallback về service đơn lẻ
+        time: booking.time,
+        status: booking.status
+      };
+    });
 
     // Lấy các đơn hàng gần đây
     const recentOrders = await Order.find()

@@ -1,9 +1,15 @@
 const mongoose = require('mongoose');
 
 const bookingSchema = mongoose.Schema({
+  // Support both single service string and array of services
   service: {
     type: String,
-    required: true
+    required: false
+  },
+  // New field for multiple services
+  services: {
+    type: [String],
+    required: false
   },
   barber_id: {
     type: mongoose.Schema.Types.ObjectId,

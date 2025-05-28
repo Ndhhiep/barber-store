@@ -25,6 +25,11 @@
   overflow-y: auto;
 }
 
+.booking-info-container ul.list-unstyled li.booking-info-value {
+  display: block !important;
+  margin-bottom: 0.5rem; /* khoảng cách giữa các dòng */
+}
+
 /* Ensure modal is centered on all screen sizes */
 @media (max-width: 767px) {
   .booking-confirmed-modal .modal-content {

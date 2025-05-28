@@ -9,7 +9,7 @@ import BookingConfirmedModal from '../components/BookingConfirmedModal';
 
 const BookingPage = () => {
   const [bookingData, setBookingData] = useState({
-    service: '',
+    services: [], // Thay đổi từ service đơn lẻ thành mảng services
     barber_id: '', 
     time: '',
     name: '',
@@ -26,14 +26,13 @@ const BookingPage = () => {
   // State to store services from API
   const [serviceList, setServiceList] = useState([]);
   const [loadingServices, setLoadingServices] = useState(false);
-  
-  const [bookingStatus, setBookingStatus] = useState({
+    const [bookingStatus, setBookingStatus] = useState({
     submitted: false,
     error: false,
     errorMessage: '',
     confirmedDate: '',
     confirmedTime: '',
-    confirmedService: '',
+    confirmedService: [],
     confirmedEmail: ''
   });
 
@@ -98,20 +97,25 @@ const BookingPage = () => {
     };
 
     fetchServices();
-  }, []);
-  // Check if a time slot should be disabled - wrapped in useCallback
+  }, []);  // Check if a time slot should be disabled - wrapped in useCallback
   const isTimeSlotDisabled = useCallback((timeSlot) => {
-    // If we have statuses from the backend, use those
-    if (timeSlotStatuses.length > 0) {
-      const slotStatus = timeSlotStatuses.find(slot => slot.start_time === timeSlot);
-      if (slotStatus) {
-        return slotStatus.isPast || !slotStatus.isAvailable;
+    // Get total duration of selected services
+    const totalDuration = calculateTotalDuration(bookingData.services);
+    
+    // If no services selected, only check basic availability
+    if (totalDuration === 0) {
+      if (timeSlotStatuses.length > 0) {
+        const slotStatus = timeSlotStatuses.find(slot => slot.start_time === timeSlot);
+        if (slotStatus) {
+          return slotStatus.isPast || !slotStatus.isAvailable;
+        }
       }
+      return false;
     }
     
-    // If we don't have status data yet, assume the slot is available
-    return false;
-  }, [timeSlotStatuses]);
+    // Check if this time slot and subsequent slots are available for the total duration
+    return !checkTimeSlotAvailability(timeSlot, totalDuration);
+  }, [timeSlotStatuses, bookingData.services]);
   // Check if a time slot is in the past or booked - for future use in showing specific messages
   // eslint-disable-next-line no-unused-vars
   
@@ -207,10 +211,25 @@ const BookingPage = () => {
           setIsLoadingTimeSlots(false);
         }
       }
-    };
-    fetchTimeSlotStatuses();
+    };    fetchTimeSlotStatuses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingData.barber_id, bookingData.date]);
+
+  // Check if selected time is still valid when services change
+  useEffect(() => {
+    if (bookingData.time && bookingData.barber_id && bookingData.date && timeSlotStatuses.length > 0) {
+      const totalDuration = calculateTotalDuration(bookingData.services);
+      const isStillAvailable = checkTimeSlotAvailability(bookingData.time, totalDuration);
+      
+      if (!isStillAvailable) {
+        setBookingData(prev => ({
+          ...prev,
+          time: '' // Reset time if no longer available with new service selection
+        }));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookingData.services, timeSlotStatuses]);
 
   // Wrap `validateBookingToken` in a `useCallback` hook
   const validateBookingToken = useCallback(async (token) => {
@@ -223,26 +242,25 @@ const BookingPage = () => {
         { token }
       );
   
-      if (response.data.success) {
-        const { booking } = response.data;
+      if (response.data.success) {        const { booking } = response.data;
   
-        // Store confirmation info in booking status
+        // Store confirmation info in booking status;
         setBookingStatus({
           submitted: false, // Changed to false since we're using modal instead
           error: false,
           errorMessage: '',
           confirmedDate: booking.date,
           confirmedTime: booking.time,
-          confirmedService: booking.service,
+          confirmedService: booking.services && booking.services.length > 0 
+            ? booking.services 
+            : (booking.service ? [booking.service] : []), // Always store as array for consistency
           confirmedEmail: booking.email
         });
   
         // Clear pending booking data
-        localStorage.removeItem('pendingBooking');
-  
-        // Reset form data - works for both guest and logged-in users
+        localStorage.removeItem('pendingBooking');        // Reset form data - works for both guest and logged-in users
         setBookingData({
-          service: '',
+          services: [], // Reset to empty array for multiple services
           barber_id: '',
           date: '',
           time: '',
@@ -307,7 +325,87 @@ const BookingPage = () => {
     "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
     "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
     "18:00", "18:30", "19:00"
-  ];
+  ];  // Calculate total duration of all selected services
+  const calculateTotalDuration = (services) => {
+    if (!services || services.length === 0) return 0;
+    
+    // Calculate total duration from service data
+    // If a service has a duration property, use it, otherwise default to 30 minutes
+    return services.reduce((total, service) => {
+      // Use service.duration if available, otherwise default to 30 minutes
+      const serviceDuration = service.duration || 30;
+      return total + serviceDuration;
+    }, 0);
+  };
+  // Calculate end time given start time and duration
+  const calculateEndTime = (startTime, durationMinutes) => {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const startTotalMinutes = hours * 60 + minutes;
+    const endTotalMinutes = startTotalMinutes + durationMinutes;
+    
+    const endHours = Math.floor(endTotalMinutes / 60);
+    const endMinutes = endTotalMinutes % 60;
+    
+    return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+  };
+  // Get detailed reason why a time slot is disabled
+  const getTimeSlotDisabledReason = (timeSlot) => {
+    const totalDuration = calculateTotalDuration(bookingData.services);
+    
+    if (totalDuration === 0) {
+      if (timeSlotStatuses.length > 0) {
+        const slotStatus = timeSlotStatuses.find(slot => slot.start_time === timeSlot);
+        if (slotStatus) {
+          if (slotStatus.isPast) return 'Time slot is in the past';
+          if (!slotStatus.isAvailable) return 'Time slot is already booked';
+        }
+      }
+      return 'Available';
+    }
+
+    // Check availability for the full duration
+    const slotsNeeded = Math.ceil(totalDuration / 30);
+    const startIndex = timeSlotStatuses.findIndex(slot => slot.start_time === timeSlot);
+    
+    if (startIndex === -1) return 'Time slot not found';
+    
+    // Calculate the actual end time of the appointment
+    const appointmentEndTime = calculateEndTime(timeSlot, totalDuration);
+    
+    for (let i = 0; i < slotsNeeded; i++) {
+      const slotIndex = startIndex + i;
+      
+      if (slotIndex >= timeSlotStatuses.length) {
+        return `Not enough time remaining (need ${totalDuration} minutes until ${appointmentEndTime}, only ${timeSlotStatuses.length - startIndex} slots available)`;
+      }
+      
+      const currentSlot = timeSlotStatuses[slotIndex];
+      
+      // For the last slot, check if the appointment would actually overlap with it
+      if (i === slotsNeeded - 1) {
+        const [slotHour, slotMinute] = currentSlot.start_time.split(':').map(Number);
+        const slotStartMinutes = slotHour * 60 + slotMinute;
+        
+        const [endHour, endMinute] = appointmentEndTime.split(':').map(Number);
+        const appointmentEndMinutes = endHour * 60 + endMinute;
+        
+        // If the appointment ends before or exactly at the start of this slot, we don't need to check it
+        if (appointmentEndMinutes <= slotStartMinutes) {
+          break;
+        }
+      }
+      
+      if (currentSlot.isPast) {
+        return `Appointment would extend to ${appointmentEndTime}, but slot ${currentSlot.start_time} is in the past`;
+      }
+      
+      if (!currentSlot.isAvailable) {
+        return `Appointment would extend to ${appointmentEndTime}, but slot ${currentSlot.start_time} is already booked`;
+      }
+    }
+    
+    return `Available for ${totalDuration}-minute appointment (${timeSlot} - ${appointmentEndTime})`;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -341,23 +439,194 @@ const BookingPage = () => {
         [name]: value
       }));
     }
-  };
-  const handleTimeSelect = (time) => {
-    // Check if the time is available before setting it (using already loaded time slot data)
-    const isAvailable = timeSlotStatuses.some(
-      slot => slot.start_time === time && !slot.isPast && slot.isAvailable
-    );
+  };  // Add a service to the booking
+  const addService = (serviceId) => {
+    // Find the service in the serviceList
+    const serviceToAdd = serviceList.find(service => service._id === serviceId);
     
-    if (isAvailable || timeSlotStatuses.length === 0) {
+    if (serviceToAdd) {
+      // Check if service is already added
+      const isAlreadyAdded = bookingData.services.some(service => service._id === serviceId);
+      if (isAlreadyAdded) {
+        alert('This service is already selected.');
+        return; // Don't add duplicate services
+      }
+      
+      // Update the booking data with the new service
+      setBookingData(prev => {
+        const newServices = [...prev.services, serviceToAdd];
+        const newTotalDuration = calculateTotalDuration(newServices);
+        
+        // Check if current selected time is still valid with new duration
+        let newTime = prev.time;
+        const previousTime = prev.time;
+        
+        if (prev.time && prev.barber_id && prev.date && timeSlotStatuses.length > 0) {
+          const isStillAvailable = checkTimeSlotAvailability(prev.time, newTotalDuration);
+          if (!isStillAvailable) {
+            newTime = ''; // Reset time if no longer available
+            console.log(`Time slot ${prev.time} is no longer available with new total duration of ${newTotalDuration} minutes`);
+          }
+        }
+        
+        // Log the changes
+        console.log(`Added service: ${serviceToAdd.name} (${serviceToAdd.duration || 30} min). New total duration: ${newTotalDuration} minutes`);
+        
+        if (newTime !== previousTime) {
+          console.log(`Time slot reset due to service addition. Previous: ${previousTime}, New: ${newTime}`);
+        }
+        
+        return {
+          ...prev,
+          services: newServices,
+          time: newTime
+        };
+      });
+    }
+  };
+    // Remove a service from the booking
+  const removeService = (serviceId) => {
+    setBookingData(prev => {
+      const serviceToRemove = prev.services.find(service => service._id === serviceId);
+      const newServices = prev.services.filter(service => service._id !== serviceId);
+      const newTotalDuration = calculateTotalDuration(newServices);
+      
+      // Check if current selected time is still valid with new duration
+      let newTime = prev.time;
+      if (prev.time && prev.barber_id && prev.date && timeSlotStatuses.length > 0) {
+        // After removing a service, the time might still be valid or even more valid
+        // We still need to check because the logic might have changed
+        const isStillAvailable = checkTimeSlotAvailability(prev.time, newTotalDuration);
+        if (!isStillAvailable) {
+          newTime = ''; // Reset time if somehow no longer available
+        }
+      }
+      
+      console.log(`Removed service: ${serviceToRemove?.name} (${serviceToRemove?.duration || 30} min). New total duration: ${newTotalDuration} minutes`);
+      
+      if (newTime !== prev.time) {
+        console.log(`Time slot reset due to service removal. Previous: ${prev.time}, New: ${newTime}`);
+      }
+      
+      return {
+        ...prev,
+        services: newServices,
+        time: newTime
+      };
+    });
+  };const handleTimeSelect = (time) => {
+    // Get total duration of selected services
+    const totalDuration = calculateTotalDuration(bookingData.services);
+    
+    // If no services selected, allow time selection but show warning
+    if (totalDuration === 0) {
       setBookingData(prev => ({
         ...prev,
         time
       }));
+      return;
     }
+    
+    // Check if the time is available for the entire duration needed
+    const isAvailable = checkTimeSlotAvailability(time, totalDuration);
+    
+    if (isAvailable) {
+      setBookingData(prev => ({
+        ...prev,
+        time
+      }));
+      const endTime = calculateEndTime(time, totalDuration);
+      console.log(`Selected time slot: ${time} - ${endTime} (${totalDuration} minutes total for ${bookingData.services.length} service${bookingData.services.length > 1 ? 's' : ''})`);
+    } else {
+      // Calculate end time and get detailed reason
+      const endTime = calculateEndTime(time, totalDuration);
+      const reason = getTimeSlotDisabledReason(time);
+      
+      // Show detailed message about unavailability
+      console.log(`Cannot select ${time} - ${reason}`);
+      
+      // Create service breakdown for user message
+      const serviceBreakdown = bookingData.services.map(service => 
+        `• ${service.name}: ${service.duration || 30} minutes`
+      ).join('\n');
+      
+      // Show user-friendly message with service breakdown
+      alert(`⏰ Time Slot Unavailable\n\nThe selected time (${time} - ${endTime}) cannot accommodate your ${totalDuration}-minute appointment.\n\nSelected Services:\n${serviceBreakdown}\n\nReason: ${reason}\n\nPlease select a different time slot that can accommodate your full appointment duration.`);
+    }
+  };// Check if a time slot and subsequent slots (based on duration) are available
+  const checkTimeSlotAvailability = (startTime, durationMinutes = 30) => {
+    // If no time slots loaded from backend, assume available (fallback behavior)
+    if (timeSlotStatuses.length === 0) return true;
+    
+    // Default to 30 minutes if no duration or services selected
+    const minutes = durationMinutes > 0 ? durationMinutes : 30;
+    
+    // Calculate how many 30-minute slots we need (time slots are always in 30-minute intervals)
+    // We need to check all slots that the appointment duration would overlap
+    const slotsNeeded = Math.ceil(minutes / 30);
+    
+    // Find the index of the start time
+    const startIndex = timeSlotStatuses.findIndex(slot => slot.start_time === startTime);
+    if (startIndex === -1) {
+      console.log(`Start time ${startTime} not found in available slots`);
+      return false;
+    }
+    
+    // Calculate the actual end time of the appointment
+    const appointmentEndTime = calculateEndTime(startTime, minutes);
+    
+    // Check if all time slots that the appointment would overlap are available
+    for (let i = 0; i < slotsNeeded; i++) {
+      const slotIndex = startIndex + i;
+      
+      // If we run out of slots, return false
+      if (slotIndex >= timeSlotStatuses.length) {
+        console.log(`Time slot ${startTime} is not available for ${durationMinutes} minutes - not enough slots remaining (need ${slotsNeeded}, only ${timeSlotStatuses.length - startIndex} available)`);
+        return false;
+      }
+      
+      const currentSlot = timeSlotStatuses[slotIndex];
+      
+      // For the last slot, check if the appointment would actually overlap with it
+      if (i === slotsNeeded - 1) {
+        // Calculate the start time of this slot in minutes
+        const [slotHour, slotMinute] = currentSlot.start_time.split(':').map(Number);
+        const slotStartMinutes = slotHour * 60 + slotMinute;
+        
+        // Calculate the appointment end time in minutes
+        const [endHour, endMinute] = appointmentEndTime.split(':').map(Number);
+        const appointmentEndMinutes = endHour * 60 + endMinute;
+        
+        // If the appointment ends before or exactly at the start of this slot, we don't need to check it
+        if (appointmentEndMinutes <= slotStartMinutes) {
+          console.log(`Appointment ends at ${appointmentEndTime}, slot ${currentSlot.start_time} starts at or after appointment end - no overlap`);
+          break;
+        }
+      }
+      
+      // Check if the current slot is past or unavailable
+      if (currentSlot.isPast || !currentSlot.isAvailable) {
+        const reason = currentSlot.isPast ? 'in the past' : 'unavailable';
+        console.log(`Time slot ${startTime}-${appointmentEndTime} (${durationMinutes} min) is not available - slot ${currentSlot.start_time} (${i+1} of ${slotsNeeded}) is ${reason}`);
+        return false;
+      }
+    }
+      console.log(`Time slot ${startTime}-${appointmentEndTime} (${durationMinutes} min) is available - all required time slots are available`);
+    return true;
   };
-  
-  const handleSubmit = async (e) => {
+    const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate that at least one service is selected
+    if (bookingData.services.length === 0) {
+      setBookingStatus({
+        submitted: false,
+        error: true,
+        errorMessage: 'Please select at least one service for your appointment.'
+      });
+      return; // Prevent form submission
+    }
+    
     setIsLoading(true);
     
     try {
@@ -367,17 +636,16 @@ const BookingPage = () => {
       
       if (token) {
         headers.Authorization = `Bearer ${token}`;
-      }      
-      // Create a copy of the booking data to preserve for confirmation display
+      }        // Create a copy of the booking data to preserve for confirmation display
       const confirmedBookingData = {...bookingData};
       
-      // Get service name for display in confirmation
-      const serviceName = getServiceNameById(bookingData.service);
+      // Convert service objects to names for display in confirmation
+      const serviceNames = bookingData.services.map(service => service.name);
       
-      // Create the request data with service name instead of ID
+      // Create the request data with service names instead of IDs
       const requestData = {
         ...bookingData,
-        service: serviceName, // Convert service ID to service name as required by the backend
+        services: bookingData.services.map(service => service.name), // Convert service objects to names as required by the backend
         requireEmailConfirmation: true, // New flag to indicate email confirmation is needed
         // For guest bookings, ensure user_id is null to avoid FK constraint errors
         user_id: isGuestMode ? null : bookingData.user_id
@@ -392,14 +660,14 @@ const BookingPage = () => {
       
       // Show email confirmation modal instead of setting submitted state
       setShowEmailConfirmModal(true);
-      
-      // Store booking data for later use
+        // Store booking data for later use
       localStorage.setItem('pendingBooking', JSON.stringify({
         id: response.data.bookingId,
-        serviceName,
+        serviceNames: serviceNames,
         date: confirmedBookingData.date,
         time: confirmedBookingData.time,
-        email: confirmedBookingData.email
+        email: confirmedBookingData.email,
+        totalDuration: calculateTotalDuration(bookingData.services)
       }));
       
       // Don't reset the form data yet - we'll do that after confirmation
@@ -555,35 +823,117 @@ const BookingPage = () => {
                         </h3>
                         <div className="card p-3 p-md-4 booking-section-card no-hover-effect">
                           <div className="row g-3">                            <div className="col-12 mb-3 mb-md-4">
-                              <label htmlFor="service" className="form-label fw-bold">
-                                <i className="bi bi-scissors me-2"></i>Select Service*
-                              </label>                              
-                              <select
-                                id="service"
-                                name="service"
-                                value={bookingData.service || ''}
-                                onChange={handleChange}
-                                required
-                                className="form-select booking-form-control no-hover-effect"
-                                style={{outline: 'none', boxShadow: 'none'}}
-                                disabled={loadingServices}
-                              >                                
-                              <option value="">-- Select a service --</option>
-                                {loadingServices ? (
-                                  <option value="" disabled>Loading services...</option>
-                                ) : serviceList.length > 0 ? (serviceList.map((service) => (
-                                    <option key={service._id} value={service._id}>
-                                      {service.name} - {formatPrice(service.price)}
-                                    </option>
-                                  ))
-                                ) : (
-                                  <option value="" disabled>No services available</option>
-                                )}
-                              </select>
+                              <label className="form-label fw-bold">
+                                <i className="bi bi-scissors me-2"></i>Select Services*
+                              </label>                              {/* Display Selected Services */}
+                              {bookingData.services.length > 0 && (
+                                <div className="selected-services mb-3">
+                                  {bookingData.services.map(service => (
+                                    <div key={service._id} className="selected-service-item d-flex justify-content-between align-items-center p-2 mb-2 border rounded bg-light">
+                                      <div>
+                                        <span className="me-2 fw-medium">{service.name}</span>
+                                        <small className="text-muted">({formatPrice(service.price)} - {service.duration || 30} min)</small>
+                                      </div>
+                                      <button 
+                                        type="button" 
+                                        className="btn btn-sm btn-outline-danger" 
+                                        onClick={() => removeService(service._id)}
+                                      >
+                                        <i className="bi bi-x"></i>
+                                      </button>
+                                    </div>
+                                  ))}                                  {/* Enhanced Total Duration Display */}
+                                  <div className="mt-3 p-3 total-duration-highlight">
+                                    <div className="d-flex align-items-center justify-content-between">
+                                      <div className="d-flex align-items-center">
+                                        <i className="bi bi-clock-history text-primary me-2 fs-5"></i>
+                                        <span className="fw-semibold text-primary">Total Duration:</span>
+                                      </div>
+                                      <span className="badge bg-primary fs-6 px-3 py-2">
+                                        {calculateTotalDuration(bookingData.services)} minutes
+                                      </span>
+                                    </div>
+                                    <div className="mt-2">
+                                      <small className="text-muted">
+                                        <i className="bi bi-info-circle me-1"></i>
+                                        When you select a time slot, it will reserve {calculateTotalDuration(bookingData.services)} minutes of consecutive time
+                                        {bookingData.time && (
+                                          <span className="text-success fw-medium">
+                                            {' '}({bookingData.time} - {calculateEndTime(bookingData.time, calculateTotalDuration(bookingData.services))})
+                                          </span>
+                                        )}
+                                      </small>
+                                    </div>
+                                    {bookingData.services.length > 1 && (
+                                      <div className="mt-2 pt-2 border-top border-primary border-opacity-25">
+                                        <small className="text-primary">
+                                          <i className="bi bi-list-ul me-1"></i>
+                                          <strong>Service Breakdown:</strong>
+                                        </small>                                        <div className="mt-1">
+                                          {bookingData.services.map((service, index) => (
+                                            <div key={service._id} className="service-breakdown-item">
+                                              <small className="text-muted">
+                                                <span className="fw-medium text-dark">{index + 1}. {service.name}</span>
+                                                <span className="text-primary ms-2">({service.duration || 30} min)</span>
+                                              </small>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Service Selection Dropdown with Add Button */}
+                              <div className="input-group">
+                                <select
+                                  id="serviceSelect"
+                                  className="form-select booking-form-control no-hover-effect"
+                                  disabled={loadingServices}
+                                  value=""
+                                  onChange={(e) => {
+                                    if (e.target.value) {
+                                      addService(e.target.value);
+                                      e.target.value = ""; // Reset select after adding
+                                    }
+                                  }}
+                                >
+                                  <option value="">-- Add a service --</option>
+                                  {loadingServices ? (
+                                    <option value="" disabled>Loading services...</option>
+                                  ) : serviceList.length > 0 ? (                                    serviceList.map((service) => (
+                                      <option key={service._id} value={service._id}>
+                                        {service.name} - {formatPrice(service.price)} ({service.duration || 30} min)
+                                      </option>
+                                    ))
+                                  ) : (
+                                    <option value="" disabled>No services available</option>
+                                  )}
+                                </select>
+                                <button 
+                                  type="button" 
+                                  className="btn btn-primary"
+                                  onClick={() => {
+                                    const select = document.getElementById('serviceSelect');
+                                    if (select.value) {
+                                      addService(select.value);
+                                      select.value = "";
+                                    }
+                                  }}
+                                >
+                                  <i className="bi bi-plus-lg"></i> Add
+                                </button>
+                              </div>                              {bookingData.services.length === 0 && (
+                                <div className="alert alert-info">
+                                  <i className="bi bi-info-circle me-2"></i>
+                                  <strong>Select Your Services:</strong> You can choose multiple services for your appointment. The total time required will be calculated and consecutive time slots will be reserved.
+                                </div>
+                              )}
                               <small className="text-muted mt-1 d-block">
-                                Choose the service you'd like to book
+                                Choose the services you'd like to book
                               </small>
-                            </div>                              <div className="col-12 mb-3 mb-md-4">
+                            </div><div className="col-12 mb-3 mb-md-4">
                               <label htmlFor="barber" className="form-label fw-bold">
                                 <i className="bi bi-person-badge me-2"></i>Select Barber*
                               </label>
@@ -671,16 +1021,77 @@ const BookingPage = () => {
                                     ) : (                                      <div className="row g-2">
                                         {(timeSlotStatuses.length > 0 ? timeSlotStatuses.map(slot => slot.start_time) : timeSlots).map((time, index) => {
                                           const disabled = isTimeSlotDisabled(time);
+                                          const isSelected = bookingData.time === time;
+                                          const totalDuration = calculateTotalDuration(bookingData.services);
+                                          
+                                          // Check if this slot is part of the selected time range
+                                          let isInSelectedRange = false;
+                                          let isEndOfRange = false;
+                                          let isExactEndTime = false;
+                                          
+                                          if (bookingData.time && totalDuration > 0) {
+                                            const allTimeSlots = timeSlotStatuses.length > 0 ? timeSlotStatuses.map(slot => slot.start_time) : timeSlots;
+                                            const selectedIndex = allTimeSlots.indexOf(bookingData.time);
+                                            const currentIndex = index;
+                                            
+                                            if (selectedIndex >= 0) {
+                                              // Calculate appointment end time
+                                              const appointmentEndTime = calculateEndTime(bookingData.time, totalDuration);
+                                              
+                                              // Convert times to minutes for comparison
+                                              const [currentHour, currentMinute] = time.split(':').map(Number);
+                                              const currentTimeMinutes = currentHour * 60 + currentMinute;
+                                              
+                                              const [selectedHour, selectedMinute] = bookingData.time.split(':').map(Number);
+                                              const selectedTimeMinutes = selectedHour * 60 + selectedMinute;
+                                              
+                                              const [endHour, endMinute] = appointmentEndTime.split(':').map(Number);
+                                              const endTimeMinutes = endHour * 60 + endMinute;
+                                              
+                                              // Check if this slot overlaps with the appointment duration
+                                              const slotEndMinutes = currentTimeMinutes + 30; // Each slot is 30 minutes
+                                              
+                                              if (currentTimeMinutes >= selectedTimeMinutes && currentTimeMinutes < endTimeMinutes) {
+                                                isInSelectedRange = true;
+                                                
+                                                // Check if this is the last slot that the appointment overlaps
+                                                if (slotEndMinutes >= endTimeMinutes) {
+                                                  isEndOfRange = true;
+                                                  // Check if the appointment ends exactly at the start of the next slot
+                                                  if (endTimeMinutes === slotEndMinutes) {
+                                                    isExactEndTime = true;
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                          
                                           return (
                                             <div key={index} className="col-6 col-sm-4 col-md-3 col-lg-2">
                                               <button
                                                 type="button"
-                                                className={`btn time-slot-btn w-100 ${bookingData.time === time ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
+                                                className={`btn time-slot-btn w-100 position-relative ${
+                                                  isSelected ? 'active' : ''
+                                                } ${
+                                                  disabled ? 'disabled' : ''
+                                                } ${
+                                                  isInSelectedRange && !isSelected ? 'selected-range' : ''
+                                                }`}
                                                 onClick={() => !disabled && handleTimeSelect(time)}
                                                 disabled={disabled}
+                                                title={
+                                                  disabled 
+                                                    ? getTimeSlotDisabledReason(time)
+                                                    : isInSelectedRange 
+                                                      ? `Part of your ${totalDuration}-minute appointment (${bookingData.time} - ${calculateEndTime(bookingData.time, totalDuration)})`
+                                                      : totalDuration > 0
+                                                        ? `Click to book ${totalDuration}-minute appointment (${time} - ${calculateEndTime(time, totalDuration)})`
+                                                        : `Available time slot`
+                                                }
                                               >
-                                                <i className={`bi bi-${disabled ? 'lock-fill' : 'clock'} me-1 small`}></i>
+                                                <i className={`bi bi-${disabled ? 'lock-fill' : isInSelectedRange ? 'check-circle-fill' : 'clock'} me-1 small`}></i>
                                                 {time}
+                                                
                                               </button>
                                             </div>
                                           );
@@ -689,10 +1100,15 @@ const BookingPage = () => {
                                     )}
                                   </div>
                                 </div>
-                              </div>
-                              <div className="d-flex mt-2 align-items-center">
+                              </div>                              <div className="d-flex mt-2 align-items-center">
                                 <i className="bi bi-info-circle text-primary me-2"></i>
                                 <div>
+                                  {bookingData.services.length > 0 && (
+                                    <small className="text-success d-block mb-1 fw-semibold">
+                                      <i className="bi bi-check-circle me-1"></i>
+                                      Services selected: {bookingData.services.length} service{bookingData.services.length > 1 ? 's' : ''} requiring {calculateTotalDuration(bookingData.services)} minutes total
+                                    </small>
+                                  )}
                                   {bookingData.date === formatDate(new Date()) && (
                                     <small className="text-muted d-block">
                                       <i className="bi bi-clock-history me-1"></i> Past time slots or slots within 30 minutes are disabled
@@ -700,12 +1116,20 @@ const BookingPage = () => {
                                   )}
                                   {bookingData.barber_id && bookingData.date && timeSlotStatuses.length > 0 && (
                                     <small className="text-muted d-block">
-                                      <i className="bi bi-lock me-1"></i> Grayed out time slots are already booked
+                                      <i className="bi bi-lock me-1"></i> 
+                                      {bookingData.services.length > 0 
+                                        ? `Time slots without ${calculateTotalDuration(bookingData.services)} minutes of consecutive availability are disabled`
+                                        : 'Grayed out time slots are unavailable'
+                                      }
                                     </small>
                                   )}
                                   {(!bookingData.barber_id || !bookingData.date) && (
                                     <small className="text-muted d-block">
                                       <i className="bi bi-info-circle me-1"></i> Select both a barber and date to see available time slots
+                                    </small>
+                                  )}                                  {bookingData.services.length === 0 && (
+                                    <small className="text-info d-block">
+                                      <i className="bi bi-lightbulb me-1"></i> Select services first to see which time slots can accommodate your full appointment
                                     </small>
                                   )}
                                 </div>

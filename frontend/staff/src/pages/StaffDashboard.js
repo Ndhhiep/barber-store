@@ -30,7 +30,6 @@ const StaffDashboard = () => {
   
   // Sử dụng Socket.IO context
   const { isConnected, registerHandler, unregisterHandler } = useSocketContext();
-
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -41,6 +40,11 @@ const StaffDashboard = () => {
         const response = await staffDashboardService.getDashboardStats();
         
         if (response.status === 'success') {
+          // Debug để xem cấu trúc dữ liệu
+          console.log('Today bookings data:', response.data.todayBookings);
+            // Debug dữ liệu todayBookings từ API
+          console.log('Today bookings from API:', JSON.stringify(response.data.todayBookings, null, 2));
+          
           setDashboardData({
             appointments: response.data.counts.bookings || 0,
             orders: response.data.counts.orders || 0,
@@ -164,11 +168,19 @@ const StaffDashboard = () => {
         if (data.fullDocument) {
           const today = new Date().toISOString().split('T')[0];
           const bookingDate = new Date(data.fullDocument.date).toISOString().split('T')[0];
-          
-          if (bookingDate === today) {
+            if (bookingDate === today) {            // Định dạng booking mới để đảm bảo các trường đều có giá trị
+            const formattedBooking = {
+              ...data.fullDocument,
+              services: Array.isArray(data.fullDocument.services) ? data.fullDocument.services : [],
+              service: data.fullDocument.service || 'N/A',
+              serviceName: Array.isArray(data.fullDocument.services) && data.fullDocument.services.length > 0
+                ? data.fullDocument.services.join(', ')
+                : data.fullDocument.service || 'N/A'
+            };
+            
             setDashboardData(prev => ({
               ...prev,
-              todayBookings: [data.fullDocument, ...prev.todayBookings],
+              todayBookings: [formattedBooking, ...prev.todayBookings],
               appointments: prev.appointments + 1 // Tăng số lượng lịch hẹn
             }));
           } else {
@@ -286,20 +298,17 @@ const StaffDashboard = () => {
             <div className="card-body">
               {dashboardData.todayBookings.length > 0 ? (
                 <div className="table-responsive dashboard-table-container">
-                  <table className="table table-hover">
-                    <thead>
+                  <table className="table table-hover">                    <thead>
                       <tr>
                         <th>Customer</th>
-                        <th>Service</th>
                         <th>Time</th>
                         <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {dashboardData.todayBookings.map((appointment) => (
+                      {dashboardData.todayBookings.map(appointment => (
                         <tr key={appointment._id}>
                           <td>{appointment.userName || 'N/A'}</td>
-                          <td>{appointment.serviceName}</td>
                           <td>{formatTime(appointment.time)}</td>
                           <td>
                             <span className={`badge bg-${
@@ -315,7 +324,8 @@ const StaffDashboard = () => {
                       ))}
                     </tbody>
                   </table>
-                </div>              ) : (
+                </div>
+              ) : (
                 <p className="text-center">No appointments for today</p>
               )}
             </div>

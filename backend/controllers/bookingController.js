@@ -11,9 +11,9 @@ const crypto = require('crypto');
 // @desc    Tạo mới booking
 // @route   POST /api/bookings
 // @access  Công khai
-const createBooking = asyncHandler(async (req, res) => {
-  const {
+const createBooking = asyncHandler(async (req, res) => {  const {
     service,
+    services,
     barber_id,
     date,
     time,
@@ -46,9 +46,10 @@ const createBooking = asyncHandler(async (req, res) => {
 
   // Chuyển đổi date sang đúng múi giờ Việt Nam
   const vnDate = dateUtils.toVNDateTime(date);
-
   const booking = new Booking({
-    service,
+    // Handle both single service and multiple services
+    service: !services || services.length === 0 ? service : undefined,
+    services: services || [],
     barber_id,
     date: vnDate, // Sử dụng ngày đã được chuyển đổi sang múi giờ Việt Nam
     time,
@@ -191,13 +192,24 @@ const getBookings = asyncHandler(async (req, res) => {
       .lean();
     
     console.log(`Tìm thấy ${bookings.length} bookings trong tổng số ${totalCount}`);
-    
-    // Định dạng bookings để bao gồm tên barber và khách
+      // Định dạng bookings để bao gồm tên barber và khách
     const formattedBookings = await Promise.all(bookings.map(async (booking) => {
       const formattedBooking = { ...booking };
       
-      // Thêm tên dịch vụ cho hiển thị dễ dàng
-      formattedBooking.serviceName = booking.service;
+      // Xử lý thông tin dịch vụ - hỗ trợ cả dịch vụ đơn lẻ và nhiều dịch vụ
+      if (booking.services && Array.isArray(booking.services) && booking.services.length > 0) {
+        // Nếu có mảng services, sử dụng nó
+        formattedBooking.services = booking.services;
+        formattedBooking.serviceName = booking.services.join(', '); // Tạo chuỗi để hiển thị
+      } else if (booking.service) {
+        // Nếu chỉ có dịch vụ đơn lẻ
+        formattedBooking.serviceName = booking.service;
+        formattedBooking.services = [booking.service]; // Tạo mảng để tương thích
+      } else {
+        // Không có thông tin dịch vụ
+        formattedBooking.serviceName = 'N/A';
+        formattedBooking.services = [];
+      }
       
       // Thêm tên khách hàng từ booking.name
       formattedBooking.userName = booking.name || 'N/A';

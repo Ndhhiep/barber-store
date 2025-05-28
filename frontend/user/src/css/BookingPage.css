@@ -120,16 +120,21 @@
 
 /* Buttons */
 .booking-btn {
-  background-color: #2B2A2A;
+  background: linear-gradient(135deg, #2B2A2A 0%, #3C3A3A 100%);
   color: #fff;
   font-family: 'Playfair Display, serif';
-  border-radius: 0;
+  border-radius: 4px;
   padding: 0.75rem;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: all 0.3s ease !important;
 }
 
 .booking-btn:hover {
-  background-color: #8B775C;
+  background: linear-gradient(135deg, #8B775C 0%, #9D8A70 100%);
   color: #fff;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 8px rgba(0,0,0,0.15) !important;
 }
 .booking-outline-btn {
   border-color: #8B775C;
@@ -368,4 +373,120 @@
   100% {
     transform: scale(1);
   }
+}
+
+/* Selected services styling */
+.selected-service-item {
+  transition: all 0.2s ease;
+  border-left: 3px solid #8B775C !important;
+}
+
+.selected-service-item:hover {
+  background-color: #f8f5f2 !important;
+}
+
+.total-duration-display {
+  background-color: rgba(139, 119, 92, 0.1);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-weight: 500;
+  display: inline-block;
+  margin-top: 8px;
+}
+
+.duration-icon {
+  color: #8B775C;
+  margin-right: 6px;
+}
+
+/* Time slot range styling for multiple services */
+.time-slot-btn.selected-range {
+  background-color: rgba(13, 110, 253, 0.15) !important;
+  border-color: rgba(13, 110, 253, 0.5) !important;
+  color: #0d6efd !important;
+  position: relative;
+  animation: pulseSelectedRange 2s ease-in-out infinite;
+}
+
+.time-slot-btn.selected-range:hover {
+  background-color: rgba(13, 110, 253, 0.25) !important;
+  border-color: rgba(13, 110, 253, 0.7) !important;
+}
+
+/* Enhanced active time slot styling */
+.time-slot-btn.active {
+  background-color: #0d6efd !important;
+  border-color: #0d6efd !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+  animation: pulseActive 2s ease-in-out infinite;
+}
+
+/* Disabled time slots */
+.time-slot-btn.disabled {
+  background-color: #f8f9fa !important;
+  border-color: #dee2e6 !important;
+  color: #6c757d !important;
+  opacity: 0.5;
+}
+
+/* Tooltip styling for time slots */
+.time-slot-btn {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.time-slot-btn:not(.disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Animations for selected time slots */
+@keyframes pulseSelectedRange {
+  0% {
+    box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.3);
+  }
+  70% {
+    box-shadow: 0 0 0 5px rgba(13, 110, 253, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);
+  }
+}
+
+@keyframes pulseActive {
+  0% {
+    box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(13, 110, 253, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);
+  }
+}
+
+/* Service breakdown styling */
+.service-breakdown-item {
+  padding: 4px 8px;
+  margin: 2px 0;
+  background-color: rgba(13, 110, 253, 0.05);
+  border-radius: 4px;
+  border-left: 3px solid rgba(13, 110, 253, 0.3);
+}
+
+/* Enhanced total duration display */
+.total-duration-highlight {
+  background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 110, 253, 0.05) 100%);
+  border: 1px solid rgba(13, 110, 253, 0.2);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.total-duration-highlight:hover {
+  background: linear-gradient(135deg, rgba(13, 110, 253, 0.15) 0%, rgba(13, 110, 253, 0.08) 100%);
+  border-color: rgba(13, 110, 253, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
 }

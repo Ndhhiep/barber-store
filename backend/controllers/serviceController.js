@@ -55,7 +55,23 @@ const getServiceById = asyncHandler(async (req, res) => {
 // @access  Riêng tư/Admin/Staff
 const createService = asyncHandler(async (req, res) => {
   try {
-    const { name, price, description } = req.body;
+    const { name, price, description, duration } = req.body;
+
+    // Validate required fields
+    if (!name || !price || !description || !duration) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Name, price, description, and duration are required'
+      });
+    }
+
+    // Validate duration range
+    if (duration < 15 || duration > 240) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Duration must be between 15 and 240 minutes'
+      });
+    }
 
     // Kiểm tra dịch vụ với tên này đã tồn tại
     const existingService = await Service.findOne({ name });
@@ -69,7 +85,8 @@ const createService = asyncHandler(async (req, res) => {
     const service = await Service.create({
       name,
       price,
-      description
+      description,
+      duration // Use the provided duration value
     });
 
     res.status(201).json({
@@ -91,13 +108,21 @@ const createService = asyncHandler(async (req, res) => {
 // @access  Riêng tư/Admin/Staff
 const updateService = asyncHandler(async (req, res) => {
   try {
-    const { name, price, description, isActive } = req.body;
+    const { name, price, description, duration, isActive } = req.body;
     const service = await Service.findById(req.params.id);
 
     if (!service) {
       return res.status(404).json({
         status: 'fail',
         message: 'Service not found'
+      });
+    }
+
+    // Validate duration if provided
+    if (duration !== undefined && (duration < 15 || duration > 240)) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Duration must be between 15 and 240 minutes'
       });
     }
 
@@ -115,6 +140,7 @@ const updateService = asyncHandler(async (req, res) => {
     service.name = name || service.name;
     service.price = price !== undefined ? price : service.price;
     service.description = description || service.description;
+    service.duration = duration !== undefined ? duration : service.duration; // Use provided duration
     service.isActive = isActive !== undefined ? isActive : service.isActive;
 
     const updatedService = await service.save();

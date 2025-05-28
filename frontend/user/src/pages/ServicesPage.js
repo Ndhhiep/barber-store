@@ -61,11 +61,10 @@ const ServicesPage = () => {
                 <div className="card h-100 shadow-sm service-card">
                   <div className="card-body p-3 p-md-4">
                     <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start mb-3">
-                      <h3 className="h5 h-md-4 service-name mb-2 mb-sm-0">{service.name}</h3>
-                      <div className="d-flex flex-column align-items-start align-sm-end">
+                      <h3 className="h5 h-md-4 service-name mb-2 mb-sm-0">{service.name}</h3>                      <div className="d-flex flex-column align-items-start align-sm-end">
                         <span className="service-price mb-1">${service.price}</span>
                         <span className="text-muted service-duration">
-                          30 min
+                          {service.duration || 30} min
                         </span>
                       </div>
                     </div>

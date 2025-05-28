@@ -698,13 +698,37 @@ useEffect(() => {
                   {/* Appointment Information Section */}
                   <h5 className="mb-3">
                     <i className="bi bi-calendar-event me-2"></i>Appointment Information
-                  </h5>
-                  <div className="card mb-4">
+                  </h5>                  <div className="card mb-4">
                     <div className="card-body">
                       <div className="row mb-1">
                         <div className="col-3" style={{ fontWeight: 'bold' }}>Service:</div>
-                        <div className="col-9">{selectedAppointment.serviceName}</div>
-                      </div>                      <div className="row mb-1">
+                        <div className="col-9">
+                          {(() => {
+                            // Handle both single service and multiple services
+                            if (selectedAppointment.services && Array.isArray(selectedAppointment.services) && selectedAppointment.services.length > 0) {
+                              // Multiple services - display as list
+                              return (
+                                <ul className="list-unstyled mb-0">
+                                  {selectedAppointment.services.map((service, index) => (
+                                    <li key={index} className="mb-1">
+                                      {service}
+                                    </li>
+                                  ))}
+                                </ul>
+                              );
+                            } else if (selectedAppointment.serviceName && selectedAppointment.serviceName !== 'N/A') {
+                              // Single service from serviceName
+                              return <span><i className="bi bi-scissors me-2"></i>{selectedAppointment.serviceName}</span>;
+                            } else if (selectedAppointment.service && selectedAppointment.service !== 'N/A') {
+                              // Single service from service field
+                              return <span><i className="bi bi-scissors me-2"></i>{selectedAppointment.service}</span>;
+                            } else {
+                              // No service information available
+                              return <span className="text-muted">No service information available</span>;
+                            }
+                          })()}
+                        </div>
+                      </div><div className="row mb-1">
                         <div className="col-3" style={{ fontWeight: 'bold' }}>Barber:</div>
                         <div className="col-9">{selectedAppointment.barberName || 'Any Available'}</div>
                       </div>

@@ -24,7 +24,7 @@ router.get('/check-cloudinary', protect, staffOnly, async (req, res) => {
 });
 
 // Tải ảnh barber lên (chỉ nhân viên)
-router.post('/upload-image', protect, staffOnly, upload, uploadBarberImage);
+router.post('/upload-image', protect, staffOnly, upload.single('image'), uploadBarberImage);
 
 // Chuyển đổi trạng thái hoạt động của barber (chỉ nhân viên)
 router.patch('/:id/toggle-status', protect, staffOnly, toggleBarberStatus);

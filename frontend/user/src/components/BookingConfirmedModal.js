@@ -28,8 +28,7 @@ const BookingConfirmedModal = ({
           <div className="modal-header border-0 p-0 m-0">
             <button
               type="button"
-              className="btn-close"
-              onClick={() => {
+              className="btn-close"              onClick={() => {
                 setShowBookingConfirmedModal(false);
                 setBookingStatus({
                   submitted: false,
@@ -37,7 +36,7 @@ const BookingConfirmedModal = ({
                   errorMessage: '',
                   confirmedDate: '',
                   confirmedTime: '',
-                  confirmedService: '',
+                  confirmedService: [],
                   confirmedEmail: ''
                 });
               }}
@@ -67,11 +66,20 @@ const BookingConfirmedModal = ({
                       <td>
                         <span className="booking-info-value">{bookingStatus.confirmedTime}</span>
                       </td>
-                    </tr>
-                    <tr>
-                      <td className="fw-bold text-end text-md-end text-start">Service:</td>
+                    </tr>                    <tr>
+                      <td className="fw-bold text-end text-md-end text-start">Services:</td>
                       <td>
-                        <span className="booking-info-value">{bookingStatus.confirmedService}</span>
+                        {typeof bookingStatus.confirmedService === 'string' ? (
+                          <span className="booking-info-value">{bookingStatus.confirmedService}</span>
+                        ) : Array.isArray(bookingStatus.confirmedService) ? (
+                          <ul className="list-unstyled mb-0">
+                            {bookingStatus.confirmedService.map((service, index) => (
+                              <li key={index} className="booking-info-value">{service}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span className="booking-info-value">No service selected</span>
+                        )}
                       </td>
                     </tr>
                     {setSelectedBarberName && (
@@ -90,8 +98,7 @@ const BookingConfirmedModal = ({
             <div className="d-flex flex-column flex-md-row justify-content-between w-100 gap-2">
               <button
                 type="button"
-                className="btn btn-outline-secondary booking-outline-btn px-4 order-2 order-md-1"
-                onClick={() => {
+                className="btn btn-outline-secondary booking-outline-btn px-4 order-2 order-md-1"                onClick={() => {
                   setShowBookingConfirmedModal(false);
                   setBookingStatus({
                     submitted: false,
@@ -99,7 +106,7 @@ const BookingConfirmedModal = ({
                     errorMessage: '',
                     confirmedDate: '',
                     confirmedTime: '',
-                    confirmedService: '',
+                    confirmedService: [],
                     confirmedEmail: ''
                   });
                   navigate('/');
@@ -111,9 +118,9 @@ const BookingConfirmedModal = ({
               <button
                 type="button"
                 className="btn booking-btn px-4 order-1 order-md-2"
-                onClick={() => {
-                  setShowBookingConfirmedModal(false);setBookingData({
-                    service: '',
+                onClick={() => {                  setShowBookingConfirmedModal(false);
+                  setBookingData({
+                    services: [], // Use empty array instead of empty string
                     barber_id: '',
                     date: '',
                     time: '',
@@ -125,14 +132,13 @@ const BookingConfirmedModal = ({
                   });
                   if (setSelectedBarberName) {
                     setSelectedBarberName('');
-                  }
-                  setBookingStatus({
+                  }                  setBookingStatus({
                     submitted: false,
                     error: false,
                     errorMessage: '',
                     confirmedDate: '',
                     confirmedTime: '',
-                    confirmedService: '',
+                    confirmedService: [],
                     confirmedEmail: ''
                   });
                 }}

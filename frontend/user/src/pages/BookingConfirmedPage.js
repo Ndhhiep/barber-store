@@ -4,14 +4,13 @@ import axios from 'axios';
 import '../css/BookingPage.css';
 
 const BookingConfirmedPage = () => {
-  const [isValidatingToken, setIsValidatingToken] = useState(true);
-  const [bookingStatus, setBookingStatus] = useState({
+  const [isValidatingToken, setIsValidatingToken] = useState(true);  const [bookingStatus, setBookingStatus] = useState({
     submitted: false,
     error: false,
     errorMessage: '',
     confirmedDate: '',
     confirmedTime: '',
-    confirmedService: '',
+    confirmedService: [],
     confirmedEmail: '',
     confirmedBarber: ''
   });
@@ -32,10 +31,11 @@ const BookingConfirmedPage = () => {
         setBookingStatus({
           submitted: true,
           error: false,
-          errorMessage: '',
-          confirmedDate: new Date(booking.date).toLocaleDateString(),
+          errorMessage: '',          confirmedDate: new Date(booking.date).toLocaleDateString(),
           confirmedTime: booking.time,
-          confirmedService: booking.service,
+          confirmedService: booking.services && booking.services.length > 0 
+            ? booking.services 
+            : (booking.service || 'No service information'),
           confirmedEmail: booking.email,
           confirmedBarber: booking.barber_name || ''
         });
@@ -126,11 +126,18 @@ const BookingConfirmedPage = () => {
                             <td>
                               <span className="booking-info-value">{bookingStatus.confirmedTime}</span>
                             </td>
-                          </tr>
-                          <tr>
-                            <td width="30%" className="fw-bold text-end">Service:</td>
+                          </tr>                          <tr>
+                            <td width="30%" className="fw-bold text-end">Service{Array.isArray(bookingStatus.confirmedService) && bookingStatus.confirmedService.length > 1 ? 's' : ''}:</td>
                             <td>
-                              <span className="booking-info-value">{bookingStatus.confirmedService}</span>
+                              {Array.isArray(bookingStatus.confirmedService) ? (
+                                <ul className="list-unstyled mb-0">
+                                  {bookingStatus.confirmedService.map((service, index) => (
+                                    <li key={index} className="booking-info-value">{service}</li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <span className="booking-info-value">{bookingStatus.confirmedService}</span>
+                              )}
                             </td>
                           </tr>
                           {bookingStatus.confirmedBarber && bookingStatus.confirmedBarber !== "Any Available Barber" && (

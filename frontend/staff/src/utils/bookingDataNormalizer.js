@@ -49,12 +49,24 @@ const normalizeBookingData = (bookingData) => {
     // Hoặc đôi khi trường barber có thể là string name trực tiếp
     barberName = barberName || normalized.barber;
   }
-  
-  // Gán trường barber đã chuẩn hóa
+    // Gán trường barber đã chuẩn hóa
   normalized.barberName = barberName || 'Any Available';
   
-  // Đảm bảo trường serviceName được gán
-  normalized.serviceName = normalized.serviceName || normalized.service || 'N/A';
+  // Xử lý thông tin dịch vụ - hỗ trợ cả dịch vụ đơn lẻ và nhiều dịch vụ
+  if (normalized.services && Array.isArray(normalized.services) && normalized.services.length > 0) {
+    // Nếu có mảng services, giữ nguyên để hiển thị danh sách
+    // normalized.services đã có sẵn
+    normalized.serviceName = normalized.services.join(', '); // Tạo serviceName từ mảng để tương thích ngược
+  } else if (normalized.service) {
+    // Nếu chỉ có dịch vụ đơn lẻ
+    normalized.serviceName = normalized.service;
+    // Cũng tạo mảng services để tương thích
+    normalized.services = [normalized.service];
+  } else {
+    // Không có thông tin dịch vụ
+    normalized.serviceName = normalized.serviceName || 'N/A';
+    normalized.services = [];
+  }
   
   return normalized;
 };

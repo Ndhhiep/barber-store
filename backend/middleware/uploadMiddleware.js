@@ -49,42 +49,12 @@ const storage = new CloudinaryStorage({
   }
 });
 
-// Khởi tạo upload với error handling
-const upload = multer({
+// Khởi tạo multer với các cấu hình
+const multerUpload = multer({
   storage: storage,
   limits: { fileSize: 5000000 }, // Giới hạn 5MB
   fileFilter: fileFilter
-}).single('image'); // Pre-configured for single image uploads
+});
 
-// Wrap multer middleware with error handler
-module.exports = function(req, res, next) {
-  upload(req, res, function(err) {
-    if (err) {
-      console.error('Upload middleware error:', err);
-      if (err instanceof multer.MulterError) {
-        // A Multer error occurred when uploading.
-        if (err.code === 'LIMIT_FILE_SIZE') {
-          return res.status(413).json({
-            success: false,
-            message: 'File quá lớn. Kích thước tối đa là 5MB.'
-          });
-        }
-        return res.status(400).json({
-          success: false,
-          message: `Lỗi upload: ${err.message}`
-        });
-      } else {
-        // An unknown error occurred when uploading.
-        return res.status(500).json({
-          success: false,
-          message: err.message || 'Lỗi không xác định khi tải tệp lên'
-        });
-      }
-    }
-    
-    // Everything went fine.
-    next();
-  });
-};
-
-module.exports = upload;
+// Export multer instance
+module.exports = multerUpload;

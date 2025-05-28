@@ -73,10 +73,17 @@ const sendBookingConfirmationEmail = async (options) => {
           <div style="text-align: center; margin: 30px 0;">
             <a href="${confirmationLink}" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Confirm Appointment</a>
           </div>
-          
-          <div style="background-color: #f9f9f9; padding: 20px; border-radius: 4px; margin-bottom: 20px;">
+            <div style="background-color: #f9f9f9; padding: 20px; border-radius: 4px; margin-bottom: 20px;">
             <h2 style="color: #333; margin-top: 0; font-size: 18px;">Appointment Details:</h2>
-            <p style="margin: 10px 0; font-size: 16px;"><strong>Service:</strong> ${booking.service}</p>
+            <div style="margin: 10px 0; font-size: 16px;">
+              <strong>Service${(booking.services && booking.services.length > 1) || (Array.isArray(booking.service) && booking.service.length > 1) ? 's' : ''}:</strong>
+              ${booking.services && booking.services.length > 0
+                ? booking.services.map(service => `<div style="margin-left: 20px; margin-top: 5px;">• ${service}</div>`).join('')
+                : Array.isArray(booking.service) 
+                  ? booking.service.map(service => `<div style="margin-left: 20px; margin-top: 5px;">• ${service}</div>`).join('')
+                  : `<span style="margin-left: 10px;">${booking.service}</span>`
+              }
+            </div>
             <p style="margin: 10px 0; font-size: 16px;"><strong>Date:</strong> ${new Date(booking.date).toLocaleDateString()}</p>
             <p style="margin: 10px 0; font-size: 16px;"><strong>Time:</strong> ${booking.time}</p>
             ${booking.barber_name ? `<p style="margin: 10px 0; font-size: 16px;"><strong>Barber:</strong> ${booking.barber_name}</p>` : ''}
