@@ -3,10 +3,13 @@ import staffBarberService from '../services/staffBarberService';
 import { validateImageFile, diagnoseImageUploadIssue } from '../utils/imageUtils';
 
 const StaffBarbers = () => {
-  const [barbers, setBarbers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [barbers, setBarbers] = useState([]);  const [loading, setLoading] = useState(true);  const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false); // Add state for form submission loading
+  const [successMessage, setSuccessMessage] = useState(''); // State thông báo thành công
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [barberToDelete, setBarberToDelete] = useState(null);
+  const [barberDisplayId, setBarberDisplayId] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const [editingBarber, setEditingBarber] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,10 +38,20 @@ const StaffBarbers = () => {
     }
   });
   const [formErrors, setFormErrors] = useState({});
-
   useEffect(() => {
     fetchBarbers();
   }, []);
+
+  // Auto-hide success message after 3 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
   const fetchBarbers = async () => {
     try {
       setLoading(true);
@@ -305,11 +318,14 @@ const StaffBarbers = () => {
         }
         
         console.log('Barber updated with image:', updatedBarber.imgURL || updatedBarber.image_url);
-        
-        // Cập nhật danh sách barbers
+          // Cập nhật danh sách barbers
         setBarbers(barbers.map(barber => 
           barber._id === editingBarber._id ? updatedBarber : barber
-        ));} else {        response = await staffBarberService.createBarber(formData);
+        ));
+        
+        // Show success message for edit
+        setSuccessMessage('Barber updated successfully!');
+      } else {response = await staffBarberService.createBarber(formData);
         
         // Process the returned data to ensure proper image URL mapping
         let newBarber;
@@ -333,12 +349,14 @@ const StaffBarbers = () => {
         }
         
         console.log('New barber added with image:', newBarber.imgURL || newBarber.image_url);
-        
-        // Thêm barber mới vào danh sách
+          // Thêm barber mới vào danh sách
         setBarbers([...barbers, newBarber]);
+        
+        // Show success message for add
+        setSuccessMessage('New barber added successfully!');
       }
       
-      closeModal();    } catch (err) {
+      closeModal();} catch (err) {
       console.error('Error saving barber:', err);
       
       // Detailed error handling
@@ -377,19 +395,36 @@ const StaffBarbers = () => {
       }
     } finally {
       setIsLoading(false);
+    }  };
+
+  const openDeleteModal = (barber) => {
+    setBarberToDelete(barber._id);
+    // Store the barber name for display
+    setBarberDisplayId(barber.name);
+    setDeleteModalOpen(true);
+  };
+  
+  const closeDeleteModal = () => {
+    setBarberToDelete(null);
+    setBarberDisplayId(null);
+    setDeleteModalOpen(false);
+  };
+  
+  const handleDeleteBarber = async () => {
+    try {
+      setDeleteLoading(true);
+      await staffBarberService.deleteBarber(barberToDelete);
+      setBarbers(barbers.filter(barber => barber._id !== barberToDelete));
+      setSuccessMessage('Barber deleted successfully!');
+    } catch (err) {
+      console.error('Error deleting barber:', err);
+      setError('Failed to delete barber. Please try again.');
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setDeleteLoading(false);
+      closeDeleteModal();
     }
   };
-  const handleDeleteBarber = async (id) => {
-    if (window.confirm('Are you sure you want to delete this barber? This action cannot be undone.')) {
-      try {
-        await staffBarberService.deleteBarber(id);
-        setBarbers(barbers.filter(barber => barber._id !== id));
-        alert('Barber deleted successfully');
-      } catch (err) {
-        console.error('Error deleting barber:', err);
-        alert('Failed to delete barber. Please try again.');
-      }
-    }  };
 
   return (
     <div className="container mt-4">      <div className="d-flex justify-content-between align-items-center mb-4">
@@ -452,10 +487,9 @@ const StaffBarbers = () => {
                       onClick={() => openEditModal(barber)}
                     >
                       <i className="fas fa-edit"></i> Edit
-                    </button>
-                    <button 
+                    </button>                    <button 
                       className="btn btn-danger" 
-                      onClick={() => handleDeleteBarber(barber._id)}
+                      onClick={() => openDeleteModal(barber)}
                     >
                       <i className="fas fa-trash"></i> Delete
                     </button>
@@ -796,8 +830,80 @@ const StaffBarbers = () => {
                 </div>
               </form>
             </div>
+          </div>          <div className="modal-backdrop fade show"></div>
+        </div>      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <>
+          <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header border-0">
+                  <h5 className="modal-title fs-4">Confirmation</h5>
+                  <button type="button" className="btn-close" onClick={closeDeleteModal} aria-label="Close"></button>
+                </div>
+                <div className="modal-body pt-0">
+                  <p className="text-secondary">
+                    Are you sure you want to delete barber <span className="fw-bold">{barberDisplayId}</span>? This action cannot be undone and you will be unable to recover any data.
+                  </p>
+                </div>
+                <div className="modal-footer border-0">
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ backgroundColor: '#CED4DA', borderColor: '#CED4DA', color: '#212529' }}
+                    onClick={closeDeleteModal}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-danger" 
+                    style={{ backgroundColor: '#FA5252' }}
+                    onClick={handleDeleteBarber}
+                    disabled={deleteLoading}
+                  >
+                    {deleteLoading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Deleting...
+                      </>
+                    ) : (
+                      'Yes, delete it!'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="modal-backdrop fade show"></div>
+        </>
+      )}
+
+      {/* Success Toast Notification */}
+      {successMessage && (
+        <div 
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            zIndex: 9999,
+            maxWidth: '300px'
+          }}
+          className="toast show bg-success text-white"
+        >
+          <div className="toast-header bg-success text-white">
+            <strong className="me-auto">Success</strong>
+            <button 
+              type="button" 
+              className="btn-close btn-close-white" 
+              onClick={() => setSuccessMessage('')}
+            ></button>
+          </div>
+          <div className="toast-body">
+            {successMessage}
+          </div>
         </div>
       )}
     </div>

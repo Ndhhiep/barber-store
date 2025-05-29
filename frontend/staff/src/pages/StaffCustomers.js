@@ -151,80 +151,16 @@ const StaffCustomers = () => {
     } catch (err) {
       console.error('Error fetching customer details:', err);
       alert('Failed to load customer details. Please try again.');
-    }
-  };
+    }  };
   
-  // Edit customer
-  const handleEditCustomer = async (id) => {
-    try {
-      const customer = await staffCustomerService.getCustomerById(id);
-      setCustomerDetails({
-        ...customer,
-        isEditing: true
-      });
-      setActiveTab('info');
-      setIsModalOpen(true);
-    } catch (err) {
-      console.error('Error fetching customer for editing:', err);
-      alert('Failed to load customer information for editing. Please try again.');
-    }
-  };
-  
-  // Save edited customer
-  const handleSaveCustomer = async () => {
-    try {
-      const { _id, name, email, phone, address } = customerDetails;
-      
-      await staffCustomerService.updateCustomer(_id, {
-        name,
-        email,
-        phone,
-        address
-      });
-      
-      // Refresh the customers list
-      fetchCustomers();
-      
-      // Close the modal and reset state
-      closeModal();
-      alert('Customer information updated successfully!');
-    } catch (err) {
-      console.error('Error updating customer:', err);
-      alert('Failed to update customer information. Please try again.');
-    }
-  };
-    // Đóng modal chi tiết và reset state
+  // Đóng modal chi tiết và reset state
   const closeModal = () => {
     setIsModalOpen(false);
     setCustomerDetails(null);
     setActiveTab('info');
     // Reset pagination for bookings and orders
     setBookingsPage(1);
-    setOrdersPage(1);
-  };
-  
-  // Handle form input change
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    
-    if (name.startsWith('address.')) {
-      // Handle nested address field
-      const addressField = name.split('.')[1];
-      setCustomerDetails({
-        ...customerDetails,
-        address: {
-          ...customerDetails.address,
-          [addressField]: value
-        }
-      });
-    } else {
-      // Handle top-level field
-      setCustomerDetails({
-        ...customerDetails,
-        [name]: value
-      });
-    }
-  };
+    setOrdersPage(1);  };
   
   // Định dạng ngày để hiển thị dễ đọc
   const formatDate = (dateString) => {
@@ -298,13 +234,6 @@ const StaffCustomers = () => {
                                 title="View customer details"
                               >
                                 View
-                              </button>
-                              <button 
-                                className="btn btn-sm btn-primary"
-                                onClick={() => handleEditCustomer(customer._id)}
-                                title="Edit customer"
-                              >
-                                Edit
                               </button>
                             </div>
                           </td>
@@ -385,215 +314,89 @@ const StaffCustomers = () => {
               width: '100%', 
               maxWidth: '800px',
               position: 'relative'
-            }}>              <div className="modal-content">
-                <div className="modal-header">
+            }}>              <div className="modal-content">                <div className="modal-header">
                   <h5 className="modal-title">
-                    <i className={`fas ${customerDetails.isEditing ? 'fa-user-edit' : 'fa-user'} me-2`}></i>
-                    {customerDetails.isEditing ? 'Edit Customer' : 'Customer Details'}
+                    <i className="fas fa-user me-2"></i>
+                    Customer Details
                   </h5>
                   <button type="button" className="btn-close btn-close-white" onClick={closeModal}></button>
                 </div>                <div className="modal-body" style={{ height: '600px', overflowY: 'auto' }}>
-                  {/* Tabs for different sections */}                {customerDetails.isEditing ? (
-                    <div className="mb-4"></div>
-                  ) : (
-                    <ul className="nav nav-tabs nav-fill mb-4">
-                      <li className="nav-item">                      
-                        <button 
-                          className={`nav-link ${activeTab === 'info' ? 'active text-primary' : ''}`}
-                          onClick={() => setActiveTab('info')}
-                        >
-                          <i className="fas fa-user me-2"></i>Personal Information
-                        </button>
-                      </li>
-                      <li className="nav-item">
-                        <button 
-                          className={`nav-link ${activeTab === 'bookings' ? 'active text-warning' : ''}`}
-                          onClick={() => {
-                            setActiveTab('bookings');
-                            setBookingsPage(1);
-                          }}
-                        >
-                          <i className="fas fa-calendar-alt me-2"></i>Bookings
-                        </button>
-                      </li>
-                      <li className="nav-item">
-                        <button 
-                          className={`nav-link ${activeTab === 'orders' ? 'active text-success' : ''}`}
-                          onClick={() => {
-                            setActiveTab('orders');
-                            setOrdersPage(1);
-                          }}
-                        >
-                          <i className="fas fa-shopping-bag me-2"></i>Orders
-                        </button>
-                      </li>
-                    </ul>
-                  )}
-                  
-                  {/* Personal Information */}
+                  {/* Tabs for different sections */}
+                  <ul className="nav nav-tabs nav-fill mb-4">
+                    <li className="nav-item">                      
+                      <button 
+                        className={`nav-link ${activeTab === 'info' ? 'active text-primary' : ''}`}
+                        onClick={() => setActiveTab('info')}
+                      >
+                        <i className="fas fa-user me-2"></i>Personal Information
+                      </button>
+                    </li>
+                    <li className="nav-item">
+                      <button 
+                        className={`nav-link ${activeTab === 'bookings' ? 'active text-warning' : ''}`}
+                        onClick={() => {
+                          setActiveTab('bookings');
+                          setBookingsPage(1);
+                        }}
+                      >
+                        <i className="fas fa-calendar-alt me-2"></i>Bookings
+                      </button>
+                    </li>
+                    <li className="nav-item">
+                      <button 
+                        className={`nav-link ${activeTab === 'orders' ? 'active text-success' : ''}`}
+                        onClick={() => {
+                          setActiveTab('orders');
+                          setOrdersPage(1);
+                        }}
+                      >
+                        <i className="fas fa-shopping-bag me-2"></i>Orders
+                      </button>
+                    </li>
+                  </ul>
+                    {/* Personal Information */}
                   {activeTab === 'info' && (
                     <div>
-                      {customerDetails.isEditing ? (
-                        <form onSubmit={(e) => { e.preventDefault(); handleSaveCustomer(); }}>
-                          <div className="card border-left border-primary mb-4">
+                      <div className="row mb-4">
+                        <div className="col-md-6">
+                          <div className="card h-100 border-left border-primary">
                             <div className="card-header bg-light">
                               <h6 className="mb-0 text-primary">
-                                <i className="fas fa-user-edit me-2"></i>Personal Information
+                                <i className="fas fa-user me-2"></i>Personal Details
                               </h6>
                             </div>
                             <div className="card-body">
-                              <div className="row">
-                                <div className="col-md-6 mb-3">
-                                  <label htmlFor="name" className="form-label">Full Name</label>
-                                  <input 
-                                    type="text" 
-                                    className="form-control" 
-                                    id="name" 
-                                    name="name" 
-                                    value={customerDetails.name || ''} 
-                                    onChange={handleInputChange}
-                                    required
-                                  />
-                                </div>
-                                <div className="col-md-6 mb-3">
-                                  <label htmlFor="email" className="form-label">Email Address</label>
-                                  <input 
-                                    type="email" 
-                                    className="form-control" 
-                                    id="email" 
-                                    name="email" 
-                                    value={customerDetails.email || ''} 
-                                    onChange={handleInputChange}
-                                    required
-                                  />
-                                </div>
-                              </div>                              <div className="row">
-                                <div className="col-md-6 mb-3">
-                                  <label htmlFor="phone" className="form-label">Phone Number</label>
-                                  <input 
-                                    type="tel" 
-                                    className="form-control" 
-                                    id="phone" 
-                                    name="phone" 
-                                    value={customerDetails.phone || ''} 
-                                    onChange={handleInputChange}
-                                  />
-                                </div>
-                              </div>
+                              <p><strong>Name:</strong> {customerDetails.name || 'N/A'}</p>
+                              <p><strong>Email:</strong> {customerDetails.email}</p>
+                              <p><strong>Phone:</strong> {customerDetails.phone || 'N/A'}</p>
+                              <p><strong>Member Since:</strong> {formatDate(customerDetails.createdAt)}</p>
+                              <p className="mt-2 text-success"><strong>Total Spent:</strong> ${customerDetails.orders?.reduce((total, order) => total + (order.totalAmount || 0), 0).toFixed(2)}</p>
                             </div>
                           </div>
-                          <div className="card border-left border-info mb-3">
+                        </div>
+                        <div className="col-md-6">
+                          <div className="card h-100 border-left border-info">
                             <div className="card-header bg-light">
                               <h6 className="mb-0 text-info">
-                                <i className="fas fa-map-marker-alt me-2"></i>Address Information
+                                <i className="fas fa-map-marker-alt me-2"></i>Address
                               </h6>
                             </div>
                             <div className="card-body">
-                              <div className="row">
-                                <div className="col-md-12 mb-3">
-                                  <label htmlFor="address.street" className="form-label">Street Address</label>
-                                  <input
-                                    type="text"
-                                    className="form-control"
-                                    id="address.street"
-                                    name="address.street"
-                                    value={customerDetails.address?.street || ''}
-                                    onChange={handleInputChange}
-                                  />
-                                </div>
-                              </div>
-                              <div className="row">
-                                <div className="col-md-6 mb-3">
-                                  <label htmlFor="address.city" className="form-label">City</label>
-                                  <input
-                                    type="text"
-                                    className="form-control"
-                                    id="address.city"
-                                    name="address.city"
-                                    value={customerDetails.address?.city || ''}
-                                    onChange={handleInputChange}
-                                  />
-                                </div>
-                                <div className="col-md-6 mb-3">
-                                  <label htmlFor="address.state" className="form-label">State/Province</label>
-                                  <input
-                                    type="text"
-                                    className="form-control"
-                                    id="address.state"
-                                    name="address.state"
-                                    value={customerDetails.address?.state || ''}
-                                    onChange={handleInputChange}
-                                  />
-                                </div>
-                              </div>
-                              <div className="row">
-                                <div className="col-md-6 mb-3">
-                                  <label htmlFor="address.zipCode" className="form-label">Zip/Postal Code</label>
-                                  <input
-                                    type="text"
-                                    className="form-control"
-                                    id="address.zipCode"
-                                    name="address.zipCode"
-                                    value={customerDetails.address?.zipCode || ''}
-                                    onChange={handleInputChange}
-                                  />
-                                </div>
-                                <div className="col-md-6 mb-3">
-                                  <label htmlFor="address.country" className="form-label">Country</label>
-                                  <input
-                                    type="text"
-                                    className="form-control"
-                                    id="address.country"
-                                    name="address.country"
-                                    value={customerDetails.address?.country || ''}
-                                    onChange={handleInputChange}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </form>
-                      ) : (
-                        <>
-                          <div className="row mb-4">
-                            <div className="col-md-6">
-                              <div className="card h-100 border-left border-primary">
-                                <div className="card-header bg-light">
-                                  <h6 className="mb-0 text-primary">
-                                    <i className="fas fa-user me-2"></i>Personal Details
-                                  </h6>
-                                </div>                                <div className="card-body">
-                                  <p><strong>Name:</strong> {customerDetails.name || 'N/A'}</p>
-                                  <p><strong>Email:</strong> {customerDetails.email}</p>
-                                  <p><strong>Phone:</strong> {customerDetails.phone || 'N/A'}</p>
-                                  <p><strong>Member Since:</strong> {formatDate(customerDetails.createdAt)}</p>
-                                  <p className="mt-2 text-success"><strong>Total Spent:</strong> ${customerDetails.orders?.reduce((total, order) => total + (order.totalAmount || 0), 0).toFixed(2)}</p>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="col-md-6">
-                              <div className="card h-100 border-left border-info">
-                                <div className="card-header bg-light">
-                                  <h6 className="mb-0 text-info">
-                                    <i className="fas fa-map-marker-alt me-2"></i>Address
-                                  </h6>
-                                </div>
-                                <div className="card-body">
-                                  {customerDetails.address ? (
-                                    <address>
-                                      {customerDetails.address.street && <p>{customerDetails.address.street}</p>}
-                                      {customerDetails.address.city && customerDetails.address.state && (
-                                        <p>{customerDetails.address.city}, {customerDetails.address.state} {customerDetails.address.zipCode}</p>
-                                      )}
-                                      {customerDetails.address.country && <p>{customerDetails.address.country}</p>}
-                                    </address>
-                                  ) : (
-                                    <p>No address on file</p>
+                              {customerDetails.address ? (
+                                <address>
+                                  {customerDetails.address.street && <p>{customerDetails.address.street}</p>}
+                                  {customerDetails.address.city && customerDetails.address.state && (
+                                    <p>{customerDetails.address.city}, {customerDetails.address.state} {customerDetails.address.zipCode}</p>
                                   )}
-                                </div>
-                              </div>
+                                  {customerDetails.address.country && <p>{customerDetails.address.country}</p>}
+                                </address>
+                              ) : (
+                                <p>No address on file</p>
+                              )}
                             </div>
                           </div>
+                        </div>
+                      </div>
                           <div className="row">
                             <div className="col-md-6">
                               <div className="card h-100 border-left border-success">
@@ -620,10 +423,7 @@ const StaffCustomers = () => {
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                          </div>                    </div>
                   )}
                     {/* Bookings Tab */}
                   {activeTab === 'bookings' && (
@@ -820,41 +620,13 @@ const StaffCustomers = () => {
                     </div>
                   )}
                 </div>                <div className="modal-footer">
-                  {customerDetails.isEditing ? (
-                    <>
-                      <button 
-                        type="button" 
-                        className="btn btn-secondary" 
-                        onClick={closeModal}
-                      >
-                        <i className="fas fa-times me-2"></i>Cancel
-                      </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-primary"
-                        onClick={handleSaveCustomer}
-                      >
-                        <i className="fas fa-save me-2"></i>Save Changes
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button 
-                        type="button" 
-                        className="btn btn-outline-primary me-auto"
-                        onClick={() => handleEditCustomer(customerDetails._id)}
-                      >
-                        <i className="fas fa-user-edit me-2"></i>Edit Customer
-                      </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-secondary"
-                        onClick={closeModal}
-                      >
-                        <i className="fas fa-times me-2"></i>Close
-                      </button>
-                    </>
-                  )}
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary"
+                    onClick={closeModal}
+                  >
+                    <i className="fas fa-times me-2"></i>Close
+                  </button>
                 </div>
               </div>
             </div>

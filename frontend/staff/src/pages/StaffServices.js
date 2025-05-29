@@ -5,9 +5,14 @@ const StaffServices = () => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(''); // State thông báo thành công
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState(null);
+  const [serviceDisplayId, setServiceDisplayId] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   
   const [editingService, setEditingService] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);  const [formData, setFormData] = useState({
+  const [isModalOpen, setIsModalOpen] = useState(false);const [formData, setFormData] = useState({
     name: '',
     price: '',
     description: '',
@@ -15,10 +20,20 @@ const StaffServices = () => {
     isActive: true
   });
   const [formErrors, setFormErrors] = useState({});
-
   useEffect(() => {
     fetchServices();
   }, []);
+
+  // Auto-hide success message after 3 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   const fetchServices = async () => {
     try {
@@ -114,16 +129,17 @@ const StaffServices = () => {
       duration: Number(formData.duration),
       isActive: formData.isActive
     };
-    
-    try {
+      try {
       if (editingService) {
         await staffService.updateService(editingService._id, serviceData);
         setServices(services.map(s => 
           s._id === editingService._id ? { ...s, ...serviceData } : s
         ));
+        setSuccessMessage('Service updated successfully!');
       } else {
         const response = await staffService.createService(serviceData);
         setServices([...services, response.data]);
+        setSuccessMessage('New service added successfully!');
       }
       closeModal();
     } catch (err) {
@@ -132,18 +148,34 @@ const StaffServices = () => {
         ...prev, 
         submit: err.message || 'Failed to save service. Please try again.' 
       }));
-    }
-  };
+    }  };
 
-  const handleDeleteService = async (id) => {
-    if (window.confirm('Are you sure you want to delete this service?')) {
-      try {
-        await staffService.deleteService(id);
-        setServices(services.filter(service => service._id !== id));
-      } catch (err) {
-        console.error('Error deleting service:', err);
-        alert('Failed to delete service. Please try again.');
-      }
+  const openDeleteModal = (service) => {
+    setServiceToDelete(service._id);
+    // Store the service name for display
+    setServiceDisplayId(service.name);
+    setDeleteModalOpen(true);
+  };
+  
+  const closeDeleteModal = () => {
+    setServiceToDelete(null);
+    setServiceDisplayId(null);
+    setDeleteModalOpen(false);
+  };
+  
+  const handleDeleteService = async () => {
+    try {
+      setDeleteLoading(true);
+      await staffService.deleteService(serviceToDelete);
+      setServices(services.filter(service => service._id !== serviceToDelete));
+      setSuccessMessage('Service deleted successfully!');
+    } catch (err) {
+      console.error('Error deleting service:', err);
+      setError('Failed to delete service. Please try again.');
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setDeleteLoading(false);
+      closeDeleteModal();
     }
   };
 
@@ -198,10 +230,9 @@ const StaffServices = () => {
                             title="Edit Service"
                           >
                             Edit
-                          </button>
-                          <button
+                          </button>                          <button
                             className="btn btn-sm btn-danger"
-                            onClick={() => handleDeleteService(service._id)}
+                            onClick={() => openDeleteModal(service)}
                             title="Delete Service"
                           >
                             Delete
@@ -346,9 +377,82 @@ const StaffServices = () => {
                   </div>
                 </form>
               </div>
+            </div>          </div>
+        </>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <>
+          <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header border-0">
+                  <h5 className="modal-title fs-4">Confirmation</h5>
+                  <button type="button" className="btn-close" onClick={closeDeleteModal} aria-label="Close"></button>
+                </div>
+                <div className="modal-body pt-0">
+                  <p className="text-secondary">
+                    Are you sure you want to delete service <span className="fw-bold">{serviceDisplayId}</span>? This action cannot be undone and you will be unable to recover any data.
+                  </p>
+                </div>
+                <div className="modal-footer border-0">
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ backgroundColor: '#CED4DA', borderColor: '#CED4DA', color: '#212529' }}
+                    onClick={closeDeleteModal}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-danger" 
+                    style={{ backgroundColor: '#FA5252' }}
+                    onClick={handleDeleteService}
+                    disabled={deleteLoading}
+                  >
+                    {deleteLoading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Deleting...
+                      </>
+                    ) : (
+                      'Yes, delete it!'
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
+          <div className="modal-backdrop fade show"></div>
         </>
+      )}
+
+      {/* Success Toast Notification */}
+      {successMessage && (
+        <div 
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            zIndex: 9999,
+            maxWidth: '300px'
+          }}
+          className="toast show bg-success text-white"
+        >
+          <div className="toast-header bg-success text-white">
+            <strong className="me-auto">Success</strong>
+            <button 
+              type="button" 
+              className="btn-close btn-close-white" 
+              onClick={() => setSuccessMessage('')}
+            ></button>
+          </div>
+          <div className="toast-body">
+            {successMessage}
+          </div>
+        </div>
       )}
     </div>
   );
