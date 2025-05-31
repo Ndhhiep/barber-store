@@ -105,6 +105,32 @@ export const daysBetween = (startDate, endDate) => {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
+/**
+ * Compare dates consistently by using string format to avoid timezone issues
+ * @param {string|Date} date1 - First date
+ * @param {string|Date} date2 - Second date  
+ * @returns {boolean} True if dates are the same day
+ */
+export const isSameDate = (date1, date2) => {
+  const formatDate = (date) => {
+    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return date;
+    }
+    const d = new Date(date);
+    return d.toISOString().split('T')[0];
+  };
+  
+  return formatDate(date1) === formatDate(date2);
+};
+
+/**
+ * Get today's date in YYYY-MM-DD format consistently
+ * @returns {string} Today's date in YYYY-MM-DD format
+ */
+export const getTodayString = () => {
+  return new Date().toISOString().split('T')[0];
+};
+
 const dateUtils = {
   formatDate,
   formatTime,
@@ -113,7 +139,9 @@ const dateUtils = {
   isToday,
   getTodayISO,
   convertTo12HourFormat,
-  daysBetween
+  daysBetween,
+  isSameDate,
+  getTodayString
 };
 
 export default dateUtils;

@@ -1,4 +1,5 @@
 import api from './api';
+import { isSameDate, getTodayString } from '../utils/dateUtils';
 
 // Always use localhost for development
 const API_URL = 'http://localhost:5000/api';
@@ -30,12 +31,9 @@ const getTimeSlotStatus = async (barberId, date, services = []) => {
         "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
         "18:00", "18:30"
       ];      // Filter out past time slots if the date is today
-      // Parse the input date and today's date for comparison
-      const selectedDate = new Date(date);
-      const today = new Date();
-      const isToday = selectedDate.getFullYear() === today.getFullYear() &&
-                     selectedDate.getMonth() === today.getMonth() &&
-                     selectedDate.getDate() === today.getDate();
+      // Use consistent date comparison to avoid timezone issues
+      const today = getTodayString();
+      const isToday = isSameDate(date, today);
                      
       if (isToday) {
         const now = new Date();

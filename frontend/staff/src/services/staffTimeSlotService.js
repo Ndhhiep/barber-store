@@ -1,5 +1,6 @@
 import axios from 'axios';
 import staffAuthService from './staffAuthService';
+import { isSameDate, getTodayString } from '../utils/dateUtils';
 
 const API_URL = process.env.REACT_APP_BACKEND_API_URL || 'http://localhost:5000/api';
 
@@ -64,9 +65,9 @@ const getTimeSlotStatus = async (barberId, date, services = [], excludeBookingId
       "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
       "18:00", "18:30", "19:00"
     ];
-    
-    // If it's today, mark past slots as unavailable
-    if (date === new Date().toISOString().split('T')[0]) {
+      // If it's today, mark past slots as unavailable
+    const today = getTodayString();
+    if (isSameDate(date, today)) {
       const now = new Date();
       const currentHour = now.getHours();
       const currentMinute = now.getMinutes();

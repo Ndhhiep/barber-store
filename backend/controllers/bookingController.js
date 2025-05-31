@@ -855,14 +855,11 @@ const getAvailableTimeSlots = async (req, res) => {
     const timeSlots = allTimeSlots.map(slot => ({
       start_time: slot,
       is_available: !bookedTimes.includes(slot)
-    }));
-
-    // Nếu ngày là hôm nay, lọc bỏ khung giờ đã qua hoặc trong 30 phút tới
-    const today = new Date().toISOString().split('T')[0];
+    }));    // Nếu ngày là hôm nay, lọc bỏ khung giờ đã qua hoặc trong 30 phút tới
+    const today = dateUtils.getVNTodayString();
     if (date === today) {
-      const now = new Date();
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
+      const vnCurrentTime = dateUtils.getVNCurrentTime();
+      const currentTotalMinutes = vnCurrentTime.totalMinutes;
       
       // Lọc bỏ khung giờ đã qua hoặc trong 30 phút tới
       return res.status(200).json({
@@ -871,7 +868,6 @@ const getAvailableTimeSlots = async (req, res) => {
           timeSlots: timeSlots.filter(slot => {
             const [slotHour, slotMinute] = slot.start_time.split(':').map(Number);
             const slotTotalMinutes = slotHour * 60 + slotMinute;
-            const currentTotalMinutes = currentHour * 60 + currentMinute;
             
             // Giữ lại các khung giờ ít nhất 30 phút trong tương lai
             return slotTotalMinutes > currentTotalMinutes + 30;
@@ -1113,16 +1109,17 @@ const getTimeSlotStatus = async (req, res) => {
         }
       }
     });
-    
-    console.log(`Total occupied slots found: ${occupiedSlots.size}`);
+      console.log(`Total occupied slots found: ${occupiedSlots.size}`);
     console.log(`Occupied slots:`, Array.from(occupiedSlots));
     
-    // Xác định nếu khung giờ đã qua cho hôm nay
-    const today = new Date().toISOString().split('T')[0];
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const currentTotalMinutes = currentHour * 60 + currentMinute;    // Helper function để kiểm tra xem có đủ slots liên tiếp không
+    // Xác định nếu khung giờ đã qua cho hôm nay - sử dụng VN timezone
+    const today = dateUtils.getVNTodayString();
+    const vnCurrentTime = dateUtils.getVNCurrentTime();
+    const currentTotalMinutes = vnCurrentTime.totalMinutes;
+    
+    console.log(`Vietnam today: ${today}`);
+    console.log(`Vietnam current time: ${vnCurrentTime.hour}:${vnCurrentTime.minute.toString().padStart(2, '0')} (${currentTotalMinutes} minutes)`);
+    console.log(`Input date for comparison: ${date}`);// Helper function để kiểm tra xem có đủ slots liên tiếp không
     const hasConsecutiveSlots = (startSlotIndex, requiredDuration) => {
       const slotsNeeded = Math.ceil(requiredDuration / 30);
       const startSlot = allTimeSlots[startSlotIndex];
@@ -1138,13 +1135,12 @@ const getTimeSlotStatus = async (req, res) => {
       for (let i = 0; i < slotsNeeded; i++) {
         const slotIndex = startSlotIndex + i;
         const slotTime = allTimeSlots[slotIndex];
-        
-        // Kiểm tra nếu slot này đã qua
+          // Kiểm tra nếu slot này đã qua (sử dụng VN timezone)
         if (date === today) {
           const [slotHour, slotMinute] = slotTime.split(':').map(Number);
           const slotTotalMinutes = slotHour * 60 + slotMinute;
           if (slotTotalMinutes < currentTotalMinutes + 30) {
-            console.log(`Slot ${slotTime} is in the past`);
+            console.log(`Slot ${slotTime} is in the past (VN time)`);
             return false;
           }
         }
@@ -1164,13 +1160,10 @@ const getTimeSlotStatus = async (req, res) => {
     const timeSlots = allTimeSlots.map((slot, index) => {
       // Kiểm tra nếu khung giờ đã qua nếu là hôm nay
       let isPast = false;
+        // So sánh ngày sử dụng string comparison để tránh vấn đề timezone
+      const isToday = date === today;
       
-      // Compare dates properly instead of string comparison
-      const dateObj = new Date(date);
-      const todayObj = new Date(today);
-      const isToday = dateObj.getFullYear() === todayObj.getFullYear() &&
-                     dateObj.getMonth() === todayObj.getMonth() &&
-                     dateObj.getDate() === todayObj.getDate();
+      console.log(`Checking slot ${slot}: date=${date}, today=${today}, isToday=${isToday}`);
                      
       if (isToday) {
         const [slotHour, slotMinute] = slot.split(':').map(Number);
@@ -1178,6 +1171,8 @@ const getTimeSlotStatus = async (req, res) => {
         
         // Khung giờ được coi là "quá khứ" nếu ít hơn 30 phút từ bây giờ
         isPast = slotTotalMinutes < currentTotalMinutes + 30;
+        
+        console.log(`Today slot ${slot}: slotMinutes=${slotTotalMinutes}, currentMinutes=${currentTotalMinutes}, isPast=${isPast}`);
       }
       
       // Check if the slot is occupied by an existing appointment

@@ -156,12 +156,45 @@ const generateTimeSlots = (date = new Date(), intervalMinutes = 30, workingHours
   return slots;
 };
 
+/**
+ * Lấy ngày hiện tại ở múi giờ Việt Nam theo định dạng YYYY-MM-DD
+ * @returns {string} Ngày hiện tại định dạng YYYY-MM-DD (VN timezone)
+ */
+const getVNTodayString = () => {
+  const now = new Date();
+  // Chuyển sang múi giờ UTC+7 (Việt Nam)
+  const vnTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+  return vnTime.toISOString().split('T')[0];
+};
+
+/**
+ * Lấy thời gian hiện tại ở múi giờ Việt Nam
+ * @returns {Object} Object chứa thông tin thời gian VN {hour, minute, totalMinutes}
+ */
+const getVNCurrentTime = () => {
+  const now = new Date();
+  // Chuyển sang múi giờ UTC+7 (Việt Nam)
+  const vnTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+  const hour = vnTime.getUTCHours();
+  const minute = vnTime.getUTCMinutes();
+  const totalMinutes = hour * 60 + minute;
+  
+  return {
+    hour,
+    minute,
+    totalMinutes,
+    dateTime: vnTime
+  };
+};
+
 module.exports = {
   toVNDateTime,
   formatDate,
   formatTime,
   getVNStartOfDay,
   getVNEndOfDay,
+  getVNTodayString,
+  getVNCurrentTime,
   timeStringToDate,
   isWithinWorkingHours,
   generateTimeSlots
