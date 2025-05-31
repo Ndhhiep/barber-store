@@ -136,6 +136,25 @@
   transform: translateY(-2px) !important;
   box-shadow: 0 6px 8px rgba(0,0,0,0.15) !important;
 }
+
+/* Ensure white text and spinner during processing state */
+.booking-btn:disabled {
+  background: linear-gradient(135deg, #2B2A2A 0%, #3C3A3A 100%);
+  color: #fff !important;
+  opacity: 0.8;
+}
+
+.booking-btn:disabled .spinner-border {
+  border-color: #fff !important;
+  border-right-color: transparent !important;
+}
+
+.booking-btn:disabled:hover {
+  background: linear-gradient(135deg, #2B2A2A 0%, #3C3A3A 100%);
+  color: #fff !important;
+  transform: none !important;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+}
 .booking-outline-btn {
   border-color: #8B775C;
   color: #8B775C;
