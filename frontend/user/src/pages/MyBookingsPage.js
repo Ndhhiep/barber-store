@@ -238,20 +238,37 @@ const MyBookingsPage = () => {
       ) : (
         <div className="row">
           {currentBookings.map((booking) => (
-            <div className="col-12 col-md-6 col-lg-4 mb-3 mb-md-4" key={booking._id}>              <div className="card booking-card">
-                <div className="card-header d-flex justify-content-between align-items-center">
+            <div className="col-12 col-md-6 col-lg-4 mb-3 mb-md-4" key={booking._id}>              <div className="card booking-card">                <div className="card-header">
                   <div>
-                    <h5 className="mb-0">
-                      {booking.services && Array.isArray(booking.services) && booking.services.length > 0 ? (
-                        <span>{booking.services[0]}{booking.services.length > 1 && '...'}</span>
-                      ) : (
-                        <span>{booking.service || 'No service'}</span>
-                      )}
+                    <h5 className="mb-0" style={{ fontFamily: 'sans-serif' }}>
+                      <strong>Booking ID:</strong> {booking._id.slice(-6)}
                     </h5>
                   </div>
-                  {getStatusBadge(booking.status)}
-                </div><div className="card-body">
+                </div>                
+                <div className="card-body">
                   <p className="mb-2"><strong>Date:</strong> {formatDate(booking.date)} at {booking.time}</p>
+                  
+                  {/* Services list */}                  <div className="mb-2">
+                    <strong>Services:</strong>
+                    {booking.services && Array.isArray(booking.services) && booking.services.length > 0 ? (
+                      <ul className="list-unstyled mb-0 mt-1">
+                        {booking.services.map((service, index) => (
+                          <li key={index} className="ms-3">• {typeof service === 'object' ? service.name : service}</li>
+                        ))}
+                      </ul>
+                    ) : booking.serviceNames ? (
+                      <ul className="list-unstyled mb-0 mt-1">
+                        {booking.serviceNames.map((name, index) => (
+                          <li key={index} className="ms-3">• {name}</li>
+                        ))}
+                      </ul>
+                    ) : booking.serviceName ? (
+                      <span className="ms-2">{booking.serviceName}</span>
+                    ) : (
+                      <span className="ms-2">{booking.service || 'No service specified'}</span>
+                    )}
+                  </div>
+                  
                   <p className="mb-2">
                     <strong>Barber:</strong> {
                       booking.barber?.name || 
@@ -259,6 +276,12 @@ const MyBookingsPage = () => {
                        (typeof booking.barber === 'string' ? booking.barber : 'Not specified'))
                     }
                   </p>
+                  
+                  {/* Status moved here */}
+                  <div className="mb-2">
+                    <strong>Status:</strong> {getStatusBadge(booking.status)}
+                  </div>
+                  
                   {booking.notes && (
                     <p className="mb-2"><strong>Notes:</strong> {booking.notes}</p>
                   )}
@@ -324,8 +347,7 @@ const MyBookingsPage = () => {
       {showConfirmModal && bookingToCancel && (
         <div className="modal-backdrop">
           <div className="confirmation-modal">
-            <div className="confirmation-modal-content">
-              <h4>Cancel Booking</h4>
+            <div className="confirmation-modal-content">              <h4>Cancel Booking</h4>
               
               {/* Booking details section */}
               <div className="booking-details mb-3">
@@ -336,10 +358,25 @@ const MyBookingsPage = () => {
                     return (
                       <div className="card booking-summary">
                         <div className="card-body">
-                          <h6 className="booking-service">{bookingDetails.service}</h6>
+                          <h6 className="booking-service">Order ID: #{bookingDetails._id.slice(-6)}</h6>
                           <hr />
                           <div className="booking-info">
                             <p><strong>Date:</strong> {formatDate(bookingDetails.date)} at {bookingDetails.time}</p>
+                            
+                            {/* Services list */}
+                            <div className="mb-2">
+                              <strong>Services:</strong>
+                              {bookingDetails.services && Array.isArray(bookingDetails.services) && bookingDetails.services.length > 0 ? (
+                                <ul className="list-unstyled mb-0 mt-1">
+                                  {bookingDetails.services.map((service, index) => (
+                                    <li key={index} className="ms-3">• {service}</li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <span className="ms-2">{bookingDetails.service || 'No service specified'}</span>
+                              )}
+                            </div>
+                            
                             <p>
                               <strong>Barber:</strong> {
                                 bookingDetails.barber?.name || 

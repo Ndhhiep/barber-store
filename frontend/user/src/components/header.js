@@ -70,7 +70,9 @@ const Header = () => {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);  return (
+  }, []);  
+  
+  return (
     <>
       {/* Header placeholder that appears when header becomes fixed */}
       {isScrolled && <div style={{ height: '80px' }}></div>}
@@ -83,10 +85,14 @@ const Header = () => {
       
       <header className={`navbar navbar-expand-lg header-navbar ${isScrolled ? 'sticky-header' : ''}`}>
         <div className="header-container container-fluid px-2 px-sm-3 px-md-4">
-          {/* Logo and Brand Name */}
-          <NavLink to="/" className="navbar-brand d-flex align-items-center">
+          {/* Logo and Brand Name */}          <NavLink to="/" className="navbar-brand d-flex align-items-center">
             <div className="header-logo-circle">
-              <span className="logo-letters">GC</span>
+              <img 
+                src="/assets/logo.jpg" 
+                alt="The Gentleman's Cut Logo" 
+                className="logo-image"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+              />
             </div>
             <span className="header-brand-name ms-2">
               The Gentleman's Cut

@@ -4,17 +4,20 @@ import '../css/MyOrdersPage.css';
 import orderService from '../services/orderService';
 import authService from '../services/authService';
 
-const MyOrdersPage = () => {
-  const [orders, setOrders] = useState([]);
+const MyOrdersPage = () => {  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   // Add pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [ordersPerPage] = useState(5);
+  // Cancel order states
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancellingOrder, setCancellingOrder] = useState(false);
+  const [cancelMessage, setCancelMessage] = useState('');
+  const [cancelSuccess, setCancelSuccess] = useState(false);
   
   const navigate = useNavigate();
-
   // Fetch all orders for the current user
   useEffect(() => {
     const fetchOrderHistory = async () => {
@@ -27,6 +30,7 @@ const MyOrdersPage = () => {
         
         // Fetch my orders using the orderService
         const result = await orderService.getMyOrders();
+        console.log('Fetch order history result:', result);
         
         if (result.success) {
           // Sort orders by date (most recent first)
@@ -38,7 +42,8 @@ const MyOrdersPage = () => {
             setSelectedOrder(sortedOrders[0]);
           }
         } else {
-          throw new Error(result.message || 'Failed to fetch orders');
+          console.error('Failed to fetch orders:', result.message);
+          setError(result.message || 'Failed to load order history');
         }
       } catch (err) {
         console.error('Error fetching orders:', err);
@@ -87,7 +92,6 @@ const MyOrdersPage = () => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
-
   const getStatusBadgeColor = (status) => {
     switch (status) {
       case 'pending': return 'bg-warning text-dark';
@@ -97,6 +101,58 @@ const MyOrdersPage = () => {
       case 'cancelled': return 'bg-danger';
       default: return 'bg-secondary';
     }
+  };
+
+  // Handle cancel order
+  const handleCancelOrder = async () => {
+    if (!selectedOrder) return;
+    
+    setCancellingOrder(true);
+    setCancelMessage('');
+    setCancelSuccess(false);
+    
+    try {
+      const result = await orderService.cancelOrder(selectedOrder._id);
+      
+      if (result.success) {
+        setCancelMessage('Order cancelled successfully!');
+        setCancelSuccess(true);
+        
+        // Update the selected order status
+        const updatedOrder = { ...selectedOrder, status: 'cancelled' };
+        setSelectedOrder(updatedOrder);
+        
+        // Update the orders list
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            order._id === selectedOrder._id 
+              ? { ...order, status: 'cancelled' }
+              : order
+          )
+        );
+        
+        // Close modal after delay
+        setTimeout(() => {
+          setShowCancelModal(false);
+          setCancelMessage('');
+          setCancelSuccess(false);
+        }, 2000);
+      } else {
+        setCancelMessage(result.message || 'Failed to cancel order');
+        setCancelSuccess(false);
+      }
+    } catch (error) {
+      console.error('Cancel order error:', error);
+      setCancelMessage(error.message || 'Failed to cancel order');
+      setCancelSuccess(false);
+    } finally {
+      setCancellingOrder(false);
+    }
+  };
+
+  // Check if order can be cancelled
+  const canCancelOrder = (order) => {
+    return order && (order.status === 'pending' || order.status === 'processing');
   };
 
   if (loading && orders.length === 0) {
@@ -241,15 +297,15 @@ const MyOrdersPage = () => {
                   <small className="text-muted">An error occurred while loading order details</small>
                 </div>
               </div>
-            ) : selectedOrder ? (              <div className="card order-detail-card">
-                <div className="card-header d-flex justify-content-between align-items-center">
+            ) : selectedOrder ? (              <div className="card order-detail-card">                <div className="card-header d-flex justify-content-between align-items-center">
                   <div>
                     <h5 className="mb-0" style={{fontFamily: 'sans-serif'}}>Order ID: {selectedOrder._id.substring(selectedOrder._id.length - 6)}</h5>
                     <small className="text-muted">Placed on {formatDate(selectedOrder.createdAt)}</small>
                   </div>
                   <span className={`badge ${getStatusBadgeColor(selectedOrder.status)}`}>
                     {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
-                  </span>                </div>
+                  </span>
+                </div>
                 <div className="card-body d-flex flex-column">
                   <div className="row mb-3">
                     <div className="col-md-6">
@@ -308,22 +364,68 @@ const MyOrdersPage = () => {
                       </tfoot>
                     </table>
                   </div>
-                  
-                  {selectedOrder.notes && (
+                    {selectedOrder.notes && (
                     <div className="mt-3">
                       <h6>Notes</h6>
                       <p className="mb-0">{selectedOrder.notes}</p>
                     </div>
-                  )}                </div>
-                <div className="card-footer">
-                  {selectedOrder.status === 'pending' ? (
-                    <div className="alert alert-info mb-0 py-1" role="alert">
-                      <i className="bi bi-info-circle me-1"></i>
-                      Your order is being processed. We'll update you when it ships.
-                    </div>
-                  ) : (
-                    <small className="text-muted">Order status: {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}</small>
                   )}
+                  
+                  {/* Order Status and Actions */}
+                  <div className="mt-4">
+                    {selectedOrder.status === 'pending' ? (
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div className="alert alert-info mb-0 py-2 flex-grow-1 me-3" role="alert">
+                          <i className="bi bi-info-circle me-1"></i>
+                          Your order is being processed. We'll update you when it ships.
+                        </div>
+                        {canCancelOrder(selectedOrder) && (
+                          <button 
+                            className="btn btn-danger"
+                            onClick={() => setShowCancelModal(true)}
+                          >
+                            <i className="bi bi-x-circle me-1"></i>
+                            Cancel Order
+                          </button>
+                        )}
+                      </div>
+                    ) : selectedOrder.status === 'processing' ? (
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div className="alert alert-warning mb-0 py-2 flex-grow-1 me-3" role="alert">
+                          <i className="bi bi-clock me-1"></i>
+                          Your order is being processed.
+                        </div>
+                        {canCancelOrder(selectedOrder) && (
+                          <button 
+                            className="btn btn-danger"
+                            onClick={() => setShowCancelModal(true)}
+                          >
+                            <i className="bi bi-x-circle me-1"></i>
+                            Cancel Order
+                          </button>
+                        )}
+                      </div>
+                    ) : selectedOrder.status === 'cancelled' ? (
+                      <div className="alert alert-danger mb-0 py-2" role="alert">
+                        <i className="bi bi-x-circle me-1"></i>
+                        This order has been cancelled.
+                      </div>
+                    ) : selectedOrder.status === 'delivered' ? (
+                      <div className="alert alert-success mb-0 py-2" role="alert">
+                        <i className="bi bi-check-circle me-1"></i>
+                        Order delivered successfully!
+                      </div>
+                    ) : selectedOrder.status === 'shipped' ? (
+                      <div className="alert alert-primary mb-0 py-2" role="alert">
+                        <i className="bi bi-truck me-1"></i>
+                        Your order has been shipped and is on the way!
+                      </div>
+                    ) : (
+                      <div className="alert alert-secondary mb-0 py-2" role="alert">
+                        Order status: {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : (              <div className="card order-detail-card">
@@ -336,6 +438,94 @@ const MyOrdersPage = () => {
                 </div>
               </div>
             )}
+          </div>        </div>
+      )}
+      
+      {/* Cancel Order Modal */}
+      {showCancelModal && (
+        <div className="modal fade show d-block" tabIndex="-1" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Cancel Order</h5>
+                <button 
+                  type="button" 
+                  className="btn-close" 
+                  onClick={() => setShowCancelModal(false)}
+                  disabled={cancellingOrder}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {cancelMessage && (
+                  <div className={`alert ${cancelSuccess ? 'alert-success' : 'alert-danger'}`} role="alert">
+                    <i className={`bi ${cancelSuccess ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2`}></i>
+                    {cancelMessage}
+                  </div>
+                )}
+                
+                {!cancelSuccess && (
+                  <>
+                    <p>Are you sure you want to cancel this order?</p>
+                    {selectedOrder && (
+                      <div className="border rounded p-3 bg-light">
+                        <strong>Order ID:</strong> {selectedOrder._id.substring(selectedOrder._id.length - 6)}<br/>
+                        <strong>Total Amount:</strong> ${selectedOrder.totalAmount.toFixed(2)}<br/>
+                        <strong>Status:</strong> {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}<br/>
+                        <strong>Items:</strong> {selectedOrder.items.length} item(s)
+                      </div>
+                    )}
+                    <div className="mt-3">
+                      <small className="text-muted">
+                        <i className="bi bi-info-circle me-1"></i>
+                        This action cannot be undone. Once cancelled, you will need to place a new order.
+                      </small>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="modal-footer">
+                {!cancelSuccess && (
+                  <>
+                    <button 
+                      type="button" 
+                      className="btn btn-secondary" 
+                      onClick={() => setShowCancelModal(false)}
+                      disabled={cancellingOrder}
+                    >
+                      Keep Order
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn btn-danger" 
+                      onClick={handleCancelOrder}
+                      disabled={cancellingOrder}
+                    >
+                      {cancellingOrder ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                          Cancelling...
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-x-circle me-1"></i>
+                          Yes, Cancel Order
+                        </>
+                      )}
+                    </button>
+                  </>
+                )}
+                {cancelSuccess && (
+                  <button 
+                    type="button" 
+                    className="btn btn-success" 
+                    onClick={() => setShowCancelModal(false)}
+                  >
+                    <i className="bi bi-check-lg me-1"></i>
+                    Close
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

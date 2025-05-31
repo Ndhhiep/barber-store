@@ -5,9 +5,8 @@
 // Determine if we're running in production
 export const IS_PRODUCTION = window.location.hostname !== 'localhost';
 
-// Default API URL 
-export const API_URL = process.env.REACT_APP_BACKEND_API_URL || 
-  (IS_PRODUCTION ? 'https://barber-store.onrender.com/api' : 'http://localhost:5000/api');
+// Default API URL - Always use localhost:5000 when running locally
+export const API_URL = 'http://localhost:5000/api';
 
 // Log API URL at startup
 console.log('API Configuration:', {
@@ -18,7 +17,7 @@ console.log('API Configuration:', {
 
 // Default API request configuration
 export const API_CONFIG = {
-  withCredentials: true,
+  withCredentials: false, // Disable credentials to avoid CORS issues
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json'

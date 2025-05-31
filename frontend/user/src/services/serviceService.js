@@ -1,24 +1,30 @@
-import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_BACKEND_API_URL || 'http://localhost:5000/api'; // Use variable from .env file
+import api from './api';
 
 // Get all services
 const getAllServices = async () => {
   try {
-    const response = await axios.get(`${API_URL}/services`);
-    return response.data;
+    const response = await api.get(`/services`);
+    // Fix the data access to match the controller's response structure
+    return response.data.data && response.data.data.services 
+      ? { data: response.data.data.services } 
+      : { data: response.data.data || [] };
   } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch services' };
+    console.error("Error fetching services:", error);
+    return { data: [] }; // Return empty data instead of throwing
   }
 };
 
 // Get service by ID
 const getServiceById = async (id) => {
   try {
-    const response = await axios.get(`${API_URL}/services/${id}`);
-    return response.data;
+    const response = await api.get(`/services/${id}`);
+    // Fix the data access to match the controller's response structure
+    return response.data.data && response.data.data.service
+      ? response.data.data.service
+      : response.data.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Failed to fetch service' };
+    console.error(`Error fetching service with ID ${id}:`, error);
+    return null; // Return null instead of throwing
   }
 };
 

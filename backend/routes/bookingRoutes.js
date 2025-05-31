@@ -6,6 +6,7 @@ const {
   getUserBookings,
   getBookingById,
   cancelBooking,
+  updateBooking,
   updateBookingStatus,
   getAvailableTimeSlots,
   checkTimeSlotAvailability,
@@ -15,6 +16,10 @@ const {
 } = require('../controllers/bookingController');
 const { protect } = require('../middleware/authMiddleware');
 const { restrictTo } = require('../controllers/authController');
+const { handleLegacyBookingServices } = require('../middleware/bookingMiddleware');
+
+// Áp dụng middleware xử lý services cho tất cả các routes
+router.use(handleLegacyBookingServices);
 
 // Các route công khai
 router.post('/', createBooking);
@@ -30,6 +35,7 @@ router.get('/my-bookings', protect, getUserBookings);
 router.get('/', protect, restrictTo('admin', 'manager', 'barber', 'staff'), getBookings);
 router.get('/stats', protect, restrictTo('admin', 'manager', 'barber', 'staff'), getBookingStats);
 router.put('/:id/status', protect, restrictTo('admin', 'manager', 'barber', 'staff'), updateBookingStatus);
+router.put('/:id', protect, restrictTo('admin', 'manager', 'barber', 'staff'), updateBooking);
 
 // Các route với tham số đường dẫn nên đặt sau các route cụ thể
 router.get('/:id', protect, getBookingById);

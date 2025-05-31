@@ -413,6 +413,19 @@
   border-color: rgba(13, 110, 253, 0.7) !important;
 }
 
+/* Occupied time slots from existing appointments */
+.time-slot-btn.occupied-by-appointment {
+  background-color: rgba(253, 126, 20, 0.15) !important;
+  border-color: rgba(253, 126, 20, 0.4) !important;
+  color: #fd7e14 !important;
+  position: relative;
+}
+
+.time-slot-btn.occupied-by-appointment:hover {
+  background-color: rgba(253, 126, 20, 0.25) !important;
+  border-color: rgba(253, 126, 20, 0.6) !important;
+}
+
 /* Enhanced active time slot styling */
 .time-slot-btn.active {
   background-color: #0d6efd !important;

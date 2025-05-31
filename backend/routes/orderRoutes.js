@@ -1,5 +1,5 @@
 const express = require('express');
-const { createOrder, getOrdersByUserId, getOrderById, getMyOrders, getAllOrders, getOrderStats, getRecentOrders, updateOrderStatus } = require('../controllers/orderController');
+const { createOrder, getOrdersByUserId, getOrderById, getMyOrders, getAllOrders, getOrderStats, getRecentOrders, updateOrderStatus, cancelOrder } = require('../controllers/orderController');
 const { protect } = require('../middleware/authMiddleware');
 const { restrictTo } = require('../controllers/authController');
 
@@ -21,6 +21,9 @@ router.get('/recent', protect, restrictTo('admin', 'manager', 'barber', 'staff')
 
 // PATCH /api/orders/:id/status - Cập nhật trạng thái đơn hàng (chỉ admin, staff)
 router.patch('/:id/status', protect, restrictTo('admin', 'manager', 'barber', 'staff'), updateOrderStatus);
+
+// PUT /api/orders/:id/cancel - Hủy đơn hàng (chỉ user sở hữu đơn hàng)
+router.put('/:id/cancel', protect, cancelOrder);
 
 // GET /api/orders/user/my-orders - Lấy đơn hàng của người dùng đang đăng nhập
 router.get('/user/my-orders', protect, getMyOrders);

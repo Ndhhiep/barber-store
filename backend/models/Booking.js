@@ -1,15 +1,11 @@
 const mongoose = require('mongoose');
 
 const bookingSchema = mongoose.Schema({
-  // Support both single service string and array of services
-  service: {
-    type: String,
-    required: false
-  },
-  // New field for multiple services
+  // Array of service ObjectIds
   services: {
-    type: [String],
-    required: false
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'Service',
+    required: true
   },
   barber_id: {
     type: mongoose.Schema.Types.ObjectId,
@@ -23,10 +19,23 @@ const bookingSchema = mongoose.Schema({
     get: function(date) {
       return date;
     }
-  },
-  time: {
+  },  time: {
     type: String,
     required: true
+  },
+  // Trường để lưu duration tổng của appointment (phút)
+  duration: {
+    type: Number,
+    required: false,
+    default: 30
+  },
+  // Trường để lưu tất cả các time slots bị chiếm dụng
+  occupiedTimeSlots: {
+    type: [String],
+    required: false,
+    default: function() {
+      return [this.time]; // Mặc định chỉ có time slot bắt đầu
+    }
   },
   // Trường fullDateTime để tính toán thời gian chính xác
   fullDateTime: {

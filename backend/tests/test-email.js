@@ -1,72 +1,70 @@
-const path = require('path');
-const fs = require('fs');
+/**
+ * Test script for email functionality
+ * Tests the booking confirmation email with proper service names
+ */
 
-// First try to find .env in the current directory
-if (fs.existsSync(path.join(process.cwd(), '.env'))) {
-  require('dotenv').config();
-} else {
-  // If not found, try to load from parent directory (backend root)
-  require('dotenv').config({ path: path.join(__dirname, '../.env') });
-}
+require('dotenv').config();
+const { sendBookingConfirmationEmail } = require('../utils/emailUtils');
 
-// Try to determine the right path for emailUtils
-let emailUtils;
-try {
-  // First try relative to current directory
-  emailUtils = require('../utils/emailUtils');
-} catch (error) {
+// Test booking data with service names (not ObjectIds)
+const testBookingData = {
+  name: 'John Doe',
+  email: 'hiep.ndh1112k@gmail.com', // Change this to your test email
+  phone: '0933591901',
+  services: [
+    'Classic Haircut',
+    'Beard Trim'
+  ], // Using service names instead of ObjectIds
+  barber_name: 'Robert Davis',
+  date: new Date('2025-06-02'),
+  time: '17:00',
+  _id: '6819e2foee4ae07255437ef6'
+};
+
+const testToken = 'test-token-123456789';
+const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+async function testEmail() {
   try {
-    // If that fails, try from the tests directory
-    emailUtils = require(path.join(__dirname, '../utils/emailUtils'));
-  } catch (innerError) {
-    console.error('Error importing emailUtils:', innerError);
-    process.exit(1);
-  }
-}
-
-const { sendBookingConfirmationEmail } = emailUtils;
-
-async function testEmailSending() {
-  console.log('Starting email test...');
-  console.log('Current directory:', process.cwd());
-  
-  try {
-    console.log('Creating test booking data...');
-    const testBooking = {
-      _id: '123456789012345678901234',
-      name: 'Test User',
-      service: 'Haircut and Beard Trim',
-      date: new Date(),
-      time: '14:30',
-      email: 'test@example.com',
-      barber_name: 'John Doe'
-    };
-
-    console.log('Frontend URL:', process.env.FRONTEND_URL || 'http://localhost:3000');
-    console.log('Sending test confirmation email to:', testBooking.email);
+    console.log('🚀 Testing email with fixed service names...');
+    console.log('📧 Sending to:', testBookingData.email);
+    console.log('🎯 Services:', testBookingData.services);
     
     const result = await sendBookingConfirmationEmail({
-      to: testBooking.email,
-      booking: testBooking,
-      token: 'test-token-123456',
-      baseUrl: process.env.FRONTEND_URL || 'http://localhost:3000'
+      to: testBookingData.email,
+      booking: testBookingData,
+      token: testToken,
+      baseUrl: baseUrl
     });
-
-    console.log('\n✅ Email sent successfully!');
-    console.log('📝 Test message ID:', result.messageId);
     
-    // If using Ethereal, show the preview URL
+    console.log('✅ Email sent successfully!');
+    console.log('📨 Message ID:', result.messageId);
+    
     if (result.testEmailUrl) {
-      console.log('🔗 Preview URL:', result.testEmailUrl);
-      console.log('\nOpen this URL in your browser to view the test email');
+      console.log('🔗 Test email preview URL:', result.testEmailUrl);
+      console.log('\n📝 Note: This is a test email using Ethereal Email');
+      console.log('   Click the preview URL above to see how the email looks');
+    } else {
+      console.log('📬 Real email sent to:', testBookingData.email);
+      console.log('   Check your inbox for the confirmation email');
     }
+    
+    console.log('\n✨ Test completed successfully!');
+    console.log('🎉 Service names should now display correctly in the email');
+    
   } catch (error) {
-    console.error('❌ Failed to send test email:', error);
-    if (error.code === 'MODULE_NOT_FOUND') {
-      console.error('\nModule not found error. Make sure you are running this script from the backend directory.');
-      console.error('Try running: cd backend && node tests/test-email.js');
+    console.error('❌ Error testing email:', error);
+    console.error('📄 Error details:', error.message);
+    
+    if (error.code === 'EAUTH') {
+      console.error('\n🔐 Authentication error. Please check your email credentials in .env file');
+    } else if (error.code === 'ECONNREFUSED') {
+      console.error('\n🌐 Connection refused. Please check your email server settings');
     }
   }
 }
 
-testEmailSending();
+// Run the test
+console.log('🧪 Starting email test...');
+console.log('=' .repeat(50));
+testEmail();

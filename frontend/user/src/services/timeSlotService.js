@@ -1,7 +1,7 @@
-import axios from 'axios';
-import { isServerOnline } from '../utils/serverCheck';
+import api from './api';
 
-const API_URL = process.env.REACT_APP_BACKEND_API_URL || 'http://localhost:5000/api'; // Use variable from .env file
+// Always use localhost for development
+const API_URL = 'http://localhost:5000/api';
 
 // Helper function to get auth headers
 const getAuthHeader = () => {
@@ -13,15 +13,12 @@ const getAuthHeader = () => {
  * Get time slot status for a specific barber on a given date
  * @param {string} barberId - ID of the barber
  * @param {string} date - Date in YYYY-MM-DD format
+ * @param {Array} services - Array of selected service IDs (optional)
  * @returns {Promise<Array>} - Array of time slot objects with start_time and status properties
  */
-const getTimeSlotStatus = async (barberId, date) => {
+const getTimeSlotStatus = async (barberId, date, services = []) => {
   try {
-    // Check if server is online
-    const serverReachable = await isServerOnline();
-    if (!serverReachable) {
-      throw new Error('Server is not reachable');
-    }
+    // Skip server check - we're running locally so assume server is online
 
     // If barberId is 'any', use a different endpoint or provide default time slots
     if (barberId === 'any') {
@@ -31,11 +28,16 @@ const getTimeSlotStatus = async (barberId, date) => {
         "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
         "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
         "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
-        "18:00", "18:30", "19:00"
-      ];
-
-      // Filter out past time slots if the date is today
-      if (date === new Date().toISOString().split('T')[0]) {
+        "18:00", "18:30"
+      ];      // Filter out past time slots if the date is today
+      // Parse the input date and today's date for comparison
+      const selectedDate = new Date(date);
+      const today = new Date();
+      const isToday = selectedDate.getFullYear() === today.getFullYear() &&
+                     selectedDate.getMonth() === today.getMonth() &&
+                     selectedDate.getDate() === today.getDate();
+                     
+      if (isToday) {
         const now = new Date();
         const currentHour = now.getHours();
         const currentMinute = now.getMinutes();
@@ -48,28 +50,54 @@ const getTimeSlotStatus = async (barberId, date) => {
           return {
             start_time: timeSlot,
             isPast: slotTotalMinutes < (currentTotalMinutes + 30),
-            isAvailable: slotTotalMinutes >= (currentTotalMinutes + 30)
+            isAvailable: slotTotalMinutes >= (currentTotalMinutes + 30),
+            isOccupied: false // Default to not occupied for the 'any' barber case
           };
         });
-      }      // For future dates, all slots are available
+      }
+      
+      // For future dates, all slots are available
       return defaultTimeSlots.map(timeSlot => ({
         start_time: timeSlot,
         isPast: false,
-        isAvailable: true
+        isAvailable: true,
+        isOccupied: false // Default to not occupied for the 'any' barber case
       }));
+    }    // Regular flow for specific barber
+    // Ensure the date is properly formatted as YYYY-MM-DD
+    let formattedDate;
+    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      // Date is already in YYYY-MM-DD format
+      formattedDate = date;
+    } else {
+      // Convert to a consistent date format
+      const dateObj = new Date(date);
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // months are 0-based
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      formattedDate = `${year}-${month}-${day}`;
     }
+    console.log(`Requesting time slots for date: ${formattedDate}, barber: ${barberId}`);
     
-    // Regular flow for specific barber
-    const response = await axios.get(`${API_URL}/bookings/time-slots-status`, {
-      params: {
-        barberId,
-        date
-      },
-      headers: getAuthHeader()
+    const params = {
+      barberId,
+      date: formattedDate
+    };
+
+    // Add services if provided
+    if (services && services.length > 0) {
+      params.services = JSON.stringify(services);
+    }
+
+    console.log(`API request params:`, params);
+    const response = await api.get(`/bookings/time-slots-status`, {
+      params
     });
 
-    // Return time slots status array
-    return response.data.data.timeSlots;
+    // Handle different response structures
+    return response.data.data && response.data.data.timeSlots 
+      ? response.data.data.timeSlots 
+      : response.data.timeSlots || [];
   } catch (error) {
     console.error('Error fetching time slot status:', error);
     throw error;
@@ -85,13 +113,12 @@ const getTimeSlotStatus = async (barberId, date) => {
  */
 const checkTimeSlotAvailability = async (barberId, date, timeSlot) => {
   try {
-    const response = await axios.get(`${API_URL}/bookings/check-availability`, {
+    const response = await api.get(`/bookings/check-availability`, {
       params: {
         barberId,
         date,
         timeSlot
-      },
-      headers: getAuthHeader()
+      }
     });
     
     return response.data.data.isAvailable;

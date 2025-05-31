@@ -1,5 +1,6 @@
 const Booking = require('../models/Booking');
 const Barber = require('../models/Barber');
+const Service = require('../models/Service');
 const User = require('../models/User'); 
 const Token = require('../models/Token');
 const mongoose = require('mongoose');
@@ -11,9 +12,9 @@ const crypto = require('crypto');
 // @desc    Tạo mới booking
 // @route   POST /api/bookings
 // @access  Công khai
-const createBooking = asyncHandler(async (req, res) => {  const {
-    service,
-    services,
+const createBooking = asyncHandler(async (req, res) => {
+  const {
+    services, // Now expects array of service ObjectIds
     barber_id,
     date,
     time,
@@ -24,6 +25,20 @@ const createBooking = asyncHandler(async (req, res) => {  const {
     user_id, // Thêm user_id để lưu nếu người dùng đã đăng nhập
     requireEmailConfirmation = false // Cờ để xác định xem có cần xác nhận email hay không
   } = req.body;
+
+  // Xác thực services
+  if (!services || !Array.isArray(services) || services.length === 0) {
+    res.status(400);
+    throw new Error('Services là bắt buộc và phải là mảng không rỗng');
+  }
+
+  // Kiểm tra tất cả service IDs có hợp lệ không
+  for (const serviceId of services) {
+    if (!mongoose.Types.ObjectId.isValid(serviceId)) {
+      res.status(400);
+      throw new Error(`Định dạng Service ID không hợp lệ: ${serviceId}`);
+    }
+  }
 
   // Xác thực barber_id
   if (!barber_id) {
@@ -44,15 +59,42 @@ const createBooking = asyncHandler(async (req, res) => {  const {
     throw new Error('Không tìm thấy Barber');
   }
 
+  // Kiểm tra tất cả services có tồn tại không và tính toán tổng duration
+  const serviceRecords = await Service.find({ _id: { $in: services } });
+  if (serviceRecords.length !== services.length) {
+    res.status(404);
+    throw new Error('Một hoặc nhiều service không tồn tại');
+  }
+
   // Chuyển đổi date sang đúng múi giờ Việt Nam
   const vnDate = dateUtils.toVNDateTime(date);
+  // Tính toán duration từ services
+  const totalDuration = serviceRecords.reduce((total, service) => {
+    return total + (service.duration || 30);
+  }, 0);
+
+  // Tính toán occupied time slots
+  const occupiedTimeSlots = [];
+  const [startHour, startMinute] = time.split(':').map(Number);
+  let currentTotalMinutes = startHour * 60 + startMinute;
+  const endTotalMinutes = currentTotalMinutes + totalDuration;
+
+  // Tạo danh sách tất cả time slots bị chiếm dụng (30-minute intervals)
+  while (currentTotalMinutes < endTotalMinutes) {
+    const hours = Math.floor(currentTotalMinutes / 60);
+    const minutes = currentTotalMinutes % 60;
+    const timeSlot = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    occupiedTimeSlots.push(timeSlot);
+    currentTotalMinutes += 30; // Move to next 30-minute slot
+  }
+
   const booking = new Booking({
-    // Handle both single service and multiple services
-    service: !services || services.length === 0 ? service : undefined,
-    services: services || [],
+    services, // Array of service ObjectIds
     barber_id,
     date: vnDate, // Sử dụng ngày đã được chuyển đổi sang múi giờ Việt Nam
     time,
+    duration: totalDuration,
+    occupiedTimeSlots: occupiedTimeSlots,
     name,
     email,
     phone,
@@ -60,12 +102,15 @@ const createBooking = asyncHandler(async (req, res) => {  const {
     status: requireEmailConfirmation ? 'pending' : 'confirmed', // Đặt trạng thái dựa trên yêu cầu xác nhận email
     user_id: user_id || (req.user ? req.user._id : null) // Sử dụng user_id cung cấp hoặc lấy từ người dùng đã xác thực nếu có
   });
-
   const createdBooking = await booking.save();
-  
-  // Populate thông tin barber để trả về cho client
+    // Populate thông tin barber và services để trả về cho client
   const populatedBooking = await Booking.findById(createdBooking._id)
-    .populate('barber_id', 'name specialization');
+    .populate('barber_id', 'name specialization')
+    .populate('services', 'name price duration description');
+  
+  // Debug: Log populated booking services để kiểm tra
+  console.log('DEBUG - Populated booking services:', populatedBooking.services);
+  console.log('DEBUG - Services count:', populatedBooking.services ? populatedBooking.services.length : 0);
   
   // Xử lý xác nhận email nếu cần
   if (requireEmailConfirmation) {
@@ -84,6 +129,28 @@ const createBooking = asyncHandler(async (req, res) => {  const {
       // Lấy tên barber để gửi email
       const barberName = barber ? barber.name : 'Any Available Barber';
       
+      // Lấy tên services từ populatedBooking để gửi email - với error handling
+      let serviceNames = [];
+      if (populatedBooking.services && Array.isArray(populatedBooking.services)) {
+        serviceNames = populatedBooking.services.map(service => {
+          console.log('DEBUG - Processing service:', service);
+          return service.name || service.toString();
+        });
+      } else {
+        console.warn('WARNING - Services not properly populated, using original service IDs');
+        // Fallback: try to get service names from the database
+        try {
+          const serviceRecords = await Service.find({ _id: { $in: services } });
+          serviceNames = serviceRecords.map(service => service.name);
+          console.log('DEBUG - Fallback service names:', serviceNames);
+        } catch (fallbackError) {
+          console.error('ERROR - Fallback service lookup failed:', fallbackError);
+          serviceNames = services.map(id => id.toString()); // Last resort
+        }
+      }
+      
+      console.log('DEBUG - Final service names for email:', serviceNames);
+      
       // Xác định URL cơ sở cho liên kết xác nhận
       const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
       
@@ -92,6 +159,7 @@ const createBooking = asyncHandler(async (req, res) => {  const {
         to: email,
         booking: {
           ...booking.toObject(),
+          services: serviceNames, // Use service names instead of ObjectIds
           barber_name: barberName,
           _id: createdBooking._id
         },
@@ -132,6 +200,18 @@ const getBookings = asyncHandler(async (req, res) => {
     // Lọc theo ID người dùng nếu có
     if (req.query.userId) {
       filter.user_id = req.query.userId;
+    }
+    
+    // Fetch all services for reference for potential mapping
+    let serviceMap = {};
+    try {
+      const allServices = await Service.find({}).lean();
+      allServices.forEach(service => {
+        serviceMap[service.name] = service._id;
+      });
+    } catch (error) {
+      console.log("Error fetching services for mapping:", error);
+      // Continue even if there's an error with service mapping
     }
     
     if (req.query.date) {
@@ -178,12 +258,11 @@ const getBookings = asyncHandler(async (req, res) => {
     const skip = (page - 1) * limit;
     
     console.log(`Phân trang: page=${page}, limit=${limit}, skip=${skip}`);
-    
-    // Lấy tổng số bản ghi cho phân trang
+      // Lấy tổng số bản ghi cho phân trang
     const totalCount = await Booking.countDocuments(filter);
     const totalPages = Math.ceil(totalCount / limit);
     
-    // Thay đổi cách truy vấn để tránh lỗi populate và thêm phân trang
+    // Query bookings without populating services first to avoid cast errors
     const bookings = await Booking.find(filter)
       .populate('barber_id', 'name specialization')
       .sort({ date: -1, time: -1 }) // Sắp xếp theo ngày và giờ (mới nhất trước)
@@ -191,23 +270,62 @@ const getBookings = asyncHandler(async (req, res) => {
       .limit(limit)
       .lean();
     
-    console.log(`Tìm thấy ${bookings.length} bookings trong tổng số ${totalCount}`);
-      // Định dạng bookings để bao gồm tên barber và khách
+    console.log(`Tìm thấy ${bookings.length} bookings trong tổng số ${totalCount}`);    // Định dạng bookings để bao gồm tên barber và khách
     const formattedBookings = await Promise.all(bookings.map(async (booking) => {
       const formattedBooking = { ...booking };
       
-      // Xử lý thông tin dịch vụ - hỗ trợ cả dịch vụ đơn lẻ và nhiều dịch vụ
+      // Xử lý thông tin dịch vụ - handle both legacy string data and ObjectId references
       if (booking.services && Array.isArray(booking.services) && booking.services.length > 0) {
-        // Nếu có mảng services, sử dụng nó
-        formattedBooking.services = booking.services;
-        formattedBooking.serviceName = booking.services.join(', '); // Tạo chuỗi để hiển thị
-      } else if (booking.service) {
-        // Nếu chỉ có dịch vụ đơn lẻ
+        // Check if services are ObjectIds or strings
+        const hasObjectIds = booking.services.some(service => 
+          mongoose.Types.ObjectId.isValid(service) && typeof service !== 'string'
+        );
+        
+        if (hasObjectIds) {
+          // Services are ObjectIds, populate them manually
+          try {
+            const serviceIds = booking.services.filter(service => 
+              mongoose.Types.ObjectId.isValid(service)
+            );
+            const populatedServices = await Service.find({ _id: { $in: serviceIds } }).lean();
+            formattedBooking.services = populatedServices;
+            formattedBooking.serviceName = populatedServices.map(service => service.name).join(', ');
+          } catch (error) {
+            console.log('Error populating services:', error);
+            // Fallback to showing service IDs
+            formattedBooking.serviceName = booking.services.join(', ');
+            formattedBooking.services = booking.services.map(serviceId => ({
+              _id: serviceId,
+              name: serviceId.toString(),
+              price: 0,
+              duration: 30,
+              description: 'Service ID'
+            }));
+          }
+        } else {
+          // Services are legacy strings
+          formattedBooking.serviceName = booking.services.join(', ');
+          formattedBooking.services = booking.services.map(serviceName => ({
+            _id: null,
+            name: serviceName,
+            price: 0,
+            duration: 30,
+            description: 'Legacy service'
+          }));
+        }
+      } else if (booking.service && typeof booking.service === 'string') {
+        // Handle legacy data with service field (string)
         formattedBooking.serviceName = booking.service;
-        formattedBooking.services = [booking.service]; // Tạo mảng để tương thích
+        formattedBooking.services = [{
+          _id: null,
+          name: booking.service,
+          price: 0,
+          duration: 30,
+          description: 'Legacy service'
+        }];
       } else {
-        // Không có thông tin dịch vụ
-        formattedBooking.serviceName = 'N/A';
+        // Fallback for bookings without services
+        formattedBooking.serviceName = 'No services specified';
         formattedBooking.services = [];
       }
       
@@ -257,34 +375,165 @@ const getBookings = asyncHandler(async (req, res) => {
 // @route   GET /api/bookings/my-bookings
 // @access  Riêng tư
 const getUserBookings = asyncHandler(async (req, res) => {
-  const bookings = await Booking.find({ user_id: req.user._id })
-    .populate('barber_id', 'name specialization')
-    .sort({ date: -1, createdAt: -1 }); // Sắp xếp theo ngày (mới nhất trước)
-  
-  res.json(bookings);
+  try {
+    // Fetch all services for reference if needed for legacy data
+    let serviceMap = {};
+    try {
+      const allServices = await Service.find({}).lean();
+      allServices.forEach(service => {
+        serviceMap[service.name] = service._id;
+      });
+    } catch (error) {
+      console.log("Error fetching services for mapping in getUserBookings:", error);
+    }
+      const bookings = await Booking.find({ user_id: req.user._id })
+      .populate('barber_id', 'name specialization')
+      .sort({ date: -1, createdAt: -1 }) // Sắp xếp theo ngày (mới nhất trước)
+      .lean();
+      // Process bookings to handle legacy data
+    const processedBookings = await Promise.all(bookings.map(async (booking) => {
+      const processedBooking = { ...booking };
+      
+      // Handle services field - convert string services to objects if necessary
+      if (booking.services && Array.isArray(booking.services) && booking.services.length > 0) {
+        // Check if services are ObjectIds or strings
+        const hasObjectIds = booking.services.some(service => 
+          mongoose.Types.ObjectId.isValid(service) && typeof service !== 'string'
+        );
+        
+        if (hasObjectIds) {
+          // Services are ObjectIds, populate them manually
+          try {
+            const serviceIds = booking.services.filter(service => 
+              mongoose.Types.ObjectId.isValid(service)
+            );
+            const populatedServices = await Service.find({ _id: { $in: serviceIds } }).lean();
+            processedBooking.services = populatedServices;
+            processedBooking.serviceNames = populatedServices.map(service => service.name);
+          } catch (error) {
+            console.log('Error populating services in getUserBookings:', error);
+            // Fallback to showing service IDs
+            processedBooking.serviceNames = booking.services.map(service => service.toString());
+          }
+        } else {
+          // Services are legacy strings
+          processedBooking.serviceNames = booking.services;
+          processedBooking.services = booking.services.map(serviceName => ({
+            _id: null,
+            name: serviceName,
+            price: 0,
+            duration: 30,
+            description: 'Legacy service'
+          }));
+        }
+      } else if (booking.service && typeof booking.service === 'string') {
+        // Legacy booking with string service, convert to services array
+        processedBooking.services = [{
+          name: booking.service,
+          price: 0,
+          duration: 30,
+          description: 'Legacy service'
+        }];
+        processedBooking.serviceNames = [booking.service];
+      } else {
+        // No services found
+        processedBooking.services = [];
+        processedBooking.serviceNames = [];
+      }
+      
+      return processedBooking;
+    }));
+    
+    res.json(processedBookings);
+  } catch (error) {
+    console.error('Error getting user bookings:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Không thể lấy danh sách bookings của bạn',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
 });
 
 // @desc    Lấy booking theo ID
 // @route   GET /api/bookings/:id
 // @access  Riêng tư
-const getBookingById = asyncHandler(async (req, res) => {
-  const booking = await Booking.findById(req.params.id)
-    .populate('barber_id', 'name specialization');
+const getBookingById = asyncHandler(async (req, res) => {  try {
+    const booking = await Booking.findById(req.params.id)
+      .populate('barber_id', 'name specialization')
+      .lean();
 
-  // Kiểm tra nếu booking không tồn tại
-  if (!booking) {
-    res.status(404);
-    throw new Error('Không tìm thấy booking');
+    // Kiểm tra nếu booking không tồn tại
+    if (!booking) {
+      res.status(404);
+      throw new Error('Không tìm thấy booking');
+    }
+      // Kiểm tra quyền truy cập trước khi xử lý dữ liệu
+    // Staff và admin có thể xem tất cả bookings
+    const isStaffOrAdmin = ['admin', 'manager', 'barber', 'staff'].includes(req.user.role);
+    
+    // Booking owner có thể xem booking của mình
+    const isOwner = booking.user_id && booking.user_id.toString() === req.user._id.toString();
+    
+    // Nếu không phải staff/admin và không phải owner, từ chối truy cập
+    if (!isStaffOrAdmin && !isOwner) {
+      console.log(`Access denied - User: ${req.user._id}, Role: ${req.user.role}, Booking user_id: ${booking.user_id}`);
+      res.status(403);
+      throw new Error('Không có quyền xem booking này');
+    }
+
+    // Handle services field - handle both legacy string data and ObjectId references
+    if (booking.services && Array.isArray(booking.services) && booking.services.length > 0) {
+      // Check if services are ObjectIds or strings
+      const hasObjectIds = booking.services.some(service => 
+        mongoose.Types.ObjectId.isValid(service) && typeof service !== 'string'
+      );
+      
+      if (hasObjectIds) {
+        // Services are ObjectIds, populate them manually
+        try {
+          const serviceIds = booking.services.filter(service => 
+            mongoose.Types.ObjectId.isValid(service)
+          );
+          const populatedServices = await Service.find({ _id: { $in: serviceIds } }).lean();
+          booking.services = populatedServices;
+          booking.serviceNames = populatedServices.map(service => service.name);
+        } catch (error) {
+          console.log('Error populating services in getBookingById:', error);
+          // Fallback to showing service IDs
+          booking.serviceNames = booking.services.map(service => service.toString());
+        }
+      } else {
+        // Services are legacy strings
+        booking.serviceNames = booking.services;
+        booking.services = booking.services.map(serviceName => ({
+          _id: null,
+          name: serviceName,
+          price: 0,
+          duration: 30,
+          description: 'Legacy service'
+        }));
+      }
+    } else if (booking.service && typeof booking.service === 'string') {
+      // Handle legacy data with service field (string)
+      booking.serviceNames = [booking.service];
+      booking.services = [{
+        name: booking.service,
+        price: 0,
+        duration: 30,
+        description: 'Legacy service'
+      }];
+    }
+
+    res.json(booking);
+  } catch (error) {
+    console.error('Error getting booking by id:', error);
+    res.status(error.statusCode || 500).json({
+      status: 'error',
+      message: error.message || 'Không thể lấy thông tin booking',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
-
-  // Kiểm tra nếu booking không thuộc người dùng hoặc không phải admin
-  if (booking.user_id && booking.user_id.toString() !== req.user._id.toString() && 
-      req.user.role !== 'admin' && req.user.role !== 'manager') {
-    res.status(403);
-    throw new Error('Không có quyền xem booking này');
-  }
-
-  res.json(booking);
 });
 
 // @desc    Hủy booking
@@ -311,9 +560,9 @@ const cancelBooking = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error('Không thể hủy booking đã hoàn thành');
   }
-
   // Cập nhật trạng thái booking thành cancelled
   booking.status = 'cancelled';
+  booking.occupiedTimeSlots = []; // Clear occupied time slots
   const updatedBooking = await booking.save();
 
   res.json(updatedBooking);
@@ -342,8 +591,175 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
   // Cập nhật trạng thái booking
   booking.status = status;
   const updatedBooking = await booking.save();
-
   res.json(updatedBooking);
+});
+
+// @desc    Cập nhật thông tin booking đầy đủ (dành cho staff)
+// @route   PUT /api/bookings/:id
+// @access  Riêng tư/Staff
+const updateBooking = asyncHandler(async (req, res) => {
+  const { 
+    customerName, 
+    customerPhone, 
+    customerEmail, 
+    services, 
+    barberId, 
+    date, 
+    time, 
+    notes 
+  } = req.body;
+
+  const booking = await Booking.findById(req.params.id);
+
+  // Kiểm tra nếu booking không tồn tại
+  if (!booking) {
+    res.status(404);
+    throw new Error('Không tìm thấy booking');
+  }
+  // Xác thực barberId nếu có
+  if (barberId) {
+    if (!mongoose.Types.ObjectId.isValid(barberId)) {
+      res.status(400);
+      throw new Error('Định dạng Barber ID không hợp lệ');
+    }
+
+    const barber = await Barber.findById(barberId);
+    if (!barber) {
+      res.status(404);
+      throw new Error('Không tìm thấy Barber');
+    }
+  }
+
+  // Xác thực services nếu có
+  if (services !== undefined) {
+    if (!Array.isArray(services) || services.length === 0) {
+      res.status(400);
+      throw new Error('Services phải là mảng không rỗng');
+    }
+
+    // Kiểm tra tất cả service IDs có hợp lệ không
+    for (const serviceId of services) {
+      if (!mongoose.Types.ObjectId.isValid(serviceId)) {
+        res.status(400);
+        throw new Error(`Định dạng Service ID không hợp lệ: ${serviceId}`);
+      }
+    }
+
+    // Kiểm tra tất cả services có tồn tại không
+    const serviceRecords = await Service.find({ _id: { $in: services } });
+    if (serviceRecords.length !== services.length) {
+      res.status(404);
+      throw new Error('Một hoặc nhiều service không tồn tại');
+    }
+  }
+  // Cập nhật các trường được cung cấp
+  if (customerName !== undefined) booking.name = customerName;
+  if (customerPhone !== undefined) booking.phone = customerPhone;
+  if (customerEmail !== undefined) booking.email = customerEmail;
+  if (services !== undefined) booking.services = services;
+  if (barberId !== undefined) booking.barber_id = barberId;
+  if (date !== undefined) {
+    // Chuyển đổi date sang đúng múi giờ Việt Nam
+    const vnDate = dateUtils.toVNDateTime(date);
+    booking.date = vnDate;
+  }
+  if (time !== undefined) booking.time = time;
+  if (notes !== undefined) booking.notes = notes;
+    // Recalculate occupiedTimeSlots if time or services changed
+  if (time !== undefined || services !== undefined) {
+    // Get total duration based on services
+    let totalDuration = 30; // Default duration
+      if (services && Array.isArray(services) && services.length > 0) {
+      try {
+        // Services are already validated as ObjectIds above
+        const serviceRecords = await Service.find({ _id: { $in: services } });
+        console.log(`Found ${serviceRecords.length} service records for duration calculation`);
+        
+        if (serviceRecords && serviceRecords.length > 0) {
+          totalDuration = serviceRecords.reduce((total, service) => {
+            return total + (service.duration || 30); // Default to 30 minutes if duration not specified
+          }, 0);
+        }
+      } catch (error) {
+        console.warn('Error calculating service duration during update:', error);
+      }
+    }
+    
+    // Recalculate occupied time slots
+    const occupiedTimeSlots = [];
+    const [startHour, startMinute] = booking.time.split(':').map(Number);
+    let currentTotalMinutes = startHour * 60 + startMinute;
+    const endTotalMinutes = currentTotalMinutes + totalDuration;
+    
+    // Create list of all occupied time slots (30-minute intervals)
+    while (currentTotalMinutes < endTotalMinutes) {
+      const hours = Math.floor(currentTotalMinutes / 60);
+      const minutes = currentTotalMinutes % 60;
+      const timeSlot = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      occupiedTimeSlots.push(timeSlot);
+      currentTotalMinutes += 30; // Move to next 30-minute slot
+    }
+    
+    booking.occupiedTimeSlots = occupiedTimeSlots;
+    booking.duration = totalDuration;
+  }
+  try {
+    const updatedBooking = await booking.save();
+      // Populate thông tin barber và services để trả về cho client
+    const populatedBooking = await Booking.findById(updatedBooking._id)
+      .populate('barber_id', 'name specialization')
+      .populate('services', 'name price duration description');
+
+    res.json({
+      success: true,
+      message: 'Booking đã được cập nhật thành công',
+      booking: populatedBooking
+    });
+  } catch (error) {
+    console.error('Error saving booking:', error);
+    
+    // Handle VersionError specifically
+    if (error.name === 'VersionError') {
+      // Fetch the latest version of the document
+      const freshBooking = await Booking.findById(req.params.id);
+      
+      if (!freshBooking) {
+        res.status(404);
+        throw new Error('Booking no longer exists');
+      }
+      
+      // Apply updates to the fresh booking
+      if (customerName !== undefined) freshBooking.name = customerName;
+      if (customerPhone !== undefined) freshBooking.phone = customerPhone;
+      if (customerEmail !== undefined) freshBooking.email = customerEmail;
+      if (services !== undefined) freshBooking.services = services;
+      if (barberId !== undefined) freshBooking.barber_id = barberId;
+      if (time !== undefined) freshBooking.time = time;
+      if (notes !== undefined) freshBooking.notes = notes;
+      
+      if (date !== undefined) {
+        // Convert date to VN timezone
+        const vnDate = dateUtils.toVNDateTime(date);
+        freshBooking.date = vnDate;
+      }
+      
+      // Save the fresh booking with updates
+      const updatedBooking = await freshBooking.save();
+      
+      // Populate barber info for response
+      const populatedBooking = await Booking.findById(updatedBooking._id)
+        .populate('barber_id', 'name specialization');
+
+      res.json({
+        success: true,
+        message: 'Booking đã được cập nhật thành công (retry)',
+        booking: populatedBooking
+      });
+    } else {
+      res.status(500);
+      throw new Error(`Error updating booking: ${error.message}`);
+    }
+  }
 });
 
 /**
@@ -413,19 +829,26 @@ const getAvailableTimeSlots = async (req, res) => {
     // Nếu workingHours không được định nghĩa, sử dụng giờ mặc định
     const start = barber.workingHours?.start || '09:00';
     const end = barber.workingHours?.end || '19:00';
-    
-    // Sử dụng dateUtils.generateTimeSlots thay vì hàm local
+      // Sử dụng dateUtils.generateTimeSlots thay vì hàm local
     const allTimeSlots = dateUtils.generateTimeSlots(new Date(date), 30, { open: start, close: end });
-
+    
     // Tìm tất cả booking cho barber ngày đó
-    const bookings = await Booking.find({
+    const query = {
       barber_id: barberId,
       date: {
         $gte: dateUtils.getVNStartOfDay(new Date(date)),
         $lte: dateUtils.getVNEndOfDay(new Date(date))
       },
       status: { $in: ['pending', 'confirmed'] }
-    });
+    };
+
+    // Nếu có excludeBookingId, loại trừ booking đó khỏi danh sách
+    const excludeBookingId = req.query.excludeBookingId;
+    if (excludeBookingId) {
+      query._id = { $ne: excludeBookingId };
+    }
+
+    const bookings = await Booking.find(query);
 
     // Đánh dấu khung giờ là có sẵn hay không
     const bookedTimes = bookings.map(booking => booking.time);
@@ -523,7 +946,7 @@ const checkTimeSlotAvailability = async (req, res) => {
  */
 const getTimeSlotStatus = async (req, res) => {
   try {
-    const { date, barberId } = req.query;
+    const { date, barberId, services, excludeBookingId } = req.query;
     
     if (!date) {
       return res.status(400).json({
@@ -577,50 +1000,203 @@ const getTimeSlotStatus = async (req, res) => {
           timeSlots: []
         }
       });
-    }
-
-    // Sinh tất cả khung giờ dựa trên giờ làm việc
+    }    // Sinh tất cả khung giờ dựa trên giờ làm việc
     // Nếu workingHours không được định nghĩa, sử dụng giờ mặc định
     const start = barber.workingHours?.start || '09:00';
     const end = barber.workingHours?.end || '19:00';
-    const allTimeSlots = dateUtils.generateTimeSlots(new Date(date), 30, { open: start, close: end });
+    const allTimeSlots = dateUtils.generateTimeSlots(new Date(date), 30, { open: start, close: end });    // Parse services để tính total duration
+    let totalDuration = 30; // Default duration
+    if (services) {
+      try {
+        const serviceIds = JSON.parse(services);        if (Array.isArray(serviceIds) && serviceIds.length > 0) {
+          // Filter out invalid ObjectIds (null, undefined, or invalid formats)
+          const validServiceIds = serviceIds.filter(id => {
+            if (!id) return false;
+            // Check if it's a valid ObjectId format (24 hex characters)
+            if (typeof id === 'string' && /^[0-9a-fA-F]{24}$/.test(id)) {
+              return true;
+            }
+            // Handle legacy service objects
+            if (typeof id === 'object' && id._id && /^[0-9a-fA-F]{24}$/.test(id._id)) {
+              return true;
+            }
+            return false;
+          }).map(id => {
+            // Extract ObjectId from service objects if needed
+            return typeof id === 'object' ? id._id : id;
+          });
+          
+          if (validServiceIds.length > 0) {
+            // Lấy thông tin services từ database
+            const selectedServices = await Service.find({ _id: { $in: validServiceIds } });
+            totalDuration = selectedServices.reduce((total, service) => {
+              return total + (service.duration || 30);
+            }, 0);
+          }
+        }
+      } catch (parseError) {
+        console.warn('Error parsing services:', parseError);
+        // Sử dụng default duration nếu parse lỗi
+      }
+    }// Normalize date to YYYY-MM-DD format to avoid timezone issues
+    const [year, month, day] = date.split('-');
+    const normalizedDate = `${year}-${month}-${day}`;
+    console.log(`Normalized date: ${normalizedDate}`);
 
-    // Tìm tất cả booking cho barber ngày đó
-    const bookings = await Booking.find({
+    // Convert to a proper date object using our utility function for consistent handling
+    const dateObj = dateUtils.toVNDateTime(normalizedDate);
+    
+    // Ensure proper date handling for cross-month comparisons
+    const startOfDayQuery = dateUtils.getVNStartOfDay(dateObj);
+    const endOfDayQuery = dateUtils.getVNEndOfDay(dateObj);
+    
+    console.log(`Finding bookings for date: ${normalizedDate}`);
+    console.log(`Date object created: ${dateObj.toISOString()}`);
+    console.log(`Start date for query: ${startOfDayQuery.toISOString()}`);
+    console.log(`End date for query: ${endOfDayQuery.toISOString()}`);    console.log(`Month being queried: ${dateObj.getMonth() + 1}`); // Add 1 since getMonth() is 0-indexed
+    
+    // Build query to find existing bookings
+    const bookingQuery = {
       barber_id: barberId,
       date: {
-        $gte: dateUtils.getVNStartOfDay(new Date(date)),
-        $lte: dateUtils.getVNEndOfDay(new Date(date))
+        $gte: startOfDayQuery,
+        $lte: endOfDayQuery
       },
       status: { $in: ['pending', 'confirmed'] }
-    });
+    };
+    
+    // Exclude the current booking being edited if provided
+    if (excludeBookingId) {
+      bookingQuery._id = { $ne: excludeBookingId };
+      console.log(`Excluding booking ID from time slot calculation: ${excludeBookingId}`);
+    }
+    
+    const bookings = await Booking.find(bookingQuery);
+    
+    console.log(`Found ${bookings.length} bookings for barber ${barberId} on ${normalizedDate}`);
+    if (bookings.length > 0) {
+      bookings.forEach((booking, index) => {
+        console.log(`Booking ${index + 1}:`);
+        console.log(`- Time: ${booking.time}`);
+        console.log(`- Date: ${booking.date}`);
+        console.log(`- Services: ${booking.services}`);
+        console.log(`- Occupied time slots: ${booking.occupiedTimeSlots}`);
+      });
+    }
+    
+    // Tạo set của tất cả occupied time slots từ existing bookings
+    const occupiedSlots = new Set();
+    console.log(`Processing ${bookings.length} bookings to find occupied slots...`);
+    
+    bookings.forEach((booking, bookingIndex) => {
+      console.log(`Processing booking ${bookingIndex + 1}: ${booking.time} on ${booking.date}`);
+      
+      if (booking.occupiedTimeSlots && Array.isArray(booking.occupiedTimeSlots)) {
+        // Sử dụng occupiedTimeSlots nếu có
+        console.log(`Booking ${bookingIndex + 1} has pre-calculated occupied slots:`, booking.occupiedTimeSlots);
+        booking.occupiedTimeSlots.forEach(slot => occupiedSlots.add(slot));
+      } else {
+        // Fallback: tính toán từ time và duration
+        const duration = booking.duration || 30;
+        const [startHour, startMinute] = booking.time.split(':').map(Number);
+        let currentTotalMinutes = startHour * 60 + startMinute;
+        const endTotalMinutes = currentTotalMinutes + duration;
+        
+        console.log(`Calculating occupied slots for booking ${bookingIndex + 1}: ${booking.time} (${duration} mins)`);
 
-    // Đánh dấu khung giờ là có sẵn hay không
-    const bookedTimes = bookings.map(booking => booking.time);
+        while (currentTotalMinutes < endTotalMinutes) {
+          const hours = Math.floor(currentTotalMinutes / 60);
+          const minutes = currentTotalMinutes % 60;
+          const timeSlot = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+          occupiedSlots.add(timeSlot);
+          currentTotalMinutes += 30; // Move to next 30-minute slot
+        }
+      }
+    });
+    
+    console.log(`Total occupied slots found: ${occupiedSlots.size}`);
+    console.log(`Occupied slots:`, Array.from(occupiedSlots));
     
     // Xác định nếu khung giờ đã qua cho hôm nay
     const today = new Date().toISOString().split('T')[0];
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
-    const currentTotalMinutes = currentHour * 60 + currentMinute;
+    const currentTotalMinutes = currentHour * 60 + currentMinute;    // Helper function để kiểm tra xem có đủ slots liên tiếp không
+    const hasConsecutiveSlots = (startSlotIndex, requiredDuration) => {
+      const slotsNeeded = Math.ceil(requiredDuration / 30);
+      const startSlot = allTimeSlots[startSlotIndex];
+      
+      console.log(`Checking consecutive slots for ${startSlot}: need ${slotsNeeded} slots for ${requiredDuration} minutes`);
+      
+      if (startSlotIndex + slotsNeeded > allTimeSlots.length) {
+        console.log(`Not enough slots available: need ${slotsNeeded}, have ${allTimeSlots.length - startSlotIndex}`);
+        return false;
+      }
+
+      // Kiểm tra tất cả slots cần thiết
+      for (let i = 0; i < slotsNeeded; i++) {
+        const slotIndex = startSlotIndex + i;
+        const slotTime = allTimeSlots[slotIndex];
+        
+        // Kiểm tra nếu slot này đã qua
+        if (date === today) {
+          const [slotHour, slotMinute] = slotTime.split(':').map(Number);
+          const slotTotalMinutes = slotHour * 60 + slotMinute;
+          if (slotTotalMinutes < currentTotalMinutes + 30) {
+            console.log(`Slot ${slotTime} is in the past`);
+            return false;
+          }
+        }
+
+        // Kiểm tra nếu slot này đã bị chiếm dụng
+        if (occupiedSlots.has(slotTime)) {
+          console.log(`Slot ${slotTime} is occupied`);
+          return false;
+        }
+      }
+      
+      console.log(`${startSlot}: All ${slotsNeeded} consecutive slots are available`);
+      return true;
+    };
 
     // Tạo đối tượng khung giờ với thông tin availability và quá khứ
-    const timeSlots = allTimeSlots.map(slot => {
+    const timeSlots = allTimeSlots.map((slot, index) => {
       // Kiểm tra nếu khung giờ đã qua nếu là hôm nay
       let isPast = false;
-      if (date === today) {
+      
+      // Compare dates properly instead of string comparison
+      const dateObj = new Date(date);
+      const todayObj = new Date(today);
+      const isToday = dateObj.getFullYear() === todayObj.getFullYear() &&
+                     dateObj.getMonth() === todayObj.getMonth() &&
+                     dateObj.getDate() === todayObj.getDate();
+                     
+      if (isToday) {
         const [slotHour, slotMinute] = slot.split(':').map(Number);
         const slotTotalMinutes = slotHour * 60 + slotMinute;
         
         // Khung giờ được coi là "quá khứ" nếu ít hơn 30 phút từ bây giờ
         isPast = slotTotalMinutes < currentTotalMinutes + 30;
       }
-
+      
+      // Check if the slot is occupied by an existing appointment
+      const isOccupied = occupiedSlots.has(slot);      // Kiểm tra availability dựa trên total duration
+      let isAvailable = !isPast && !isOccupied;
+      if (isAvailable) {
+        // Kiểm tra xem có đủ consecutive slots cho duration không
+        isAvailable = hasConsecutiveSlots(index, totalDuration);
+      }
+      
+      console.log(`Slot ${slot}: isPast=${isPast}, isOccupied=${isOccupied}, isAvailable=${isAvailable}, totalDuration=${totalDuration}`);
+      
       return {
         start_time: slot,
         isPast: isPast,
-        isAvailable: !bookedTimes.includes(slot)
+        isAvailable: isAvailable,
+        isOccupied: isOccupied,
+        requiredDuration: totalDuration,
+        occupiedTimeSlots: Array.from(occupiedSlots) // Send entire list of occupied slots to frontend
       };
     });
 
@@ -818,6 +1394,7 @@ module.exports = {
   getUserBookings,
   getBookingById,
   cancelBooking,
+  updateBooking,
   updateBookingStatus,
   getAvailableTimeSlots,
   checkTimeSlotAvailability,

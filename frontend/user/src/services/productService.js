@@ -1,14 +1,7 @@
 /**
  * Service quản lý các API liên quan đến sản phẩm
  */
-import axios from 'axios';
-import { API_URL, getRequestConfig } from '../utils/apiConfig';
-
-// Helper function to get auth headers - maintained for backward compatibility
-const getAuthHeader = () => {
-  const token = localStorage.getItem('token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+import api from './api';
 
 /**
  * Lấy danh sách sản phẩm với các bộ lọc tùy chọn
@@ -23,12 +16,8 @@ export const getProducts = async (filters = {}) => {
       if (filters[key] !== undefined && filters[key] !== null && filters[key] !== '') {
         queryParams.append(key, filters[key]);
       }
-    });
-    const queryString = queryParams.toString();
-    const endpoint = queryString ? `${API_URL}/products?${queryString}` : `${API_URL}/products`;
-    
-    // Use the shared API config
-    const response = await axios.get(endpoint, getRequestConfig());
+    });    // Use the api instance with params instead of constructing URL manually
+    const response = await api.get('/products', { params: filters });
     return response;
   } catch (error) {
     console.error('Get products error:', error);
@@ -43,11 +32,11 @@ export const getProducts = async (filters = {}) => {
  */
 export const getProductById = async (id) => {
   try {
-    const response = await axios.get(`${API_URL}/products/${id}`, getRequestConfig());
+    const response = await api.get(`/products/${id}`);
     return response;
   } catch (error) {
     console.error(`Get product ${id} error:`, error);
-    throw error;
+    return null;
   }
 };
 
@@ -85,11 +74,11 @@ export const searchProducts = async (keyword) => {
  */
 export const getProductsByCategoryShowcase = async () => {
   try {
-    const response = await axios.get(`${API_URL}/products/showcase-by-category`, getRequestConfig());
+    const response = await api.get(`/products/showcase-by-category`);
     return response.data;
   } catch (error) {
     console.error('Get products showcase by category error:', error);
-    throw error;
+    return [];
   }
 };
 

@@ -9,6 +9,23 @@
  */
 const toVNDateTime = (date) => {
   if (!date) return null;
+  
+  // Nếu date là string với định dạng YYYY-MM-DD, chuyển đổi nó đúng cách
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    // Tạo một date mới với giờ 00:00:00 ở múi giờ UTC
+    const [year, month, day] = date.split('-').map(Number);
+    console.log(`Converting YYYY-MM-DD format: ${date} to Date object (year: ${year}, month: ${month-1}, day: ${day})`);
+    
+    // Create Date with consistent timezone handling (UTC)
+    // First create the date as a string in ISO format to avoid timezone issues
+    const isoDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T00:00:00.000Z`;
+    const dateObj = new Date(isoDate);
+    
+    console.log(`Created Date object: ${dateObj.toISOString()}`);
+    return dateObj;
+  }
+  
+  // Xử lý trường hợp date đã là object
   return new Date(date);
 };
 
@@ -45,8 +62,16 @@ const formatTime = (date) => {
  */
 const getVNStartOfDay = (date = new Date()) => {
   const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
+  
+  // Extract year, month, day to create a consistent date
+  const year = d.getFullYear();
+  const month = d.getMonth(); // 0-indexed
+  const day = d.getDate();
+  
+  // Create a new date object with consistent time (start of day)
+  const startOfDay = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+  console.log(`Created start of day for ${date}: ${startOfDay.toISOString()}`);
+  return startOfDay;
 };
 
 /**
@@ -55,8 +80,16 @@ const getVNStartOfDay = (date = new Date()) => {
  */
 const getVNEndOfDay = (date = new Date()) => {
   const d = new Date(date);
-  d.setHours(23, 59, 59, 999);
-  return d;
+  
+  // Extract year, month, day to create a consistent date
+  const year = d.getFullYear();
+  const month = d.getMonth(); // 0-indexed
+  const day = d.getDate();
+  
+  // Create a new date object with consistent time (end of day)
+  const endOfDay = new Date(Date.UTC(year, month, day, 23, 59, 59, 999));
+  console.log(`Created end of day for ${date}: ${endOfDay.toISOString()}`);
+  return endOfDay;
 };
 
 /**

@@ -56,21 +56,31 @@ const BookingPage = () => {
   
   // For getting URL parameters and navigation
   const location = useLocation();
-  const navigate = useNavigate();
-
-  // Format date to YYYY-MM-DD for comparing with input date value
+  const navigate = useNavigate();  // Format date to YYYY-MM-DD for comparing with input date value
   const formatDate = useCallback((date) => {
-    return date.toISOString().split('T')[0];
+    // Always create a new Date object to avoid reference issues
+    const dateObj = new Date(date);
+    
+    // Ensure we're handling the date properly to avoid timezone issues
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    
+    const formattedDate = `${year}-${month}-${day}`;
+    console.log(`Formatting date: ${date} -> ${formattedDate}`);
+    return formattedDate;
   }, []);
-
   // Fetch barbers list from API
   useEffect(() => {
     const fetchBarbers = async () => {
       try {
         setLoadingBarbers(true);
         const barbers = await barberService.getAllBarbers();
-        setBarberList(barbers);
-      } catch (error) {        // Error handled silently
+        // barberService now returns an empty array instead of throwing on error
+        setBarberList(Array.isArray(barbers) ? barbers : []);
+      } catch (error) {
+        console.error("Error in fetchBarbers:", error);
+        setBarberList([]);
       } finally {
         setLoadingBarbers(false);
       }
@@ -78,17 +88,18 @@ const BookingPage = () => {
 
     fetchBarbers();
   }, []);
-  
-  // Fetch services list from API
+    // Fetch services list from API
   useEffect(() => {
     const fetchServices = async () => {
       try {
         setLoadingServices(true);
         const response = await serviceService.getAllServices();
-        // Only use active services
-        const activeServices = response.data.filter(service => service.isActive !== false);
+        // Only use active services - response now has a data property that contains an array or is empty
+        const activeServices = response && response.data ? 
+          response.data.filter(service => service.isActive !== false) : [];
         setServiceList(activeServices);
-      } catch (error) {        // Error handled silently
+      } catch (error) {
+        console.error("Error fetching services in BookingPage:", error);
         // If API fails, provide empty services list
         setServiceList([]);
       } finally {
@@ -97,23 +108,204 @@ const BookingPage = () => {
     };
 
     fetchServices();
-  }, []);  // Check if a time slot should be disabled - wrapped in useCallback
+  }, []);  
+  
+  // Calculate total duration of all selected services
+  const calculateTotalDuration = (services) => {
+    if (!services || services.length === 0) return 0;
+    
+    return services.reduce((total, service) => {
+      const duration = service.duration || 30; // Default to 30 minutes if not specified
+      return total + duration;
+    }, 0);
+  };
+  
+  // Calculate end time based on start time and duration
+  const calculateEndTime = (startTime, durationMinutes) => {
+    // Parse start time
+    const [hours, minutes] = startTime.split(':').map(Number);
+    
+    // Calculate total minutes
+    const startTotalMinutes = hours * 60 + minutes;
+    const endTotalMinutes = startTotalMinutes + durationMinutes;
+    
+    const endHours = Math.floor(endTotalMinutes / 60);
+    const endMinutes = endTotalMinutes % 60;
+    
+    return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+  };  // Check if a time slot is occupied by an existing appointment
+  const isSlotOccupiedByExistingAppointment = (timeSlot) => {
+    if (timeSlotStatuses.length === 0) {
+      return false;
+    }
+    
+    // Log current date for debugging
+    if (bookingData.date) {
+      const selectedDate = new Date(bookingData.date);
+      console.log(`Checking occupied slots for: ${selectedDate.toDateString()}, time slot: ${timeSlot}`);
+    }
+    
+    // Log all occupied time slots from API response
+    console.log("API response time slots count:", timeSlotStatuses.length);
+    
+    // First approach: Check if this specific slot object is marked as occupied directly
+    const slotStatus = timeSlotStatuses.find(slot => slot.start_time === timeSlot);
+    
+    // Direct check on the slot's isOccupied flag
+    if (slotStatus && slotStatus.isOccupied === true) {
+      console.log(`Time slot ${timeSlot} is marked as occupied by the API response`);
+      return true;
+    }
+    
+    // Second approach: Check all occupied time slots from API response
+    // This is especially important for cross-month bookings
+    let allOccupiedTimeSlots = [];
+    
+    // Only take occupiedTimeSlots from the first time slot as they all contain the same list
+    // This avoids duplicate checking and is more efficient
+    if (timeSlotStatuses.length > 0 && 
+        timeSlotStatuses[0].occupiedTimeSlots && 
+        Array.isArray(timeSlotStatuses[0].occupiedTimeSlots)) {
+      allOccupiedTimeSlots = [...timeSlotStatuses[0].occupiedTimeSlots];
+      console.log(`Found ${allOccupiedTimeSlots.length} occupied time slots from API response`);
+    } else {
+      // Fallback: gather occupied slots from each time slot object
+      timeSlotStatuses.forEach(slot => {
+        // Add occupiedTimeSlots if available
+        if (slot.occupiedTimeSlots && Array.isArray(slot.occupiedTimeSlots)) {
+          allOccupiedTimeSlots = [...allOccupiedTimeSlots, ...slot.occupiedTimeSlots];
+        }
+        
+        // Add any directly marked occupied slots
+        if (slot.isOccupied) {
+          allOccupiedTimeSlots.push(slot.start_time);
+        }
+      });
+    }
+    
+    // Remove duplicates from our occupied slots list
+    allOccupiedTimeSlots = [...new Set(allOccupiedTimeSlots)];
+    console.log(`Total unique occupied time slots: ${allOccupiedTimeSlots.length}`);
+    
+    // Check if the exact time slot is in our occupied list
+    if (allOccupiedTimeSlots.includes(timeSlot)) {
+      console.log(`Time slot ${timeSlot} is in the occupiedTimeSlots list`);
+      return true;
+    }
+    
+    // Third approach: Check overlapping slots based on duration
+    // Convert current timeSlot to minutes for comparison
+    const [currentHour, currentMinute] = timeSlot.split(':').map(Number);
+    const currentSlotMinutes = currentHour * 60 + currentMinute;
+    
+    // Check if this slot falls within the duration of any occupied slot
+    const isWithinOccupiedRange = allOccupiedTimeSlots.some(occupiedSlot => {
+      // Get the start time of the occupied slot
+      const [occupiedHour, occupiedMinute] = occupiedSlot.split(':').map(Number);
+      const occupiedStartMinutes = occupiedHour * 60 + occupiedMinute;
+      
+      // Check if this time slot falls within 30 minutes of any occupied slot
+      // (standard duration for a single slot)
+      const overlaps = (
+        (currentSlotMinutes >= occupiedStartMinutes && currentSlotMinutes < occupiedStartMinutes + 30) || 
+        (occupiedStartMinutes >= currentSlotMinutes && occupiedStartMinutes < currentSlotMinutes + 30)
+      );
+      
+      if (overlaps) {
+        console.log(`Time slot ${timeSlot} overlaps with occupied time slot ${occupiedSlot}`);
+      }
+      
+      return overlaps;
+    });
+    
+    return isWithinOccupiedRange;
+  };
+    // Check if a time slot and subsequent slots (based on duration) are available
+  const checkTimeSlotAvailability = (startTime, durationMinutes = 30) => {
+    // If no time slots loaded from backend, assume available (fallback behavior)
+    if (timeSlotStatuses.length === 0) return true;
+    
+    // Default to 30 minutes if no duration or services selected
+    const minutes = durationMinutes > 0 ? durationMinutes : 30;
+    
+    // Calculate how many 30-minute slots we need (time slots are always in 30-minute intervals)
+    // We need to check all slots that the appointment duration would overlap
+    const slotsNeeded = Math.ceil(minutes / 30);
+    
+    // Find the index of the start time
+    const startIndex = timeSlotStatuses.findIndex(slot => slot.start_time === startTime);
+    if (startIndex === -1) {
+      console.log(`Start time ${startTime} not found in available slots`);
+      return false;
+    }
+    
+    // Calculate the actual end time of the appointment
+    const appointmentEndTime = calculateEndTime(startTime, minutes);
+    
+    // Check if all time slots that the appointment would overlap are available
+    for (let i = 0; i < slotsNeeded; i++) {
+      const slotIndex = startIndex + i;
+      
+      // If we run out of slots, return false
+      if (slotIndex >= timeSlotStatuses.length) {
+        console.log(`Time slot ${startTime} is not available for ${durationMinutes} minutes - not enough slots remaining (need ${slotsNeeded}, only ${timeSlotStatuses.length - startIndex} available)`);
+        return false;
+      }
+      
+      const currentSlot = timeSlotStatuses[slotIndex];
+      
+      // For the last slot, check if the appointment would actually overlap with it
+      if (i === slotsNeeded - 1) {
+        const [slotHour, slotMinute] = currentSlot.start_time.split(':').map(Number);
+        const slotStartMinutes = slotHour * 60 + slotMinute;
+        
+        const [endHour, endMinute] = appointmentEndTime.split(':').map(Number);
+        const appointmentEndMinutes = endHour * 60 + endMinute;
+        
+        // If the appointment ends before or exactly at the start of this slot, we don't need to check it
+        if (appointmentEndMinutes <= slotStartMinutes) {
+          break;
+        }
+      }
+      
+      // Check if the current slot is past, unavailable, or occupied by an existing appointment
+      if (currentSlot.isPast || !currentSlot.isAvailable || currentSlot.isOccupied) {
+        const reason = currentSlot.isPast 
+          ? 'in the past' 
+          : currentSlot.isOccupied 
+            ? 'occupied by an existing appointment' 
+            : 'unavailable';
+        console.log(`Time slot ${startTime}-${appointmentEndTime} (${durationMinutes} min) is not available - slot ${currentSlot.start_time} (${i+1} of ${slotsNeeded}) is ${reason}`);
+        return false;
+      }
+    }
+    
+    console.log(`Time slot ${startTime}-${appointmentEndTime} (${durationMinutes} min) is available - all required time slots are available`);
+    return true;
+  };    // Check if a time slot should be disabled - wrapped in useCallback
   const isTimeSlotDisabled = useCallback((timeSlot) => {
     // Get total duration of selected services
     const totalDuration = calculateTotalDuration(bookingData.services);
     
-    // If no services selected, only check basic availability
+    // First check if the slot is occupied by an existing appointment
+    // This should be checked regardless of whether services are selected
+    if (isSlotOccupiedByExistingAppointment(timeSlot)) {
+      return true;
+    }
+    
+    // If no services selected, check only basic availability
     if (totalDuration === 0) {
       if (timeSlotStatuses.length > 0) {
         const slotStatus = timeSlotStatuses.find(slot => slot.start_time === timeSlot);
         if (slotStatus) {
+          // Check if this slot is past or unavailable
           return slotStatus.isPast || !slotStatus.isAvailable;
         }
       }
       return false;
     }
     
-    // Check if this time slot and subsequent slots are available for the total duration
+    // Check if this time slot and subsequent slots are available for the total duration    
     return !checkTimeSlotAvailability(timeSlot, totalDuration);
   }, [timeSlotStatuses, bookingData.services]);
   // Check if a time slot is in the past or booked - for future use in showing specific messages
@@ -182,9 +374,44 @@ const BookingPage = () => {
     const fetchTimeSlotStatuses = async () => {
       if (bookingData.barber_id && bookingData.date) {
         try {
+          // Clear existing time slots before fetching new ones
+          setTimeSlotStatuses([]);
           setIsLoadingTimeSlots(true);
-          // Call the service to get time slot statuses
-          const statuses = await timeSlotService.getTimeSlotStatus(bookingData.barber_id, bookingData.date);
+          
+          // Log date and barber for debugging
+          console.log(`Fetching time slots for date: ${bookingData.date}, barber: ${bookingData.barber_id}`);
+          
+          // Ensure the date is properly formatted (YYYY-MM-DD)
+          const formattedDate = bookingData.date;
+          console.log(`Using formatted date for API call: ${formattedDate}`);
+          
+          // Extract service IDs for API call
+          const serviceIds = bookingData.services.map(service => service._id);
+          
+          // Call the service to get time slot statuses with selected services
+          const statuses = await timeSlotService.getTimeSlotStatus(
+            bookingData.barber_id, 
+            formattedDate, 
+            serviceIds
+          );
+          
+          console.log(`Received ${statuses.length} time slots from API`);
+          
+          // Log all occupied time slots
+          let allOccupiedSlots = [];
+          statuses.forEach(slot => {
+            if (slot.occupiedTimeSlots && Array.isArray(slot.occupiedTimeSlots)) {
+              allOccupiedSlots = [...allOccupiedSlots, ...slot.occupiedTimeSlots];
+            }
+          });
+          allOccupiedSlots = [...new Set(allOccupiedSlots)];
+          
+          // Log the time slots with occupied status for debugging
+          const occupiedSlots = statuses.filter(slot => slot.isOccupied);
+          console.log(`${occupiedSlots.length} slots are marked as occupied directly:`, 
+            occupiedSlots.map(slot => slot.start_time));
+          console.log(`${allOccupiedSlots.length} total occupied time slots found:`, allOccupiedSlots);
+          
           setTimeSlotStatuses(statuses);
           
           // Get the current selected time from the latest bookingData
@@ -197,7 +424,11 @@ const BookingPage = () => {
               slot => slot.start_time === currentSelectedTime && slot.isAvailable && !slot.isPast
             );
             
-            if (!isCurrentTimeAvailable) {
+            // Also check if it's in the list of occupied slots
+            const isOccupied = allOccupiedSlots.includes(currentSelectedTime);
+            
+            if (!isCurrentTimeAvailable || isOccupied) {
+              console.log(`Current time ${currentSelectedTime} is no longer available or is occupied, resetting selection`);
               setBookingData(prev => ({
                 ...prev,
                 time: ''
@@ -205,31 +436,35 @@ const BookingPage = () => {
             }
           }
         } catch (error) {
-          // Error handled silently
+          console.error("Error fetching time slots:", error);
           setTimeSlotStatuses([]);
         } finally {
           setIsLoadingTimeSlots(false);
         }
+      } else {
+        // Reset time slot statuses if barber or date is missing
+        setTimeSlotStatuses([]);
       }
-    };    fetchTimeSlotStatuses();
+    };fetchTimeSlotStatuses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookingData.barber_id, bookingData.date]);
-
-  // Check if selected time is still valid when services change
+  }, [bookingData.barber_id, bookingData.date, bookingData.services]);
+  // Check if selected time is still valid when services change - now handled by API
+  // The API will return updated availability based on selected services
   useEffect(() => {
     if (bookingData.time && bookingData.barber_id && bookingData.date && timeSlotStatuses.length > 0) {
-      const totalDuration = calculateTotalDuration(bookingData.services);
-      const isStillAvailable = checkTimeSlotAvailability(bookingData.time, totalDuration);
+      // Check if the currently selected time is still marked as available by the API
+      const selectedTimeSlot = timeSlotStatuses.find(slot => slot.start_time === bookingData.time);
       
-      if (!isStillAvailable) {
+      if (selectedTimeSlot && (!selectedTimeSlot.isAvailable || selectedTimeSlot.isPast)) {
+        console.log(`Time slot ${bookingData.time} is no longer available, resetting selection`);
         setBookingData(prev => ({
           ...prev,
-          time: '' // Reset time if no longer available with new service selection
+          time: '' // Reset time if API marks it as unavailable
         }));
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookingData.services, timeSlotStatuses]);
+  }, [timeSlotStatuses]);
 
   // Wrap `validateBookingToken` in a `useCallback` hook
   const validateBookingToken = useCallback(async (token) => {
@@ -324,30 +559,10 @@ const BookingPage = () => {
     "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
     "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
     "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
-    "18:00", "18:30", "19:00"
-  ];  // Calculate total duration of all selected services
-  const calculateTotalDuration = (services) => {
-    if (!services || services.length === 0) return 0;
-    
-    // Calculate total duration from service data
-    // If a service has a duration property, use it, otherwise default to 30 minutes
-    return services.reduce((total, service) => {
-      // Use service.duration if available, otherwise default to 30 minutes
-      const serviceDuration = service.duration || 30;
-      return total + serviceDuration;
-    }, 0);
-  };
-  // Calculate end time given start time and duration
-  const calculateEndTime = (startTime, durationMinutes) => {
-    const [hours, minutes] = startTime.split(':').map(Number);
-    const startTotalMinutes = hours * 60 + minutes;
-    const endTotalMinutes = startTotalMinutes + durationMinutes;
-    
-    const endHours = Math.floor(endTotalMinutes / 60);
-    const endMinutes = endTotalMinutes % 60;
-    
-    return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
-  };
+    "18:00", "18:30"
+  ];  // These functions are now defined earlier in the file
+  // Removing duplicated declarations
+
   // Get detailed reason why a time slot is disabled
   const getTimeSlotDisabledReason = (timeSlot) => {
     const totalDuration = calculateTotalDuration(bookingData.services);
@@ -358,6 +573,7 @@ const BookingPage = () => {
         if (slotStatus) {
           if (slotStatus.isPast) return 'Time slot is in the past';
           if (!slotStatus.isAvailable) return 'Time slot is already booked';
+          if (slotStatus.isOccupied) return 'Time slot is occupied by an existing appointment';
         }
       }
       return 'Available';
@@ -394,9 +610,12 @@ const BookingPage = () => {
           break;
         }
       }
-      
-      if (currentSlot.isPast) {
+        if (currentSlot.isPast) {
         return `Appointment would extend to ${appointmentEndTime}, but slot ${currentSlot.start_time} is in the past`;
+      }
+      
+      if (currentSlot.isOccupied) {
+        return `Appointment would extend to ${appointmentEndTime}, but slot ${currentSlot.start_time} is occupied by an existing appointment`;
       }
       
       if (!currentSlot.isAvailable) {
@@ -422,15 +641,51 @@ const BookingPage = () => {
         
         // Reset time slot statuses when barber changes
         setTimeSlotStatuses([]);
-      }
-    } else if (name === 'date') {
+      }    } else if (name === 'date') {
       // Reset time selection and time slot statuses when date changes
+      console.log(`Date changed to: ${value}`);
+      
+      // Validate the date is in correct format
+      const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+      if (!datePattern.test(value)) {
+        console.error(`Invalid date format: ${value}`);
+        
+        // If we got a date object or invalid format, try to format it properly
+        if (value instanceof Date) {
+          const formattedValue = formatDate(value);
+          console.log(`Formatted date object to: ${formattedValue}`);
+          value = formattedValue;
+        } else {
+          // Try to parse as date and format
+          try {
+            const dateObj = new Date(value);
+            if (!isNaN(dateObj.getTime())) {
+              const formattedValue = formatDate(dateObj);
+              console.log(`Parsed and formatted date string to: ${formattedValue}`);
+              value = formattedValue;
+            }
+          } catch (error) {
+            console.error(`Could not parse date: ${value}`);
+          }
+        }
+      }
+      
+      // Parse the date to ensure it's valid and log information about it
+      try {
+        const selectedDate = new Date(value);
+        console.log(`Selected date: ${selectedDate.toDateString()}`);
+        console.log(`Month: ${selectedDate.getMonth() + 1}, Year: ${selectedDate.getFullYear()}`);
+      } catch (error) {
+        console.error(`Error parsing date: ${error.message}`);
+      }
+      
       setBookingData(prev => ({
         ...prev,
         [name]: value,
         time: '' // Reset time when date changes
       }));
-      // Reset time slot statuses when date changes
+      
+      // Reset time slot statuses when date changes to ensure we fetch fresh data
       setTimeSlotStatuses([]);
     } else {
       // Handle other fields normally
@@ -456,30 +711,19 @@ const BookingPage = () => {
       setBookingData(prev => {
         const newServices = [...prev.services, serviceToAdd];
         const newTotalDuration = calculateTotalDuration(newServices);
-        
-        // Check if current selected time is still valid with new duration
+          // Check if current selected time is still valid with new duration
         let newTime = prev.time;
         const previousTime = prev.time;
         
-        if (prev.time && prev.barber_id && prev.date && timeSlotStatuses.length > 0) {
-          const isStillAvailable = checkTimeSlotAvailability(prev.time, newTotalDuration);
-          if (!isStillAvailable) {
-            newTime = ''; // Reset time if no longer available
-            console.log(`Time slot ${prev.time} is no longer available with new total duration of ${newTotalDuration} minutes`);
-          }
-        }
+        // Don't automatically reset time - let the new time slot status API handle this
+        // The useEffect will refetch time slots with new services and update availability
         
-        // Log the changes
-        console.log(`Added service: ${serviceToAdd.name} (${serviceToAdd.duration || 30} min). New total duration: ${newTotalDuration} minutes`);
-        
-        if (newTime !== previousTime) {
-          console.log(`Time slot reset due to service addition. Previous: ${previousTime}, New: ${newTime}`);
-        }
+        // Log the changes        console.log(`Added service: ${serviceToAdd.name} (${serviceToAdd.duration || 30} min). New total duration: ${newTotalDuration} minutes`);
         
         return {
           ...prev,
           services: newServices,
-          time: newTime
+          time: prev.time // Keep the selected time, let the API determine availability
         };
       });
     }
@@ -490,28 +734,14 @@ const BookingPage = () => {
       const serviceToRemove = prev.services.find(service => service._id === serviceId);
       const newServices = prev.services.filter(service => service._id !== serviceId);
       const newTotalDuration = calculateTotalDuration(newServices);
-      
-      // Check if current selected time is still valid with new duration
-      let newTime = prev.time;
-      if (prev.time && prev.barber_id && prev.date && timeSlotStatuses.length > 0) {
-        // After removing a service, the time might still be valid or even more valid
-        // We still need to check because the logic might have changed
-        const isStillAvailable = checkTimeSlotAvailability(prev.time, newTotalDuration);
-        if (!isStillAvailable) {
-          newTime = ''; // Reset time if somehow no longer available
-        }
-      }
-      
-      console.log(`Removed service: ${serviceToRemove?.name} (${serviceToRemove?.duration || 30} min). New total duration: ${newTotalDuration} minutes`);
-      
-      if (newTime !== prev.time) {
-        console.log(`Time slot reset due to service removal. Previous: ${prev.time}, New: ${newTime}`);
-      }
+        // Don't automatically reset time - let the new time slot status API handle this
+      // The useEffect will refetch time slots with new services and update availability
+        console.log(`Removed service: ${serviceToRemove?.name} (${serviceToRemove?.duration || 30} min). New total duration: ${newTotalDuration} minutes`);
       
       return {
         ...prev,
         services: newServices,
-        time: newTime
+        time: prev.time // Keep the selected time, let the API determine availability
       };
     });
   };const handleTimeSelect = (time) => {
@@ -553,67 +783,8 @@ const BookingPage = () => {
       // Show user-friendly message with service breakdown
       alert(`⏰ Time Slot Unavailable\n\nThe selected time (${time} - ${endTime}) cannot accommodate your ${totalDuration}-minute appointment.\n\nSelected Services:\n${serviceBreakdown}\n\nReason: ${reason}\n\nPlease select a different time slot that can accommodate your full appointment duration.`);
     }
-  };// Check if a time slot and subsequent slots (based on duration) are available
-  const checkTimeSlotAvailability = (startTime, durationMinutes = 30) => {
-    // If no time slots loaded from backend, assume available (fallback behavior)
-    if (timeSlotStatuses.length === 0) return true;
-    
-    // Default to 30 minutes if no duration or services selected
-    const minutes = durationMinutes > 0 ? durationMinutes : 30;
-    
-    // Calculate how many 30-minute slots we need (time slots are always in 30-minute intervals)
-    // We need to check all slots that the appointment duration would overlap
-    const slotsNeeded = Math.ceil(minutes / 30);
-    
-    // Find the index of the start time
-    const startIndex = timeSlotStatuses.findIndex(slot => slot.start_time === startTime);
-    if (startIndex === -1) {
-      console.log(`Start time ${startTime} not found in available slots`);
-      return false;
-    }
-    
-    // Calculate the actual end time of the appointment
-    const appointmentEndTime = calculateEndTime(startTime, minutes);
-    
-    // Check if all time slots that the appointment would overlap are available
-    for (let i = 0; i < slotsNeeded; i++) {
-      const slotIndex = startIndex + i;
-      
-      // If we run out of slots, return false
-      if (slotIndex >= timeSlotStatuses.length) {
-        console.log(`Time slot ${startTime} is not available for ${durationMinutes} minutes - not enough slots remaining (need ${slotsNeeded}, only ${timeSlotStatuses.length - startIndex} available)`);
-        return false;
-      }
-      
-      const currentSlot = timeSlotStatuses[slotIndex];
-      
-      // For the last slot, check if the appointment would actually overlap with it
-      if (i === slotsNeeded - 1) {
-        // Calculate the start time of this slot in minutes
-        const [slotHour, slotMinute] = currentSlot.start_time.split(':').map(Number);
-        const slotStartMinutes = slotHour * 60 + slotMinute;
-        
-        // Calculate the appointment end time in minutes
-        const [endHour, endMinute] = appointmentEndTime.split(':').map(Number);
-        const appointmentEndMinutes = endHour * 60 + endMinute;
-        
-        // If the appointment ends before or exactly at the start of this slot, we don't need to check it
-        if (appointmentEndMinutes <= slotStartMinutes) {
-          console.log(`Appointment ends at ${appointmentEndTime}, slot ${currentSlot.start_time} starts at or after appointment end - no overlap`);
-          break;
-        }
-      }
-      
-      // Check if the current slot is past or unavailable
-      if (currentSlot.isPast || !currentSlot.isAvailable) {
-        const reason = currentSlot.isPast ? 'in the past' : 'unavailable';
-        console.log(`Time slot ${startTime}-${appointmentEndTime} (${durationMinutes} min) is not available - slot ${currentSlot.start_time} (${i+1} of ${slotsNeeded}) is ${reason}`);
-        return false;
-      }
-    }
-      console.log(`Time slot ${startTime}-${appointmentEndTime} (${durationMinutes} min) is available - all required time slots are available`);
-    return true;
-  };
+  };  // This function is now defined earlier in the file
+  // Removing duplicated declaration
     const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -636,16 +807,16 @@ const BookingPage = () => {
       
       if (token) {
         headers.Authorization = `Bearer ${token}`;
-      }        // Create a copy of the booking data to preserve for confirmation display
+      }      // Create a copy of the booking data to preserve for confirmation display
       const confirmedBookingData = {...bookingData};
       
       // Convert service objects to names for display in confirmation
       const serviceNames = bookingData.services.map(service => service.name);
       
-      // Create the request data with service names instead of IDs
+      // Create the request data with service ObjectIds as required by the backend
       const requestData = {
         ...bookingData,
-        services: bookingData.services.map(service => service.name), // Convert service objects to names as required by the backend
+        services: bookingData.services.map(service => service._id), // Send service ObjectIds to backend
         requireEmailConfirmation: true, // New flag to indicate email confirmation is needed
         // For guest bookings, ensure user_id is null to avoid FK constraint errors
         user_id: isGuestMode ? null : bookingData.user_id
@@ -1018,8 +1189,8 @@ const BookingPage = () => {
                                         </div>
                                         <span className="text-primary fw-medium">Loading available time slots...</span>
                                       </div>
-                                    ) : (                                      <div className="row g-2">
-                                        {(timeSlotStatuses.length > 0 ? timeSlotStatuses.map(slot => slot.start_time) : timeSlots).map((time, index) => {
+                                    ) : (                                      <div className="row g-2">                                        {(timeSlotStatuses.length > 0 ? timeSlotStatuses.map(slot => slot.start_time) : timeSlots).map((time, index) => {
+                                          // Check if this time slot should be disabled
                                           const disabled = isTimeSlotDisabled(time);
                                           const isSelected = bookingData.time === time;
                                           const totalDuration = calculateTotalDuration(bookingData.services);
@@ -1046,19 +1217,17 @@ const BookingPage = () => {
                                               const selectedTimeMinutes = selectedHour * 60 + selectedMinute;
                                               
                                               const [endHour, endMinute] = appointmentEndTime.split(':').map(Number);
-                                              const endTimeMinutes = endHour * 60 + endMinute;
+                                              const appointmentEndMinutes = endHour * 60 + endMinute;
                                               
                                               // Check if this slot overlaps with the appointment duration
                                               const slotEndMinutes = currentTimeMinutes + 30; // Each slot is 30 minutes
-                                              
-                                              if (currentTimeMinutes >= selectedTimeMinutes && currentTimeMinutes < endTimeMinutes) {
+                                                if (currentTimeMinutes >= selectedTimeMinutes && currentTimeMinutes < appointmentEndMinutes) {
                                                 isInSelectedRange = true;
                                                 
                                                 // Check if this is the last slot that the appointment overlaps
-                                                if (slotEndMinutes >= endTimeMinutes) {
-                                                  isEndOfRange = true;
-                                                  // Check if the appointment ends exactly at the start of the next slot
-                                                  if (endTimeMinutes === slotEndMinutes) {
+                                                if (slotEndMinutes >= appointmentEndMinutes) {
+                                                  isEndOfRange = true;                                                  // Check if the appointment ends exactly at the start of the next slot
+                                                  if (appointmentEndMinutes === slotEndMinutes) {
                                                     isExactEndTime = true;
                                                   }
                                                 }
@@ -1067,15 +1236,15 @@ const BookingPage = () => {
                                           }
                                           
                                           return (
-                                            <div key={index} className="col-6 col-sm-4 col-md-3 col-lg-2">
-                                              <button
-                                                type="button"
-                                                className={`btn time-slot-btn w-100 position-relative ${
+                                            <div key={index} className="col-6 col-sm-4 col-md-3 col-lg-2">                                              <button
+                                                type="button"                                                className={`btn time-slot-btn w-100 position-relative ${
                                                   isSelected ? 'active' : ''
                                                 } ${
                                                   disabled ? 'disabled' : ''
                                                 } ${
                                                   isInSelectedRange && !isSelected ? 'selected-range' : ''
+                                                } ${
+                                                  !disabled && !isSelected && !isInSelectedRange && isSlotOccupiedByExistingAppointment(time) ? 'occupied-by-appointment' : ''
                                                 }`}
                                                 onClick={() => !disabled && handleTimeSelect(time)}
                                                 disabled={disabled}
@@ -1084,12 +1253,18 @@ const BookingPage = () => {
                                                     ? getTimeSlotDisabledReason(time)
                                                     : isInSelectedRange 
                                                       ? `Part of your ${totalDuration}-minute appointment (${bookingData.time} - ${calculateEndTime(bookingData.time, totalDuration)})`
-                                                      : totalDuration > 0
-                                                        ? `Click to book ${totalDuration}-minute appointment (${time} - ${calculateEndTime(time, totalDuration)})`
-                                                        : `Available time slot`
+                                                      : isSlotOccupiedByExistingAppointment(time)
+                                                        ? `This time slot is occupied by an existing appointment`
+                                                        : totalDuration > 0
+                                                          ? `Click to book ${totalDuration}-minute appointment (${time} - ${calculateEndTime(time, totalDuration)})`
+                                                          : `Available time slot`
                                                 }
-                                              >
-                                                <i className={`bi bi-${disabled ? 'lock-fill' : isInSelectedRange ? 'check-circle-fill' : 'clock'} me-1 small`}></i>
+                                              >                                                <i className={`bi bi-${
+                                                  disabled ? 'lock-fill' : 
+                                                  isInSelectedRange ? 'check-circle-fill' : 
+                                                  isSlotOccupiedByExistingAppointment(time) ? 'calendar-x-fill' : 
+                                                  'clock'
+                                                } me-1 small`}></i>
                                                 {time}
                                                 
                                               </button>
@@ -1113,15 +1288,20 @@ const BookingPage = () => {
                                     <small className="text-muted d-block">
                                       <i className="bi bi-clock-history me-1"></i> Past time slots or slots within 30 minutes are disabled
                                     </small>
-                                  )}
-                                  {bookingData.barber_id && bookingData.date && timeSlotStatuses.length > 0 && (
-                                    <small className="text-muted d-block">
-                                      <i className="bi bi-lock me-1"></i> 
-                                      {bookingData.services.length > 0 
-                                        ? `Time slots without ${calculateTotalDuration(bookingData.services)} minutes of consecutive availability are disabled`
-                                        : 'Grayed out time slots are unavailable'
-                                      }
-                                    </small>
+                                  )}                                  {bookingData.barber_id && bookingData.date && timeSlotStatuses.length > 0 && (
+                                    <>
+                                      <small className="text-muted d-block">
+                                        <i className="bi bi-lock me-1"></i> 
+                                        {bookingData.services.length > 0 
+                                          ? `Time slots without ${calculateTotalDuration(bookingData.services)} minutes of consecutive availability are disabled`
+                                          : 'Grayed out time slots are unavailable'
+                                        }
+                                      </small>
+                                      <small className="text-warning d-block">
+                                        <i className="bi bi-calendar-x me-1"></i> 
+                                        Orange-highlighted slots are occupied by existing appointments
+                                      </small>
+                                    </>
                                   )}
                                   {(!bookingData.barber_id || !bookingData.date) && (
                                     <small className="text-muted d-block">

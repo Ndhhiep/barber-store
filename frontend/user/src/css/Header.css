@@ -303,6 +303,18 @@
   padding: 8px 20px;
 }
 
+/* Book Appointment Button - Make same height as login button */
+.btn-outline-dark[href="/booking"] {
+  height: 44px;
+  border-width: 2px;
+  font-family: 'Lato', sans-serif;
+  font-weight: 600;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 
 /* Desktop user dropdown button styling */
 .user-dropdown-btn {

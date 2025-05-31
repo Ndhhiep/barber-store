@@ -39,7 +39,7 @@ const barberSchema = mongoose.Schema({
     thursday: { type: Boolean, default: true },
     friday: { type: Boolean, default: true },
     saturday: { type: Boolean, default: true },
-    sunday: { type: Boolean, default: false }
+    sunday: { type: Boolean, default: true }
   },
   // Cấu hình giờ làm việc
   workingHours: {

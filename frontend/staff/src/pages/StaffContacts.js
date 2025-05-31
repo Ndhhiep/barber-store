@@ -210,7 +210,8 @@ const StaffContacts = () => {
                         <td>
                           <div className="btn-group" role="group">
                             <button 
-                              className="btn btn-sm btn-primary me-1" 
+                              className="btn btn-sm me-1"
+                              style={{ backgroundColor: '#0DCAF0'}}
                               onClick={() => handleViewContact(contact)}
                             >
                              View

@@ -491,6 +491,75 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
+// @desc    Hủy đơn hàng của người dùng
+// @route   PUT /api/orders/:id/cancel
+// @access  Riêng tư
+const cancelOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const order = await Order.findById(id);
+    
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+    
+    // Kiểm tra xem đơn hàng có thuộc về người dùng hiện tại không
+    if (order.userId && order.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to cancel this order'
+      });
+    }
+    
+    // Kiểm tra xem đơn hàng có thể hủy được không
+    if (order.status === 'cancelled') {
+      return res.status(400).json({
+        success: false,
+        message: 'Order is already cancelled'
+      });
+    }
+    
+    if (order.status === 'delivered') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot cancel a delivered order'
+      });
+    }
+    
+    if (order.status === 'shipped') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot cancel a shipped order. Please contact customer service.'
+      });
+    }
+    
+    // Cập nhật trạng thái đơn hàng thành cancelled
+    order.status = 'cancelled';
+    await order.save();
+    
+    // TODO: Hoàn lại số lượng sản phẩm về kho nếu cần
+    // Có thể thêm logic hoàn trả sản phẩm về kho ở đây
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Order cancelled successfully',
+      data: order
+    });
+    
+  } catch (error) {
+    console.error('Error cancelling order:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error cancelling order',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getOrdersByUserId,
@@ -499,5 +568,6 @@ module.exports = {
   getAllOrders,
   getOrderStats,
   getRecentOrders,
-  updateOrderStatus
+  updateOrderStatus,
+  cancelOrder
 };

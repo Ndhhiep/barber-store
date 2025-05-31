@@ -57,6 +57,42 @@ const getAppointmentById = async (id) => {
   }
 };
 
+// Tạo lịch hẹn mới
+const createAppointment = async (appointmentData) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/bookings`,
+      appointmentData,
+      { headers: staffAuthService.authHeader() }
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to create appointment' };
+  }
+};
+
+// Cập nhật thông tin lịch hẹn
+const updateAppointment = async (id, appointmentData) => {
+  try {
+    console.log('Sending appointment update data:', appointmentData);
+    const response = await axios.put(
+      `${API_URL}/bookings/${id}`,
+      appointmentData,
+      { headers: staffAuthService.authHeader() }
+    );
+    console.log('Update appointment response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating appointment:', error);
+    if (error.response && error.response.data) {
+      console.error('Server error response:', error.response.data);
+      throw error.response.data;
+    } else {
+      throw { message: 'Failed to update appointment: ' + (error.message || 'Unknown error') };
+    }
+  }
+};
+
 // Cập nhật trạng thái lịch hẹn
 const updateAppointmentStatus = async (id, status) => {
   try {
@@ -88,6 +124,8 @@ const staffAppointmentService = {
   getTodayAppointments,
   getWeekAppointments,
   getAppointmentById,
+  createAppointment,
+  updateAppointment,
   updateAppointmentStatus,
   getAppointmentStats
 };

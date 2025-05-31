@@ -1,15 +1,9 @@
 /**
  * Service quản lý các API liên quan đến lịch hẹn
  */
-import axios from 'axios';
+import api from './api';
 
-const API_URL = process.env.REACT_APP_BACKEND_API_URL || 'http://localhost:5000/api'; // Use variable from .env file
-
-// Helper function to get auth headers
-const getAuthHeader = () => {
-  const token = localStorage.getItem('token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+// No need for separate API_URL or getAuthHeader since api.js handles that
 
 /**
  * Lấy danh sách lịch hẹn của người dùng hiện tại
@@ -17,13 +11,12 @@ const getAuthHeader = () => {
  */
 export const getMyBookings = async () => {
   try {
-    const response = await axios.get(`${API_URL}/bookings/my-bookings`, {
-      headers: getAuthHeader()
-    });
-    return response;
+    const response = await api.get(`/bookings/my-bookings`);
+    // The API returns bookings directly as an array, not in a nested structure
+    return { data: Array.isArray(response.data) ? response.data : [] };
   } catch (error) {
     console.error('Get my bookings error:', error);
-    throw error;
+    return { data: [] }; // Return empty array instead of throwing
   }
 };
 
@@ -34,11 +27,10 @@ export const getMyBookings = async () => {
  */
 export const createBooking = async (bookingData) => {
   try {
-    const response = await axios.post(`${API_URL}/bookings`, bookingData, {
-      headers: getAuthHeader()
-    });
+    const response = await api.post(`/bookings`, bookingData);
     return response.data;
   } catch (error) {
+    console.error('Create booking error:', error);
     throw error;
   }
 };
@@ -50,11 +42,10 @@ export const createBooking = async (bookingData) => {
  */
 export const cancelBooking = async (id) => {
   try {
-    const response = await axios.put(`${API_URL}/bookings/${id}/cancel`, {}, {
-      headers: getAuthHeader()
-    });
+    const response = await api.put(`/bookings/${id}/cancel`, {});
     return response.data;
   } catch (error) {
+    console.error(`Cancel booking ${id} error:`, error);
     throw error;
   }
 };
@@ -66,13 +57,11 @@ export const cancelBooking = async (id) => {
  */
 export const getBookingById = async (id) => {
   try {
-    const response = await axios.get(`${API_URL}/bookings/${id}`, {
-      headers: getAuthHeader()
-    });
+    const response = await api.get(`/bookings/${id}`);
     return response;
   } catch (error) {
     console.error(`Get booking ${id} error:`, error);
-    throw error;
+    return null;
   }
 };
 
@@ -84,17 +73,15 @@ export const getBookingById = async (id) => {
  */
 export const getAvailableTimeSlots = async (date, barberId = null) => {
   try {
-    let endpoint = `${API_URL}/bookings/available-slots?date=${date}`;
+    let params = { date };
     if (barberId) {
-      endpoint += `&barberId=${barberId}`;
+      params.barberId = barberId;
     }
-    const response = await axios.get(endpoint, {
-      headers: getAuthHeader()
-    });
+    const response = await api.get('/bookings/available-slots', { params });
     return response;
   } catch (error) {
     console.error('Get available time slots error:', error);
-    throw error;
+    return { data: [] }; // Return empty array on error
   }
 };
 
