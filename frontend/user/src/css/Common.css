@@ -3,9 +3,9 @@
 /* Page Title Section - used on all regular pages except homepage */
 .page-title-section {
   background-color: #8B775C;
-  padding: 3rem 0;
+  padding: 3rem 1rem;
   text-align: center;
-  min-height: 250px; /* Ensuring consistent height across pages */
+  min-height: 220px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -74,4 +74,80 @@
   color: #ffffff;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(139, 69, 19, 0.25);
+}
+
+/* ── Responsive: Common ── */
+@media (max-width: 991px) {
+  .page-title-section {
+    min-height: 180px;
+    padding: 2.5rem 1rem;
+  }
+
+  .page-subtitle {
+    font-size: 1.05rem;
+    padding: 0 1rem;
+  }
+
+  .cta-section {
+    padding: 2.5rem 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-title-section {
+    min-height: 150px;
+    padding: 2rem 1rem;
+  }
+
+  .page-title-section hr {
+    width: 70%;
+    margin: 1rem auto;
+  }
+
+  .page-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .cta-button {
+    padding: 0.65rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .page-title-section {
+    min-height: 120px;
+    padding: 1.5rem 0.75rem;
+  }
+
+  .page-title {
+    font-size: 1.6rem;
+    line-height: 1.25;
+  }
+
+  .page-subtitle {
+    font-size: 0.875rem;
+    padding: 0 0.5rem;
+  }
+
+  .page-title-section hr {
+    width: 80%;
+    height: 3px;
+    margin: 0.75rem auto;
+  }
+
+  .cta-title {
+    font-size: 1.5rem;
+  }
+
+  .cta-description {
+    font-size: 0.95rem;
+  }
+
+  .cta-button {
+    width: 100%;
+    max-width: 240px;
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+  }
 }

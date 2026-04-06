@@ -207,3 +207,107 @@
   background-color: #0069d9;
   border-color: #0062cc;
 }
+
+/* ── Responsive: My Bookings Page ── */
+@media (max-width: 991px) {
+  .my-bookings-container {
+    padding: 1.5rem 1rem;
+  }
+
+  .my-bookings-title {
+    font-size: 1.9rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .my-bookings-title {
+    font-size: 1.7rem;
+  }
+
+  .booking-card .card-header,
+  .booking-card .card-footer {
+    padding: 0.75rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .booking-service {
+    font-size: 0.95rem;
+  }
+
+  .booking-info {
+    font-size: 0.875rem;
+  }
+
+  .booking-info p {
+    margin-bottom: 0.35rem;
+  }
+
+  .booking-summary {
+    padding: 0.75rem;
+  }
+
+  /* Confirmation modal wide */
+  .confirmation-modal {
+    width: 94%;
+    max-width: 94vw;
+  }
+
+  .confirmation-modal-content {
+    padding: 1.25rem;
+  }
+
+  .confirmation-modal-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .confirmation-modal-actions .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .pagination .page-link {
+    padding: 0.35rem 0.55rem;
+    font-size: 0.85rem;
+    margin: 0 1px;
+  }
+}
+
+@media (max-width: 576px) {
+  .my-bookings-container {
+    padding: 1rem 0.75rem;
+  }
+
+  .my-bookings-title {
+    font-size: 1.5rem;
+  }
+
+  .empty-bookings-message {
+    padding: 2rem 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .booking-card:hover {
+    transform: none; /* Disable on touch screens */
+  }
+
+  .status-badge {
+    font-size: 0.65rem;
+    padding: 0.2em 0.5em;
+  }
+
+  .booking-info {
+    font-size: 0.8rem;
+  }
+
+  .pagination-container {
+    margin-top: 1.25rem;
+  }
+
+  .pagination .page-link {
+    padding: 0.3rem 0.45rem;
+    font-size: 0.8rem;
+  }
+}

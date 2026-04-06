@@ -238,3 +238,121 @@ label{
   margin-bottom: 5px;
   color: #333;
 }
+
+/* ── Responsive: Cart Page ── */
+@media (max-width: 991px) {
+  /* Order summary unstick on tablet */
+  #order-summary {
+    position: static;
+    margin-top: 1.5rem;
+  }
+
+  #order-summary .card {
+    height: auto !important;
+    min-height: unset;
+  }
+
+  #cart-container .card {
+    min-height: unset;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .cart-title {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .cart-container {
+    padding-bottom: 2.5rem;
+  }
+
+  .cart-item-row {
+    height: auto;
+    padding: 0.65rem 0;
+  }
+
+  .product-image {
+    width: 64px;
+    height: 64px;
+  }
+
+  .product-name {
+    font-size: 0.9rem;
+  }
+
+  .product-info {
+    min-height: unset;
+  }
+
+  .quantity-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 0.8rem;
+  }
+
+  .quantity-display {
+    min-width: 32px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .cart-title {
+    font-size: 1.6rem;
+  }
+
+  .checkout-btn,
+  .clear-cart-btn {
+    font-size: 0.9rem;
+    padding: 9px 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .cart-container {
+    padding-bottom: 3rem;
+  }
+
+  .product-image {
+    width: 52px;
+    height: 52px;
+  }
+
+  .product-name {
+    font-size: 0.85rem;
+  }
+
+  .quantity-controls {
+    margin-top: 0.5rem;
+  }
+
+  .checkout-btn,
+  .clear-cart-btn {
+    font-size: 0.875rem;
+    padding: 8px 0;
+  }
+
+  .modal-content {
+    padding: 1.25rem;
+    max-height: 95vh;
+    overflow-y: auto;
+  }
+
+  .paypal-button-container {
+    max-width: 100%;
+    padding: 0 0.25rem;
+  }
+
+  label {
+    font-size: 0.875rem;
+  }
+
+  .empty-cart-icon {
+    font-size: 2.5rem;
+  }
+
+  .cart-title {
+    font-size: 1.4rem;
+  }
+}

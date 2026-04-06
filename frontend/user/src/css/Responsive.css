@@ -1,207 +1,1201 @@
-/* Responsive enhancements for all components */
+/* ============================================================
+   RESPONSIVE.CSS — Barber Store Frontend
+   Breakpoints:
+     • Desktop : ≥ 1200px  (xl and up)
+     • Tablet  : 768px – 1199px  (md to lg)
+     • Mobile  : < 768px         (sm and below)
+   ============================================================ */
 
-/* General responsive utilities */
+/* ─── 0. GLOBAL LAYOUT ─── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
 .App {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* Product Card responsive enhancements */
-.product-card {
-  transition: all 0.3s ease;
+/* ─── 1. COMMON / PAGE-TITLE SECTION ─── */
+.page-title-section {
+  min-height: 180px;
+  padding: 2.5rem 1rem;
 }
 
-@media (max-width: 576px) {
+.page-title {
+  font-size: clamp(1.6rem, 5vw, 2.8rem);
+  line-height: 1.2;
+}
+
+.page-subtitle {
+  font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+  padding: 0 1rem;
+}
+
+.page-title-section hr {
+  width: 60%;
+  max-width: 300px;
+}
+
+/* Tablet */
+@media (max-width: 1199px) {
+  .page-title-section {
+    min-height: 150px;
+    padding: 2.25rem 1rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .page-title-section {
+    min-height: 120px;
+    padding: 1.5rem 0.75rem;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.875rem;
+    padding: 0 0.5rem;
+  }
+}
+
+/* ─── 2. HEADER / NAVBAR ─── */
+.header-navbar {
+  height: 70px;
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .header-navbar {
+    height: 60px;
+  }
+
+  .header-logo-circle {
+    width: 38px;
+    height: 38px;
+  }
+
+  .logo-letters {
+    font-size: 16px;
+  }
+
+  .header-brand-name {
+    font-size: 1rem;
+    margin-left: 0.5rem;
+  }
+
+  .navbar-collapse {
+    width: 75vw !important;
+  }
+
+  .navbar-backdrop {
+    width: 25vw !important;
+  }
+}
+
+/* ─── 3. HOME PAGE ─── */
+.home-hero-section {
+  min-height: 80vh;
+  padding: 4rem 1rem;
+}
+
+.hero-title {
+  font-size: clamp(2rem, 6vw, 3.8rem);
+}
+
+.hero-description {
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.home-hero-section .btn-book {
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  padding: 12px 28px;
+}
+
+/* Tablet */
+@media (max-width: 1199px) {
+  .home-hero-section {
+    min-height: 65vh;
+    padding: 3rem 1rem;
+    text-align: center;
+  }
+
+  .hero-content {
+    padding: 1.5rem;
+  }
+
+  .hero-title {
+    font-size: 2.5rem;
+  }
+
+  .hero-description {
+    font-size: 1.1rem;
+  }
+
+  .home-hero-section .btn-book {
+    font-size: 1.2rem;
+    padding: 12px 32px;
+  }
+
+  /* About snippet: hide decorative border on tablet */
+  .home-about-snippet .image-border-decoration {
+    display: none;
+  }
+
+  .home-about-snippet .about-image {
+    max-height: 320px;
+    margin-bottom: 2rem;
+  }
+
+  /* Services icon sizing */
+  .home-services-overview .service-icon-wrapper {
+    width: 84px;
+    height: 84px;
+  }
+
+  .home-services-overview .service-icon {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .home-hero-section {
+    min-height: 55vh;
+    padding: 2.5rem 0.75rem;
+  }
+
+  .hero-content {
+    padding: 1rem;
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .hero-title {
+    font-size: 1.85rem;
+    letter-spacing: 0;
+  }
+
+  .hero-description {
+    font-size: 0.95rem;
+    font-weight: 500 !important;
+  }
+
+  .home-hero-section .btn-book {
+    font-size: 1rem;
+    padding: 10px 20px;
+    width: 100%;
+    max-width: 260px;
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* About snippet */
+  .home-about-snippet .about-image-container {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .home-about-snippet .about-image {
+    width: 100%;
+    max-height: 240px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .home-about-snippet .image-border-decoration {
+    display: none;
+  }
+
+  .home-about-snippet h2 {
+    font-size: 1.5rem;
+    text-align: center;
+  }
+
+  /* Services icon */
+  .home-services-overview .service-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1rem;
+  }
+
+  .home-services-overview .service-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .home-services-overview h2 {
+    font-size: 1.5rem;
+  }
+
+  .home-services-overview .service-card .card-text {
+    min-height: auto;
+  }
+
+  .service-book-btn {
+    width: 100%;
+    min-width: unset;
+    font-size: 1rem;
+    padding: 0.65rem 1rem;
+  }
+}
+
+/* ─── 4. ABOUT PAGE ─── */
+/* Tablet */
+@media (max-width: 1199px) {
+  .image-decoration-right,
+  .image-decoration-left {
+    display: none;
+  }
+
+  .image-container {
+    margin-bottom: 2rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .value-card {
+    margin-bottom: 1rem;
+  }
+
+  .cta-button {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    width: 100%;
+    max-width: 260px;
+  }
+}
+
+/* ─── 5. SERVICES PAGE ─── */
+/* Tablet */
+@media (max-width: 1199px) {
+  .services-lead {
+    font-size: 1rem;
+  }
+
+  .services-heading {
+    font-size: 1.9rem;
+  }
+
+  .what-to-expect,
+  .grooming-policies {
+    margin-bottom: 1.5rem;
+    height: auto;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .services-heading {
+    font-size: 1.7rem;
+    text-align: center;
+  }
+
+  .service-card {
+    margin-bottom: 1rem;
+  }
+
+  .service-name {
+    font-size: 1.1rem;
+  }
+
+  .what-to-expect,
+  .grooming-policies {
+    padding: 1.5rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+
+  .what-to-expect h3,
+  .grooming-policies h3 {
+    font-size: 1.2rem;
+  }
+
+  .info-icon,
+  .expect-icon {
+    font-size: 1rem;
+    margin-right: 6px;
+  }
+
+  .book-btn {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .cta-btn {
+    width: 100%;
+    max-width: 220px;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .material-symbols-outlined {
+    font-size: 18px;
+    margin-right: 6px;
+  }
+}
+
+/* ─── 6. TEAM PAGE ─── */
+/* Tablet */
+@media (max-width: 1199px) {
+  .team-member-image {
+    max-height: 350px;
+  }
+
+  .image-border-even,
+  .image-border-odd,
+  .join-team-image-border {
+    display: none;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .team-hero hr {
+    width: 70%;
+  }
+
+  .team-hero-title {
+    font-size: 1.8rem;
+  }
+
+  .book-with-barber {
+    width: 100%;
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* ─── 7. CONTACT PAGE ─── */
+/* Tablet */
+@media (max-width: 1199px) {
+  .contact-info-card {
+    margin-top: 1.5rem;
+  }
+
+  .map-container iframe {
+    height: 280px !important;
+  }
+
+  .modal-dialog {
+    max-width: 95vw !important;
+    margin: 0.5rem auto !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .map-container iframe {
+    height: 220px !important;
+  }
+
+  .contact-submit-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+  }
+
+  .check-icon-circle {
+    width: 56px;
+    height: 56px;
+  }
+
+  .modal-body h2 {
+    font-size: 1.25rem;
+  }
+
+  .contact-success-btn {
+    max-width: 100%;
+    padding: 0.7rem 1.5rem !important;
+  }
+}
+
+/* ─── 8. BOOKING PAGE ─── */
+.booking-page-container {
+  margin-bottom: 2rem;
+}
+
+/* Time slot grid */
+.time-slots-grid .row {
+  row-gap: 0.5rem;
+}
+
+.time-slot-btn {
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+/* Tablet */
+@media (max-width: 1199px) {
+  .time-slot-btn {
+    font-size: 0.8rem;
+    padding: 5px 8px;
+  }
+
+  .booking-card .card-body {
+    padding: 1.5rem !important;
+  }
+
+  .booking-section-card {
+    padding: 1rem !important;
+  }
+
+  .selected-service-item {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .total-duration-highlight {
+    padding: 0.75rem;
+  }
+
+  .modal-dialog {
+    max-width: 95vw;
+    margin: 1rem auto;
+  }
+
+  .modal-body {
+    padding: 1.25rem !important;
+  }
+
+  .booking-btn {
+    padding: 0.875rem;
+    font-size: 1rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .booking-card .card-body {
+    padding: 1rem !important;
+  }
+
+  .booking-section-card {
+    padding: 0.75rem !important;
+  }
+
+  .time-slot-btn {
+    font-size: 0.75rem;
+    padding: 4px 6px;
+    margin-bottom: 4px;
+  }
+
+  /* Stack time slot grid to 2 columns on mobile */
+  .time-slots-grid .col-lg-2 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  .total-duration-highlight .d-flex {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start !important;
+  }
+
+  .total-duration-highlight .badge {
+    align-self: flex-end;
+  }
+
+  .selected-service-item {
+    font-size: 0.875rem;
+  }
+
+  .booking-btn {
+    font-size: 0.95rem;
+    padding: 0.75rem;
+  }
+
+  .policy-card {
+    padding: 1rem;
+  }
+
+  .confirmation-title {
+    font-size: 1.4rem;
+  }
+}
+
+/* ─── 9. CART PAGE ─── */
+#cart-container .card {
+  min-height: auto;
+}
+
+/* Tablet */
+@media (max-width: 1199px) {
+  #order-summary {
+    position: static;
+    margin-top: 1.5rem;
+  }
+
+  #order-summary .card {
+    height: auto !important;
+    min-height: unset;
+  }
+
+  #cart-container .card {
+    min-height: unset;
+    max-height: none;
+  }
+
+  .cart-item-row {
+    height: auto;
+    padding: 0.75rem 0;
+  }
+
+  .product-image {
+    width: 60px;
+    height: 60px;
+  }
+
+  .quantity-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 0.8rem;
+  }
+
+  .quantity-display {
+    min-width: 32px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .cart-title {
+    font-size: 1.6rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .cart-container {
+    padding-bottom: 3rem;
+  }
+
+  .product-image {
+    width: 52px;
+    height: 52px;
+  }
+
+  .product-info {
+    min-height: unset;
+  }
+
+  .product-name {
+    font-size: 0.9rem;
+  }
+
+  .checkout-btn,
+  .clear-cart-btn {
+    padding: 10px 0;
+    font-size: 0.95rem;
+  }
+
+  .modal-content {
+    padding: 1.25rem;
+    max-height: 95vh;
+  }
+
+  .paypal-button-container {
+    max-width: 100%;
+  }
+
+  label {
+    font-size: 0.9rem;
+  }
+}
+
+/* ─── 10. MY BOOKINGS PAGE ─── */
+.my-bookings-container {
+  padding: 1.5rem 1rem;
+}
+
+/* Tablet */
+@media (max-width: 1199px) {
+  .my-bookings-title {
+    font-size: 1.8rem;
+  }
+
+  .booking-card .card-header,
+  .booking-card .card-footer {
+    padding: 0.75rem;
+  }
+
+  .booking-info {
+    font-size: 0.85rem;
+  }
+
+  .confirmation-modal {
+    width: 95%;
+    max-width: 95vw;
+  }
+
+  .confirmation-modal-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .confirmation-modal-actions .btn {
+    width: 100%;
+  }
+
+  .pagination .page-link {
+    padding: 0.35rem 0.55rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .my-bookings-container {
+    padding: 1rem 0.75rem;
+  }
+
+  .empty-bookings-message {
+    padding: 2rem 0.5rem;
+  }
+
+  .booking-card:hover {
+    transform: none;
+  }
+
+  .status-badge {
+    font-size: 0.7rem;
+  }
+}
+
+/* ─── 11. MY ORDERS PAGE ─── */
+.my-orders-container {
+  padding: 1.5rem 1rem;
+}
+
+/* Tablet */
+@media (max-width: 1199px) {
+  .my-orders-container h1 {
+    font-size: 1.8rem;
+    text-align: center;
+  }
+
+  .order-card .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .order-card .card-body {
+    padding: 1rem;
+  }
+
+  .order-card .badge {
+    margin-top: 0.5rem;
+    align-self: flex-start;
+  }
+
+  /* Stack order list and detail vertically */
+  .row.equal-height {
+    flex-direction: column;
+  }
+
+  .equal-height .col-md-4,
+  .equal-height .col-md-8 {
+    width: 100%;
+    max-width: 100%;
+    flex: unset;
+    margin-bottom: 1.5rem;
+  }
+
+  .order-detail-card {
+    min-height: 30vh;
+  }
+
+  .order-list-card {
+    height: auto;
+  }
+
+  .card-footer {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 0.75rem 1rem;
+  }
+
+  .card-footer .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .my-orders-container {
+    padding: 1rem 0.5rem;
+  }
+
+  .order-card table th,
+  .order-card table td {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.85rem;
+  }
+
+  .order-card:hover {
+    transform: none;
+  }
+
+  .order-loading-container,
+  .order-detail-placeholder {
+    min-height: 30vh;
+    padding: 1.5rem;
+  }
+}
+
+/* ─── 12. LOGIN / REGISTER PAGE ─── */
+/* Tablet */
+@media (max-width: 1199px) {
+  .welcome-column {
+    padding: 2rem 1rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .welcome-title {
+    font-size: 2.5rem;
+  }
+
+  .login-card {
+    max-width: 100%;
+  }
+
+  .welcome-text {
+    font-size: 1rem;
+  }
+
+  .login-card .card-body {
+    padding: 1.75rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .auth-container {
+    padding-top: 5rem;
+  }
+
+  .welcome-column {
+    padding: 1.5rem 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .welcome-title {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .welcome-text {
+    font-size: 0.95rem;
+  }
+
+  .login-card .card-body {
+    padding: 1.25rem;
+  }
+
+  .sign-in-btn {
+    padding: 0.65rem 1rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* ─── 13. USER PROFILE PAGE ─── */
+/* Tablet */
+@media (max-width: 1199px) {
+  .user-profile-container h1 {
+    font-size: 1.8rem;
+  }
+
+  .profile-card {
+    padding: 1.5rem;
+  }
+
+  .profile-buttons {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .update-profile-btn,
+  .cancel-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .user-profile-container {
+    padding: 1rem 0.75rem;
+  }
+
+  .user-profile-container h1 {
+    font-size: 1.5rem;
+  }
+
+  .profile-card {
+    padding: 1rem;
+    border-radius: 6px;
+  }
+
+  .profile-section h3 {
+    font-size: 1.25rem;
+  }
+
+  .profile-card .form-control {
+    padding: 0.6rem 0.75rem;
+  }
+
+  .update-profile-btn,
+  .cancel-btn {
+    padding: 0.65rem 1rem;
+  }
+}
+
+/* ─── 14. PRODUCTS PAGE & PRODUCT CARD ─── */
+
+/* Tablet (768px – 1199px): 3-col grid */
+@media (max-width: 1199px) {
+  .product-search-container {
+    margin-bottom: 1.25rem;
+  }
+
+  .product-card .card-img-top {
+    height: 160px !important;
+    object-fit: cover;
+  }
+
+  .product-card .card-title {
+    font-size: 1rem !important;
+  }
+
+  .product-card .card-text {
+    font-size: 0.875rem;
+  }
+
+  .btn-add-to-cart {
+    font-size: 0.85rem !important;
+    padding: 0.5rem 0.85rem !important;
+    white-space: nowrap;
+  }
+
+  .product-card .fw-bold.fs-4 {
+    font-size: 1.05rem !important;
+    white-space: nowrap;
+  }
+
+  /* Keep price + button on same row */
+  .product-card .d-flex.justify-content-between {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+  }
+}
+
+/* Mobile (< 768px): 2-col grid */
+@media (max-width: 767px) {
   .product-card {
     margin-bottom: 1rem;
   }
-  
+
   .product-card .card-img-top {
-    height: 180px !important;
+    height: 120px !important;
+    object-fit: cover;
   }
-  
+
   .product-card .card-title {
-    font-size: 1.1rem !important;
+    font-size: 0.82rem !important;
     height: auto !important;
-    -webkit-line-clamp: 1 !important;
-  }
-  
-  .product-card .card-text {
-    height: 60px !important;
     -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
+  }
+
+  .product-card .card-text {
+    height: 48px !important;
+    -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
+    font-size: 0.78rem;
+  }
+
+  /* Price label compact */
+  .product-card .fw-bold.fs-4 {
+    font-size: 0.9rem !important;
+    white-space: nowrap;
+  }
+
+  /* Keep price and Add to Cart button on the same row */
+  .product-card .d-flex.justify-content-between {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: nowrap;
+  }
+
+  /* Add to Cart button — compact for 2-column layout */
+  .btn-add-to-cart {
+    font-size: 0.68rem !important;
+    padding: 0.3rem 0.4rem !important;
+    border-radius: 6px !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .product-card .card-body {
+    padding: 0.65rem !important;
+  }
+
+  .product-card .mt-auto.pt-4 {
+    padding-top: 0.5rem !important;
   }
 }
 
-/* Product Search responsive enhancements */
-.product-search-container {
-  margin-bottom: 1rem;
-}
-
-@media (max-width: 768px) {
-  .product-search-container {
-    margin-bottom: 1.5rem;
-  }
-}
-
-/* Category Product Showcase responsive enhancements */
-.category-showcase .display-4 {
-  font-size: 2.5rem;
-}
-
-@media (max-width: 768px) {
-  .category-showcase .display-4 {
-    font-size: 2rem;
-  }
-}
-
-@media (max-width: 576px) {
-  .category-showcase .display-4 {
-    font-size: 1.75rem;
-  }
-}
-
-/* Modal responsive enhancements */
-@media (max-width: 768px) {
+/* ─── 15. BOOKING CONFIRMED MODAL ─── */
+/* Tablet */
+@media (max-width: 1199px) {
   .booking-confirmed-modal .modal-content {
-    margin: 1rem;
+    margin: 0.75rem;
     max-width: none;
   }
-  
+
   .booking-confirmed-modal .modal-body {
-    padding: 1.5rem 1rem;
+    padding: 1.25rem 1rem !important;
   }
-  
-  .booking-confirmed-modal .confirmation-icon {
-    margin-bottom: 1.5rem;
-  }
-  
+
   .booking-confirmed-modal .confirmation-icon i {
-    font-size: 3rem !important;
+    font-size: 2.5rem !important;
   }
-  
+
   .booking-confirmed-modal h2 {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
+  }
+
+  .booking-info-container {
+    padding: 1rem !important;
+  }
+
+  .booking-info-container table td {
+    padding: 8px 4px;
+    font-size: 0.875rem;
   }
 }
 
-/* PayPal Button responsive wrapper */
-.paypal-checkout-wrapper {
-  max-width: 500px;
-  margin: 0 auto;
+/* Mobile */
+@media (max-width: 767px) {
+  .booking-confirmed-modal .modal-content {
+    margin: 0.5rem;
+  }
+
+  .booking-confirmed-modal .confirmation-icon i {
+    font-size: 2rem !important;
+  }
+
+  .booking-confirmed-modal h2 {
+    font-size: 1.2rem;
+  }
+
+  .booking-info-value {
+    min-width: 80px;
+    font-size: 0.85rem;
+  }
+
+  .booking-info-label {
+    font-size: 0.85rem;
+    min-width: 60px;
+  }
 }
 
-@media (max-width: 576px) {
+/* ─── 16. PAYPAL / CHECKOUT BUTTON ─── */
+.paypal-checkout-wrapper {
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+@media (max-width: 767px) {
   .paypal-checkout-wrapper {
     max-width: 100%;
+    padding: 0 0.5rem;
   }
 }
 
-/* Footer responsive enhancements */
-@media (max-width: 768px) {
-  .footer .col-md-4 {
+/* ─── 17. FOOTER ─── */
+/* Tablet */
+@media (max-width: 1199px) {
+  footer .col-md-4,
+  footer .col-md-8 {
     text-align: center !important;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
   }
-  
-  .footer .col-md-8 {
-    text-align: center !important;
-  }
-  
-  .footer-social-container {
+
+  footer .footer-social-container {
     text-align: center !important;
     margin-top: 1rem;
   }
+
+  footer .d-flex {
+    justify-content: center !important;
+  }
 }
 
-/* Spacing utilities for mobile */
-@media (max-width: 576px) {
-  .container-fluid {
-    padding-left: 15px;
-    padding-right: 15px;
+/* Mobile */
+@media (max-width: 767px) {
+  footer {
+    font-size: 0.9rem;
   }
-  
+
+  footer h5,
+  footer h6 {
+    font-size: 1rem;
+  }
+}
+
+/* ─── 18. GLOBAL BOOTSTRAP OVERRIDES ─── */
+/* Tablet */
+@media (max-width: 1199px) {
+  .display-4 {
+    font-size: 2rem !important;
+  }
+
+  .display-5 {
+    font-size: 1.75rem !important;
+  }
+
+  .row.g-3,
+  .row.g-md-4 {
+    --bs-gutter-x: 1rem;
+    --bs-gutter-y: 1rem;
+  }
+
   section.py-5 {
     padding-top: 3rem !important;
     padding-bottom: 3rem !important;
   }
-}
 
-/* Button responsive behavior */
-@media (max-width: 576px) {
-  .btn {
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
-  }
-  
-  .btn-lg {
-    font-size: 1rem;
-    padding: 0.75rem 1.5rem;
+  .category-showcase .display-4 {
+    font-size: 1.85rem !important;
   }
 }
 
-/* Table responsive behavior */
-@media (max-width: 576px) {
-  .table-responsive table td:first-child {
-    width: 40% !important;
-    font-weight: bold;
-  }
-  
-  .table-responsive table td {
-    padding: 0.5rem 0.25rem;
-    border: none;
-  }
-}
-
-/* Additional responsive utilities */
-@media (max-width: 768px) {
-  /* Adjust grid spacing for tablets */
-  .row.g-3 {
-    --bs-gutter-x: 1rem;
-    --bs-gutter-y: 1rem;
-  }
-  
-  /* Improve card layouts on tablets */
-  .card-body {
-    padding: 1rem !important;
-  }
-  
-  /* Responsive text sizing */
+/* Mobile */
+@media (max-width: 767px) {
   .display-4 {
-    font-size: 2rem !important;
-  }
-  
-  .display-5 {
     font-size: 1.75rem !important;
   }
-}
 
-@media (max-width: 576px) {
-  /* Mobile-specific adjustments */
+  .display-5 {
+    font-size: 1.5rem !important;
+  }
+
   .row.g-3 {
     --bs-gutter-x: 0.75rem;
     --bs-gutter-y: 0.75rem;
   }
-  
-  /* Smaller card padding on mobile */
-  .card-body {
-    padding: 0.75rem !important;
+
+  section.py-5 {
+    padding-top: 2.5rem !important;
+    padding-bottom: 2.5rem !important;
   }
-  
-  /* Responsive image sizing */
+
+  .lead {
+    font-size: 1rem !important;
+  }
+
+  .container-fluid {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Slightly smaller global buttons on mobile */
+  .btn {
+    font-size: 0.875rem;
+    padding: 0.45rem 0.9rem;
+  }
+
+  .btn-lg {
+    font-size: 1rem;
+    padding: 0.65rem 1.25rem;
+  }
+
+  /* Pagination compact */
+  .pagination-container {
+    margin-top: 1.25rem;
+  }
+
+  .pagination .page-link {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  /* Table adjustments */
+  .table-responsive table th,
+  .table-responsive table td {
+    padding: 0.5rem 0.35rem;
+    font-size: 0.85rem;
+  }
+
   .img-fluid {
     max-width: 100%;
     height: auto;
   }
-  
-  /* Button sizing on mobile */
-  .btn-lg {
-    padding: 0.75rem 1.25rem;
-    font-size: 1rem;
+
+  /* Alert padding */
+  .alert {
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
   }
-  
-  /* Responsive text sizing for mobile */
-  .lead {
-    font-size: 1rem !important;
+}
+
+/* ─── 19. TOUCH / HOVER ADJUSTMENTS ─── */
+@media (hover: none) {
+  .booking-card:hover,
+  .order-card:hover,
+  .service-card:hover,
+  .home-services-overview .service-card:hover,
+  .product-card:hover {
+    transform: none !important;
+    box-shadow: inherit !important;
+  }
+}
+
+/* ─── 20. LANDSCAPE MOBILE ─── */
+@media (max-width: 767px) and (orientation: landscape) {
+  .home-hero-section {
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .login-page {
+    min-height: auto;
+  }
+
+  .login-container {
+    padding-top: 60px;
+    padding-bottom: 20px;
+  }
+
+  .welcome-column {
+    display: none;
   }
 }

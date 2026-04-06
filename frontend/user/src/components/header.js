@@ -20,7 +20,7 @@ const Header = () => {
   // Close navbar when clicking outside (for mobile)
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (!isNavCollapsed && window.innerWidth <= 991) {
+      if (!isNavCollapsed && window.innerWidth <= 1199) {
         const navbar = document.getElementById('navbarNav');
         const toggler = document.querySelector('.navbar-toggler');
         
@@ -83,7 +83,7 @@ const Header = () => {
         onClick={closeNavbar}
       ></div>
       
-      <header className={`navbar navbar-expand-lg header-navbar ${isScrolled ? 'sticky-header' : ''}`}>
+      <header className={`navbar navbar-expand-xl header-navbar ${isScrolled ? 'sticky-header' : ''}`}>
         <div className="header-container container-fluid px-2 px-sm-3 px-md-4">
           {/* Logo and Brand Name */}          <NavLink to="/" className="navbar-brand d-flex align-items-center">
             <div className="header-logo-circle">
@@ -121,7 +121,7 @@ const Header = () => {
             id="navbarNav"
           >
             {/* Mobile User Authentication at top of navbar */}
-            <div className="d-lg-none mb-2">
+            <div className="d-xl-none mb-2">
               {isLoggedIn ? (
                 <div className="dropdown d-flex justify-content-center">
                   <button 
@@ -189,7 +189,7 @@ const Header = () => {
             </div>
             
             {/* Divider in mobile */}
-            <hr className="d-lg-none my-1" />
+            <hr className="d-xl-none my-1" />
             
             {/* Main Navigation - Centered */}
             <ul className="navbar-nav mx-auto header-nav" style={{gap: '0'}}>
@@ -272,7 +272,7 @@ const Header = () => {
               </li>
               
               {/* Mobile Only Book Appointment Button */}
-              <li className="nav-item d-lg-none">
+              <li className="nav-item d-xl-none">
                 <NavLink 
                   to="/booking" 
                   className="btn btn-sm header-book-btn w-100 mt-1 py-1"
@@ -285,7 +285,7 @@ const Header = () => {
             <div className="d-flex align-items-center">
               {/* User Authentication Icon */}
               {isLoggedIn ? (
-                <div className="dropdown me-3 d-none d-lg-block">
+                <div className="dropdown me-3 d-none d-xl-block">
                   <button 
                     className="user-dropdown-btn" 
                     type="button"
@@ -340,7 +340,7 @@ const Header = () => {
               ) : (
                 <NavLink 
                   to="/login" 
-                  className="btn btn-outline-dark me-3 d-none d-lg-block"
+                  className="btn btn-outline-dark me-3 d-none d-xl-block"
                   id="login-btn"
                   onClick={closeNavbar}
                 >
@@ -351,7 +351,7 @@ const Header = () => {
               {/* Book Appointment Button - Right side */}
               <NavLink 
                 to="/booking" 
-                className="btn btn-outline-dark d-none d-lg-block"
+                className="btn btn-outline-dark d-none d-xl-block"
                 onClick={closeNavbar}
                 style={{ borderRadius: '5px' }}
               >

@@ -98,7 +98,7 @@ const CategoryProductShowcase = () => {
             <hr className="mb-4" />            <div className="row g-3 g-md-4 justify-content-center">
               {categoryData.products.map((product) => (
                 // Use Bootstrap columns for responsiveness
-                <div key={product._id} className="col-12 col-sm-6 col-lg-4 d-flex justify-content-center">
+                <div key={product._id} className="col-6 col-md-4 d-flex justify-content-center">
                   <ProductCard product={product} />
                 </div>
               ))}

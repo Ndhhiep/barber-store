@@ -115,3 +115,86 @@
   background-color: #9d8a6e;
   color: #fff;
 }
+
+/* ── Responsive: Team Page ── */
+@media (max-width: 991px) {
+  .team-member-image {
+    max-height: 380px;
+  }
+
+  .image-border-even,
+  .image-border-odd,
+  .join-team-image-border {
+    display: none;
+  }
+
+  .team-hero hr {
+    width: 60%;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Stack image + content vertically */
+  .team-section .col-md-6 {
+    margin-bottom: 1.5rem;
+  }
+
+  .team-hero-title {
+    font-size: 1.9rem;
+  }
+
+  .team-member-name {
+    font-size: 1.4rem;
+    text-align: center;
+  }
+
+  .team-member-title {
+    text-align: center;
+  }
+
+  .specialties-heading {
+    font-size: 1.1rem;
+  }
+
+  .team-member-image {
+    max-height: 300px;
+    border-radius: 4px;
+  }
+
+  .join-team-heading {
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .team-hero-title {
+    font-size: 1.6rem;
+  }
+
+  .team-hero hr {
+    width: 75%;
+  }
+
+  .team-member-image {
+    max-height: 240px;
+  }
+
+  .team-member-name {
+    font-size: 1.25rem;
+  }
+
+  .book-with-barber,
+  .contact-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    text-align: center;
+  }
+
+  .join-team-heading {
+    font-size: 1.4rem;
+  }
+
+  .specialty-icon {
+    font-size: 0.9rem;
+  }
+}

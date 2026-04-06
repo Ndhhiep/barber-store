@@ -260,3 +260,96 @@
 .social-icon:hover {
   color: #8B775C;
 }
+
+/* ── Responsive: Contact Page ── */
+@media (max-width: 991px) {
+  .contact-title {
+    font-size: 1.8rem;
+  }
+
+  .contact-lead-text {
+    font-size: 0.95rem;
+  }
+
+  .contact-info-card {
+    margin-top: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .contact-title {
+    font-size: 1.65rem;
+    text-align: center;
+  }
+
+  .map-container iframe {
+    height: 220px !important;
+  }
+
+  .contact-card {
+    margin-bottom: 1.5rem;
+  }
+
+  .contact-info-card-title {
+    font-size: 1.2rem;
+  }
+
+  .modal-dialog {
+    max-width: 92vw !important;
+    margin: 0.75rem auto !important;
+  }
+
+  .modal-body {
+    padding: 1.25rem 1.5rem !important;
+  }
+
+  .check-icon-circle {
+    width: 58px;
+    height: 58px;
+    margin-bottom: 1.25rem;
+  }
+
+  .check-icon-circle .bi-check-lg {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .contact-submit-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .contact-card-title {
+    font-size: 1.2rem;
+  }
+
+  .modal-body h2 {
+    font-size: 1.2rem;
+    padding: 0 0.5rem;
+  }
+
+  .modal-success .message-text {
+    font-size: 0.9rem;
+  }
+
+  .contact-success-btn {
+    max-width: 100%;
+    padding: 0.7rem 1.25rem !important;
+    font-size: 0.875rem;
+  }
+
+  .check-icon-circle {
+    width: 52px;
+    height: 52px;
+  }
+
+  .check-icon-circle .bi-check-lg {
+    font-size: 1.75rem;
+  }
+
+  .contact-info-icon-container {
+    width: 32px;
+  }
+}

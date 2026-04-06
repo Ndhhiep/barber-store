@@ -139,7 +139,7 @@ const ProductsPage = () => {
                   <h2 className="h4 h-md-3 mb-3 mb-md-4 pb-2 border-bottom">{category}</h2>                  <div className="row g-3 g-md-4 justify-content-start">
                     {Array.isArray(filteredProductsByCategory[category]) ? 
                       filteredProductsByCategory[category].map((product) => (
-                        <div className="col-12 col-sm-6 col-lg-4 col-xl-3 d-flex justify-content-center" key={product._id}>
+                        <div className="col-6 col-md-4 col-xl-3 d-flex justify-content-center" key={product._id}>
                           <ProductCard product={{
                             ...product,
                             imageUrl: product.image // Mapping image field to imageUrl for compatibility

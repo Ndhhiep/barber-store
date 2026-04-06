@@ -522,3 +522,167 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
 }
+
+/* ── Responsive: Booking Page ── */
+@media (max-width: 991px) {
+  .booking-card .card-body {
+    padding: 1.5rem !important;
+  }
+
+  .booking-section-card {
+    padding: 1rem !important;
+  }
+
+  .booking-title {
+    font-size: 1.8rem;
+  }
+
+  /* Time slot: 3 columns on tablet */
+  .time-slots-grid .col-lg-2 {
+    flex: 0 0 33.333%;
+    max-width: 33.333%;
+  }
+
+  .modal-dialog {
+    max-width: 90vw;
+    margin: 1rem auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .booking-page-container {
+    margin-top: 1rem !important;
+  }
+
+  .booking-card .card-body {
+    padding: 1.25rem !important;
+  }
+
+  .booking-section-card {
+    padding: 0.875rem !important;
+  }
+
+  .booking-title {
+    font-size: 1.6rem;
+  }
+
+  .confirmation-title {
+    font-size: 1.5rem;
+  }
+
+  .total-duration-highlight .d-flex {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* Time slot: 4 columns on mobile-landscape / tablet */
+  .time-slots-grid .col-lg-2 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+
+  .selected-service-item {
+    font-size: 0.9rem;
+    padding: 0.35rem 0.6rem;
+  }
+
+  .booking-btn {
+    padding: 0.85rem;
+    font-size: 1rem;
+  }
+
+  .modal-body {
+    padding: 1.25rem !important;
+  }
+
+  .booking-info-container table td {
+    font-size: 0.875rem;
+    padding: 8px 4px;
+  }
+}
+
+@media (max-width: 576px) {
+  .booking-card .card-body {
+    padding: 1rem !important;
+  }
+
+  .booking-section-card {
+    padding: 0.75rem !important;
+  }
+
+  .booking-title {
+    font-size: 1.4rem;
+  }
+
+  /* Time slots: 2 columns on mobile */
+  .time-slots-grid .col-lg-2,
+  .time-slots-grid .col-md-3,
+  .time-slots-grid .col-sm-4 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  .time-slot-btn {
+    font-size: 0.75rem;
+    padding: 5px 8px;
+    margin-bottom: 6px;
+  }
+
+  .total-duration-highlight {
+    padding: 0.75rem;
+  }
+
+  .total-duration-highlight .d-flex {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.5rem;
+  }
+
+  .total-duration-highlight .badge {
+    align-self: flex-end;
+  }
+
+  .selected-service-item {
+    font-size: 0.85rem;
+  }
+
+  .booking-btn {
+    font-size: 0.95rem;
+    padding: 0.75rem;
+    letter-spacing: 0.5px;
+  }
+
+  .policy-card .card-body {
+    padding: 1rem !important;
+  }
+
+  .policy-list {
+    padding-left: 1rem;
+    font-size: 0.875rem;
+  }
+
+  .confirmation-title {
+    font-size: 1.3rem;
+  }
+
+  .booking-info-value {
+    min-width: 80px;
+    font-size: 0.85rem;
+    padding: 4px 8px;
+  }
+
+  .booking-info-label {
+    font-size: 0.85rem;
+    min-width: 60px;
+  }
+
+  /* Modal */
+  .modal-dialog {
+    max-width: 96vw;
+    margin: 0.5rem auto;
+  }
+
+  .modal-body {
+    padding: 1rem !important;
+  }
+}

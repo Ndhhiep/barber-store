@@ -4,7 +4,7 @@
   background-color: white;
   width: 100%;
   z-index: 1000;
-  height: 80px; /* Adjusted based on the image */
+  height: 80px;
   display: flex;
   align-items: center;
   padding: 0;
@@ -36,7 +36,7 @@
 .header-logo-circle {
   width: 48px;
   height: 48px;
-  background-color: #8B775C; /* Brown color from image */
+  background-color: #8B775C;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -57,14 +57,15 @@
   margin-left: 0.75rem;
 }
 
-@media (max-width: 991px) {
+/* Tablet & below: slightly smaller brand name */
+@media (max-width: 1199px) {
   .header-brand-name {
     font-size: 1.1rem;
   }
 }
 
 .header-toggler {
-  border-color: #D9D0C7; /* var(--primary-light) */
+  border-color: #D9D0C7;
   padding: 0.25rem 0.5rem;
   position: relative;
 }
@@ -96,8 +97,9 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Mobile menu styling */
-@media (max-width: 991px) {
+/* ─── TABLET & MOBILE MENU (< 1200px) ─── */
+/* Sidebar slide-in menu */
+@media (max-width: 1199px) {
   .header-nav {
     margin-top: 0;
     padding: 2rem 0;
@@ -107,7 +109,10 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-  }    /* Mobile navbar slide animation from right */  .navbar-collapse {
+  }
+
+  /* Slide from right */
+  .navbar-collapse {
     position: fixed;
     top: 0;
     right: 0;
@@ -123,15 +128,17 @@
     transition: transform 0.3s ease-in-out;
     overflow-y: auto;
   }
-    /* Show navbar with slide animation */
+
   .navbar-collapse.show {
     transform: translateX(0);
-  }    /* Backdrop overlay */
+  }
+
+  /* Backdrop overlay */
   .navbar-backdrop {
     position: fixed;
     top: 0;
     left: 0;
-    width: 50vw; /* Only cover the left side, not the navbar area */
+    width: 50vw;
     height: 100vh;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 1040;
@@ -139,31 +146,60 @@
     visibility: hidden;
     transition: all 0.3s ease-in-out;
   }
-    .navbar-backdrop.show {
+
+  .navbar-backdrop.show {
     opacity: 1;
     visibility: visible;
   }
-}
 
-/* Increase nav item spacing */
-.navbar-nav .nav-item {
-  margin: 0 0.5rem;
-}
-
-@media (max-width: 991px) {
+  /* Nav items */
   .navbar-nav .nav-item {
     margin: 1rem 0;
     width: 100%;
     text-align: center;
   }
-  
+
   .navbar-nav {
     width: 100%;
     align-items: center;
   }
 }
 
-/* Updated navigation links */
+/* Mobile only: narrower panel */
+@media (max-width: 767px) {
+  .navbar-collapse {
+    width: 75vw;
+  }
+
+  .navbar-backdrop {
+    width: 25vw;
+  }
+
+  .header-navbar {
+    height: 60px;
+  }
+
+  .header-logo-circle {
+    width: 38px;
+    height: 38px;
+  }
+
+  .logo-letters {
+    font-size: 16px;
+  }
+
+  .header-brand-name {
+    font-size: 1rem;
+    margin-left: 0.5rem;
+  }
+}
+
+/* ─── NAV ITEMS SPACING ─── */
+.navbar-nav .nav-item {
+  margin: 0 0.5rem;
+}
+
+/* ─── NAV LINKS ─── */
 .header-nav-link {
   color: #333;
   font-family: 'Lato', sans-serif;
@@ -175,7 +211,7 @@
   display: inline-block;
 }
 
-@media (max-width: 991px) {
+@media (max-width: 1199px) {
   .header-nav-link {
     padding: 1rem 2rem;
     font-size: 1.2rem;
@@ -186,13 +222,13 @@
     margin: 0.5rem 0;
     transition: all 0.3s ease;
   }
-  
+
   .header-nav-link:hover {
     background-color: rgba(139, 119, 92, 0.1);
     color: #8B775C !important;
   }
-  
-  /* Cart link styling in mobile navbar */
+
+  /* Cart link badge in sidebar */
   .header-nav-link .badge {
     position: relative !important;
     top: auto !important;
@@ -203,23 +239,21 @@
   }
 }
 
-/* Ensure hover and active states have accent color */
-.header-nav-link:hover {
+/* Hover & active */
+.header-nav-link:hover,
+.header-nav-link.active {
   color: #8B775C !important;
 }
 
-/* Ensure all active links have accent color */
 .header-nav-link.active {
-  color: #8B775C !important; /* var(--accent) */
   font-weight: 500;
 }
 
-/* Extra specificity for home link */
 .navbar-nav .nav-item:first-child .header-nav-link.active {
   color: #8B775C !important;
 }
 
-/* Add underline to active links and hover state */
+/* Underline animation (desktop only) */
 .header-nav-link::after {
   content: '';
   position: absolute;
@@ -233,36 +267,24 @@
   transition: width 0.3s ease;
 }
 
-.header-nav-link:hover::after {
-  width: 80%;
-}
-
+.header-nav-link:hover::after,
 .header-nav-link.active::after {
   width: 80%;
 }
 
-@media (max-width: 991px) {
-  .header-nav-link::after {
-    display: none; /* Hide underline on mobile sidebar */
-  }
-  
-  .header-nav-link.active::after {
-    display: none;
-  }
-  
+/* Hide underline in sidebar */
+@media (max-width: 1199px) {
+  .header-nav-link::after,
+  .header-nav-link.active::after,
   .header-nav-link:hover::after {
     display: none;
   }
 }
 
-.header-nav-link:hover,
-.header-nav-link.active {
-  color: #8B775C; /* var(--accent) */
-}
-
+/* ─── BOOK BUTTON ─── */
 .header-book-btn {
-  border-color: #8B775C; /* Consistent brown color */
-  color: #8B775C; /* Brown text */
+  border-color: #8B775C;
+  color: #8B775C;
   font-family: 'Lato', sans-serif;
   font-size: 1.1rem;
   font-weight: 600;
@@ -274,7 +296,7 @@
   background-color: transparent;
 }
 
-@media (max-width: 991px) {
+@media (max-width: 1199px) {
   .header-book-btn {
     width: 80%;
     margin: 2rem auto 1rem auto;
@@ -287,13 +309,26 @@
 .header-book-btn:hover {
   background-color: #8B775C;
   border-color: #8B775C;
-  color: #FFFFFF; /* White text on hover */
+  color: #FFFFFF;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(139, 119, 92, 0.25);
 }
 
+.nav-item .header-book-btn {
+  background-color: transparent;
+  color: #8B775C;
+  border: 2px solid #8B775C;
+  border-radius: 4px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
 
+.nav-item .header-book-btn:hover {
+  background-color: #8B775C;
+  color: white;
+}
 
+/* ─── LOGIN BUTTON ─── */
 #login-btn {
   border-width: 2px;
   border-radius: 5px;
@@ -303,7 +338,6 @@
   padding: 8px 20px;
 }
 
-/* Book Appointment Button - Make same height as login button */
 .btn-outline-dark[href="/booking"] {
   height: 44px;
   border-width: 2px;
@@ -315,8 +349,16 @@
   justify-content: center;
 }
 
+@media (max-width: 1199px) {
+  .login-btn {
+    width: 80%;
+    text-align: center;
+    margin: 1rem auto;
+    padding: 0.75rem 1.25rem;
+  }
+}
 
-/* Desktop user dropdown button styling */
+/* ─── USER DROPDOWN ─── */
 .user-dropdown-btn {
   background: none;
   border: none;
@@ -332,7 +374,43 @@
   background-color: rgba(139, 119, 92, 0.1);
 }
 
-/* Book appointment button styling */
+@media (max-width: 1199px) {
+  .cart-btn {
+    margin: 1rem auto;
+    font-size: 1.5rem;
+  }
+
+  .cart-icon {
+    color: #333333;
+  }
+
+  .user-dropdown-btn {
+    margin: 1rem auto;
+    font-size: 1.2rem;
+  }
+
+  .dropdown-menu {
+    position: static !important;
+    transform: none !important;
+    box-shadow: none;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 1rem 0;
+    background-color: #f8f9fa;
+  }
+
+  .dropdown-menu .dropdown-item {
+    color: #333;
+    background-color: transparent;
+    padding: 0.75rem 1rem;
+  }
+
+  .dropdown-menu .dropdown-item:hover {
+    background-color: rgba(139, 119, 92, 0.1);
+    color: #8B775C;
+  }
+}
+
+/* ─── BOOK APPOINTMENT BUTTON ─── */
 .book-appointment-btn {
   border-color: #8b775c;
   color: #8b775c;
@@ -356,58 +434,14 @@
   box-shadow: 0 4px 8px rgba(139, 119, 92, 0.25);
 }
 
-@media (max-width: 991px) {
-  .login-btn {
-    width: 80%;
-    text-align: center;
-    margin: 1rem auto;
-    padding: 0.75rem 1.25rem;
-  }
-  
-  .cart-btn {
-    margin: 1rem auto;
-    font-size: 1.5rem;
-
-  }
-
-  .cart-icon{
-    color:#333333;
-  }
-  
-  .user-dropdown-btn {
-    margin: 1rem auto;
-    font-size: 1.2rem;
-  }
-  
-  .dropdown-menu {
-    position: static !important;
-    transform: none !important;
-    box-shadow: none;
-    border: 1px solid rgba(0,0,0,0.1);
-    margin: 1rem 0;
-    background-color: #f8f9fa;
-  }
-  
-  .dropdown-menu .dropdown-item {
-    color: #333;
-    background-color: transparent;
-    padding: 0.75rem 1rem;
-  }
-  
-  .dropdown-menu .dropdown-item:hover {
-    background-color: rgba(139, 119, 92, 0.1);
-    color: #8B775C;
-  }
-}
-
-/* Chỉnh sửa giao diện thương hiệu */
+/* ─── NAVBAR BRAND ─── */
 .navbar-brand {
   display: flex;
   align-items: center;
   height: 100%;
 }
 
-/* Cart badge positioning for navbar cart icon */
+/* ─── CART BUTTON (Desktop inline) ─── */
 .navbar-nav .cart-btn {
   position: relative;
   display: inline-flex;
@@ -424,7 +458,34 @@
   color: #8B775C;
 }
 
-/* Perfect circular cart badge */
+@media (max-width: 1199px) {
+  .navbar-nav .cart-btn {
+    width: 100%;
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
+    text-align: center;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .navbar-nav .cart-btn:hover {
+    background-color: rgba(139, 119, 92, 0.1);
+    color: #8B775C !important;
+  }
+
+  .cart-badge {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    margin-left: 0.5rem !important;
+    border: 1px solid white !important;
+  }
+}
+
+/* Cart badge */
 .cart-badge {
   position: absolute !important;
   top: -12px !important;
@@ -447,34 +508,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
 }
 
-@media (max-width: 991px) {
-  .navbar-nav .cart-btn {
-    width: 100%;
-    padding: 1rem 2rem;
-    font-size: 1.2rem;
-    text-align: center;
-    border-radius: 8px;
-    margin: 0.5rem 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .navbar-nav .cart-btn:hover {
-    background-color: rgba(139, 119, 92, 0.1);
-    color: #8B775C !important;
-  }
-  
-  .cart-badge {
-    position: relative !important;
-    top: auto !important;
-    right: auto !important;
-    margin-left: 0.5rem !important;
-    border: 1px solid white !important;
-  }
-}
-
-/* Cart button styling */
+/* Cart button base */
 .cart-btn {
   display: flex;
   align-items: center;
@@ -500,22 +534,7 @@
   right: -6px !important;
 }
 
-/* Mobile Book Appointment Button */
-.nav-item .header-book-btn {
-  background-color: transparent;
-  color: #8B775C;
-  border: 2px solid #8B775C;
-  border-radius: 4px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.nav-item .header-book-btn:hover {
-  background-color: #8B775C;
-  color: white;
-}
-
-/* Cart Badge Styling */
+/* Cart badge mobile */
 .cart-badge-mobile {
   font-size: 0.6rem !important;
   padding: 0.25em 0.4em !important;
@@ -525,7 +544,7 @@
   margin-left: 0 !important;
 }
 
-/* Ensure proper positioning for both mobile and desktop cart badges */
+/* Badge positioning */
 .position-relative .badge.bg-danger {
   z-index: 10;
   min-width: 18px;
@@ -534,4 +553,3 @@
   align-items: center;
   justify-content: center;
 }
-

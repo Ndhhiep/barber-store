@@ -73,3 +73,60 @@
   color: #fff;
   transform: translateY(-2px);
 }
+
+/* ── Responsive: About Page ── */
+@media (max-width: 991px) {
+  .image-decoration-right,
+  .image-decoration-left {
+    display: none;
+  }
+
+  .image-container {
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+
+  .image-container img {
+    width: 100%;
+    max-height: 350px;
+    object-fit: cover;
+  }
+
+  .about-title {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .about-title {
+    font-size: 1.6rem;
+    text-align: center;
+  }
+
+  .value-icon {
+    font-size: 2rem;
+  }
+
+  .check-icon {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .value-card {
+    margin-bottom: 1rem;
+  }
+
+  .values-section .col-md-4 {
+    margin-bottom: 1rem;
+  }
+
+  .cta-button {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    width: 100%;
+    max-width: 260px;
+    display: block;
+    margin: 0 auto;
+  }
+}

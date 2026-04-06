@@ -57,7 +57,7 @@ const ServicesPage = () => {
           </div>        ) : (
           <div className="row g-3 g-md-4">
             {services.map(service => (
-              <div key={service._id} className="col-12 col-md-6 col-lg-6">
+              <div key={service._id} className="col-6 col-md-6 col-lg-6">
                 <div className="card h-100 shadow-sm service-card">
                   <div className="card-body p-3 p-md-4">
                     <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start mb-3">

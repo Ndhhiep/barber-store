@@ -124,3 +124,98 @@
 .cta-text {
   color: #504B40;
 }
+
+/* ── Responsive: Services Page ── */
+@media (max-width: 991px) {
+  .what-to-expect,
+  .grooming-policies {
+    margin-bottom: 1.5rem;
+    height: auto;
+  }
+
+  .services-heading {
+    font-size: 1.9rem;
+  }
+
+  .services-lead {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .services-heading {
+    font-size: 1.7rem;
+    text-align: center;
+  }
+
+  .service-card {
+    margin-bottom: 1rem;
+  }
+
+  .service-name {
+    font-size: 1.1rem;
+  }
+
+  .what-to-expect,
+  .grooming-policies {
+    padding: 1.5rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+
+  .what-to-expect h3,
+  .grooming-policies h3 {
+    font-size: 1.2rem;
+  }
+
+  .info-icon,
+  .expect-icon {
+    font-size: 1rem;
+    margin-right: 6px;
+  }
+}
+
+@media (max-width: 576px) {
+  .service-card .card-body {
+    padding: 0.75rem;
+  }
+
+  .service-name {
+    font-size: 0.9rem;
+  }
+
+  .service-price {
+    font-size: 0.9rem;
+  }
+
+  .service-duration {
+    font-size: 0.75rem;
+  }
+
+  .service-description {
+    font-size: 0.8rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .book-btn {
+    width: 100%;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .cta-btn {
+    width: 100%;
+    max-width: 220px;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .material-symbols-outlined {
+    font-size: 18px;
+    margin-right: 6px;
+  }
+}

@@ -80,8 +80,9 @@ const createBooking = asyncHandler(async (req, res) => {
   const endTotalMinutes = currentTotalMinutes + totalDuration;
 
   // Tạo danh sách tất cả time slots bị chiếm dụng (30-minute intervals)
-  // Dùng <= để bao gồm cả slot tại thời điểm kết thúc (ví dụ: 13:00+90min sẽ block cả 14:30)
-  while (currentTotalMinutes <= endTotalMinutes) {
+  // Dùng < (không bao gồm end slot) vì slot kết thúc đã rảnh cho booking tiếp theo
+  // Ví dụ: 17:00 + 105 phút → end = 18:45 → block: 17:00, 17:30, 18:00, 18:30 (< 18:45)
+  while (currentTotalMinutes < endTotalMinutes) {
     const hours = Math.floor(currentTotalMinutes / 60);
     const minutes = currentTotalMinutes % 60;
     const timeSlot = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
@@ -693,8 +694,8 @@ const updateBooking = asyncHandler(async (req, res) => {
     const endTotalMinutes = currentTotalMinutes + totalDuration;
     
     // Create list of all occupied time slots (30-minute intervals)
-    // Dùng <= để bao gồm cả slot tại thời điểm kết thúc
-    while (currentTotalMinutes <= endTotalMinutes) {
+    // Dùng < (không bao gồm end slot) vì slot kết thúc đã rảnh cho booking tiếp theo
+    while (currentTotalMinutes < endTotalMinutes) {
       const hours = Math.floor(currentTotalMinutes / 60);
       const minutes = currentTotalMinutes % 60;
       const timeSlot = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
@@ -1102,8 +1103,8 @@ const getTimeSlotStatus = async (req, res) => {
         
         console.log(`Calculating occupied slots for booking ${bookingIndex + 1}: ${booking.time} (${duration} mins)`);
 
-        // Dùng <= để bao gồm cả slot tại thời điểm kết thúc
-        while (currentTotalMinutes <= endTotalMinutes) {
+        // Dùng < (không bao gồm end slot): slot kết thúc rảnh cho booking tiếp theo
+        while (currentTotalMinutes < endTotalMinutes) {
           const hours = Math.floor(currentTotalMinutes / 60);
           const minutes = currentTotalMinutes % 60;
           const timeSlot = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
@@ -1124,28 +1125,24 @@ const getTimeSlotStatus = async (req, res) => {
     console.log(`Vietnam current time: ${vnCurrentTime.hour}:${vnCurrentTime.minute.toString().padStart(2, '0')} (${currentTotalMinutes} minutes)`);
     console.log(`Input date for comparison: ${date}`);// Helper function để kiểm tra xem có đủ slots liên tiếp không
     const hasConsecutiveSlots = (startSlotIndex, requiredDuration) => {
-      // Tính số slot cần thiết (bao gồm cả boundary end slot theo logic mới)
-      // Ví dụ: 90 phút tại 13:00 cần kiểm tra 13:00, 13:30, 14:00 và 14:30 (boundary)
-      const slotsNeeded = Math.ceil(requiredDuration / 30) + 1;
+      // Số slot cần kiểm tra = số slot thực sự bị chiếm dụng bởi lịch hẹn
+      // Ví dụ: 105 phút → ceil(105/30) = 4 slots (17:00, 17:30, 18:00, 18:30)
+      // Ví dụ: 90 phút  → ceil(90/30)  = 3 slots (17:00, 17:30, 18:00)
+      const slotsNeeded = Math.ceil(requiredDuration / 30);
       const startSlot = allTimeSlots[startSlotIndex];
       
-      console.log(`Checking consecutive slots for ${startSlot}: need ${slotsNeeded} slots (incl. boundary) for ${requiredDuration} minutes`);
+      console.log(`Checking consecutive slots for ${startSlot}: need ${slotsNeeded} slots for ${requiredDuration} minutes`);
       
+      // Kiểm tra nghiêm ngặt: nếu không đủ slots trước giờ đóng cửa → không thể đặt
+      // Ví dụ: 17:30 + 105 phút = 19:15 > 19:00 (giờ đóng) → không đủ → false
       if (startSlotIndex + slotsNeeded > allTimeSlots.length) {
-        // Cho phép thiếu đúng 1 slot cuối (nếu end slot vượt ra ngoài working hours)
-        if (startSlotIndex + slotsNeeded - 1 > allTimeSlots.length) {
-          console.log(`Not enough slots available: need ${slotsNeeded}, have ${allTimeSlots.length - startSlotIndex}`);
-          return false;
-        }
+        console.log(`Not enough slots before closing: need ${slotsNeeded}, only ${allTimeSlots.length - startSlotIndex} available`);
+        return false;
       }
 
-      // Kiểm tra tất cả slots cần thiết (bao gồm boundary end slot)
+      // Kiểm tra tất cả slots cần thiết
       for (let i = 0; i < slotsNeeded; i++) {
         const slotIndex = startSlotIndex + i;
-        
-        // Nếu vượt quá danh sách slot (boundary slot nằm ngoài giờ làm việc), bỏ qua
-        if (slotIndex >= allTimeSlots.length) break;
-        
         const slotTime = allTimeSlots[slotIndex];
         
         // Kiểm tra nếu slot này đã qua (sử dụng VN timezone)
@@ -1165,7 +1162,7 @@ const getTimeSlotStatus = async (req, res) => {
         }
       }
       
-      console.log(`${startSlot}: All ${slotsNeeded} consecutive slots (incl. boundary) are available`);
+      console.log(`${startSlot}: All ${slotsNeeded} consecutive slots are available`);
       return true;
     };
 

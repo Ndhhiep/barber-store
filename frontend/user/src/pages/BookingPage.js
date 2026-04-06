@@ -134,7 +134,7 @@ const BookingPage = () => {
     
     return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
   };  // Check if a time slot is occupied by an existing appointment
-  const isSlotOccupiedByExistingAppointment = (timeSlot) => {
+  const isSlotOccupiedByExistingAppointment = useCallback((timeSlot) => {
     if (timeSlotStatuses.length === 0) {
       return false;
     }
@@ -219,18 +219,20 @@ const BookingPage = () => {
     });
     
     return isWithinOccupiedRange;
-  };
-    // Check if a time slot and subsequent slots (based on duration) are available
-  const checkTimeSlotAvailability = (startTime, durationMinutes = 30) => {
+  }, [timeSlotStatuses, bookingData.date]);
+
+  // Check if a time slot and subsequent slots (based on duration) are available
+  const checkTimeSlotAvailability = useCallback((startTime, durationMinutes = 30) => {
     // If no time slots loaded from backend, assume available (fallback behavior)
     if (timeSlotStatuses.length === 0) return true;
     
     // Default to 30 minutes if no duration or services selected
     const minutes = durationMinutes > 0 ? durationMinutes : 30;
     
-    // Số slot cần kiểm tra = ceil(duration/30) + 1 (bao gồm boundary end slot)
-    // Ví dụ: 90 phút → kiểm tra 3 slot thông thường + 1 boundary slot = 4 slot
-    const slotsNeeded = Math.ceil(minutes / 30) + 1;
+    // Số slot cần kiểm tra = ceil(duration/30) — không +1
+    // Ví dụ: 105 phút → ceil(105/30) = 4 slots (17:00, 17:30, 18:00, 18:30)
+    // Ví dụ: 90 phút  → ceil(90/30)  = 3 slots (17:00, 17:30, 18:00)
+    const slotsNeeded = Math.ceil(minutes / 30);
     
     // Find the index of the start time
     const startIndex = timeSlotStatuses.findIndex(slot => slot.start_time === startTime);
@@ -242,30 +244,33 @@ const BookingPage = () => {
     // Calculate the actual end time of the appointment
     const appointmentEndTime = calculateEndTime(startTime, minutes);
     
-    // Check all slots including the boundary end slot
+    // Kiểm tra từng slot mà lịch hẹn chiếm dụng
     for (let i = 0; i < slotsNeeded; i++) {
       const slotIndex = startIndex + i;
       
-      // If we run out of slots — boundary slot outside working hours, skip it
-      if (slotIndex >= timeSlotStatuses.length) break;
+      // Nếu vượt quá giờ làm việc → không đủ thời gian trước khi đóng cửa
+      if (slotIndex >= timeSlotStatuses.length) {
+        console.log(`Time slot ${startTime}-${appointmentEndTime} (${minutes} min) extends beyond working hours`);
+        return false;
+      }
       
       const currentSlot = timeSlotStatuses[slotIndex];
       
-      // Check if the current slot is past, unavailable, or occupied by an existing appointment
-      if (currentSlot.isPast || !currentSlot.isAvailable || currentSlot.isOccupied) {
-        const reason = currentSlot.isPast 
-          ? 'in the past' 
-          : currentSlot.isOccupied 
-            ? 'occupied by an existing appointment' 
-            : 'unavailable';
-        console.log(`Time slot ${startTime}-${appointmentEndTime} (${durationMinutes} min) is not available - slot ${currentSlot.start_time} (${i+1} of ${slotsNeeded}) is ${reason}`);
+      // Chỉ kiểm tra isPast và isOccupied cho slot trung gian
+      // Không check isAvailable vì flag đó tính "slot này có là start time hợp lệ không"
+      // chứ không phải "slot này có rảnh không"
+      if (currentSlot.isPast || currentSlot.isOccupied) {
+        const reason = currentSlot.isPast ? 'in the past' : 'occupied by an existing appointment';
+        console.log(`Time slot ${startTime}-${appointmentEndTime} (${minutes} min) is not available - slot ${currentSlot.start_time} (${i+1}/${slotsNeeded}) is ${reason}`);
         return false;
       }
     }
     
-    console.log(`Time slot ${startTime}-${appointmentEndTime} (${durationMinutes} min) is available - all required time slots (incl. boundary) are available`);
+    console.log(`Time slot ${startTime}-${appointmentEndTime} (${minutes} min) is available`);
     return true;
-  };    // Check if a time slot should be disabled - wrapped in useCallback
+  }, [timeSlotStatuses]);
+
+  // Check if a time slot should be disabled - wrapped in useCallback
   const isTimeSlotDisabled = useCallback((timeSlot) => {
     // Get total duration of selected services
     const totalDuration = calculateTotalDuration(bookingData.services);
@@ -290,7 +295,7 @@ const BookingPage = () => {
     
     // Check if this time slot and subsequent slots are available for the total duration    
     return !checkTimeSlotAvailability(timeSlot, totalDuration);
-  }, [timeSlotStatuses, bookingData.services]);
+  }, [timeSlotStatuses, bookingData.services, checkTimeSlotAvailability, isSlotOccupiedByExistingAppointment]);
   // Check if a time slot is in the past or booked - for future use in showing specific messages
   // eslint-disable-next-line no-unused-vars
   
@@ -626,36 +631,37 @@ const BookingPage = () => {
         setTimeSlotStatuses([]);
       }    } else if (name === 'date') {
       // Reset time selection and time slot statuses when date changes
-      console.log(`Date changed to: ${value}`);
+      let dateValue = value;
+      console.log(`Date changed to: ${dateValue}`);
       
       // Validate the date is in correct format
       const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-      if (!datePattern.test(value)) {
-        console.error(`Invalid date format: ${value}`);
+      if (!datePattern.test(dateValue)) {
+        console.error(`Invalid date format: ${dateValue}`);
         
         // If we got a date object or invalid format, try to format it properly
-        if (value instanceof Date) {
-          const formattedValue = formatDate(value);
+        if (dateValue instanceof Date) {
+          const formattedValue = formatDate(dateValue);
           console.log(`Formatted date object to: ${formattedValue}`);
-          value = formattedValue;
+          dateValue = formattedValue;
         } else {
           // Try to parse as date and format
           try {
-            const dateObj = new Date(value);
+            const dateObj = new Date(dateValue);
             if (!isNaN(dateObj.getTime())) {
               const formattedValue = formatDate(dateObj);
               console.log(`Parsed and formatted date string to: ${formattedValue}`);
-              value = formattedValue;
+              dateValue = formattedValue;
             }
           } catch (error) {
-            console.error(`Could not parse date: ${value}`);
+            console.error(`Could not parse date: ${dateValue}`);
           }
         }
       }
       
       // Parse the date to ensure it's valid and log information about it
       try {
-        const selectedDate = new Date(value);
+        const selectedDate = new Date(dateValue);
         console.log(`Selected date: ${selectedDate.toDateString()}`);
         console.log(`Month: ${selectedDate.getMonth() + 1}, Year: ${selectedDate.getFullYear()}`);
       } catch (error) {
@@ -664,7 +670,7 @@ const BookingPage = () => {
       
       setBookingData(prev => ({
         ...prev,
-        [name]: value,
+        [name]: dateValue,
         time: '' // Reset time when date changes
       }));
       
@@ -693,15 +699,12 @@ const BookingPage = () => {
       // Update the booking data with the new service
       setBookingData(prev => {
         const newServices = [...prev.services, serviceToAdd];
-        const newTotalDuration = calculateTotalDuration(newServices);
-          // Check if current selected time is still valid with new duration
-        let newTime = prev.time;
-        const previousTime = prev.time;
         
         // Don't automatically reset time - let the new time slot status API handle this
         // The useEffect will refetch time slots with new services and update availability
         
-        // Log the changes        console.log(`Added service: ${serviceToAdd.name} (${serviceToAdd.duration || 30} min). New total duration: ${newTotalDuration} minutes`);
+        // Log the changes
+        console.log(`Added service: ${serviceToAdd.name} (${serviceToAdd.duration || 30} min). New total duration: ${calculateTotalDuration(newServices)} minutes`);
         
         return {
           ...prev,
@@ -855,11 +858,6 @@ const BookingPage = () => {
     }).format(price);
   };
   
-  // Get service name by ID
-  const getServiceNameById = (serviceId) => {
-    const service = serviceList.find(service => service._id === serviceId);
-    return service ? service.name : '';
-  };
 
   // Email Confirmation Modal Component
   const EmailConfirmationModal = () => {
@@ -1178,78 +1176,66 @@ const BookingPage = () => {
                                           const isSelected = bookingData.time === time;
                                           const totalDuration = calculateTotalDuration(bookingData.services);
                                           
-                                          // Check if this slot is part of the selected time range
+                                          // Tính toán range của lịch hẹn
                                           let isInSelectedRange = false;
-                                          let isEndOfRange = false;
-                                          let isExactEndTime = false;
                                           
                                           if (bookingData.time && totalDuration > 0) {
-                                            const allTimeSlots = timeSlotStatuses.length > 0 ? timeSlotStatuses.map(slot => slot.start_time) : timeSlots;
-                                            const selectedIndex = allTimeSlots.indexOf(bookingData.time);
-                                            const currentIndex = index;
-                                            
-                                            if (selectedIndex >= 0) {
-                                              // Calculate appointment end time
-                                              const appointmentEndTime = calculateEndTime(bookingData.time, totalDuration);
-                                              
-                                              // Convert times to minutes for comparison
-                                              const [currentHour, currentMinute] = time.split(':').map(Number);
-                                              const currentTimeMinutes = currentHour * 60 + currentMinute;
-                                              
-                                              const [selectedHour, selectedMinute] = bookingData.time.split(':').map(Number);
-                                              const selectedTimeMinutes = selectedHour * 60 + selectedMinute;
-                                              
-                                              const [endHour, endMinute] = appointmentEndTime.split(':').map(Number);
-                                              const appointmentEndMinutes = endHour * 60 + endMinute;
-                                              
-                                              // Check if this slot overlaps with the appointment duration
-                                              const slotEndMinutes = currentTimeMinutes + 30; // Each slot is 30 minutes
-                                                if (currentTimeMinutes >= selectedTimeMinutes && currentTimeMinutes < appointmentEndMinutes) {
-                                                isInSelectedRange = true;
-                                                
-                                                // Check if this is the last slot that the appointment overlaps
-                                                if (slotEndMinutes >= appointmentEndMinutes) {
-                                                  isEndOfRange = true;                                                  // Check if the appointment ends exactly at the start of the next slot
-                                                  if (appointmentEndMinutes === slotEndMinutes) {
-                                                    isExactEndTime = true;
-                                                  }
-                                                }
-                                              }
+                                            const appointmentEndTime = calculateEndTime(bookingData.time, totalDuration);
+                                            const [currentHour, currentMinute] = time.split(':').map(Number);
+                                            const currentTimeMinutes = currentHour * 60 + currentMinute;
+                                            const [selectedHour, selectedMinute] = bookingData.time.split(':').map(Number);
+                                            const selectedTimeMinutes = selectedHour * 60 + selectedMinute;
+                                            const [endHour, endMinute] = appointmentEndTime.split(':').map(Number);
+                                            const appointmentEndMinutes = endHour * 60 + endMinute;
+                                            // Slot nằm trong range lịch hẹn (từ giờ bắt đầu đến trước giờ kết thúc)
+                                            if (currentTimeMinutes >= selectedTimeMinutes && currentTimeMinutes < appointmentEndMinutes) {
+                                              isInSelectedRange = true;
                                             }
                                           }
                                           
+                                          // isInBookingRange: slot bị khoá nhưng nằm trong range lịch hẹn đang chọn
+                                          // → chuyển sang CSS "booking-range" giúp user thấy slot này sẽ được dùng
+                                          const isInBookingRange = disabled && isInSelectedRange && !isSelected;
+                                          
                                           return (
-                                            <div key={index} className="col-6 col-sm-4 col-md-3 col-lg-2">                                              <button
-                                                type="button"                                                className={`btn time-slot-btn w-100 position-relative ${
+                                            <div key={index} className="col-6 col-sm-4 col-md-3 col-lg-2">
+                                              <button
+                                                type="button"
+                                                className={`btn time-slot-btn w-100 position-relative ${
                                                   isSelected ? 'active' : ''
                                                 } ${
-                                                  disabled ? 'disabled' : ''
+                                                  isInBookingRange ? 'selected-range' : ''
                                                 } ${
-                                                  isInSelectedRange && !isSelected ? 'selected-range' : ''
+                                                  !isInBookingRange && isInSelectedRange && !isSelected ? 'selected-range' : ''
                                                 } ${
-                                                  !disabled && !isSelected && !isInSelectedRange && isSlotOccupiedByExistingAppointment(time) ? 'occupied-by-appointment' : ''
+                                                  !isInBookingRange && !isInSelectedRange && disabled ? 'disabled' : ''
+                                                } ${
+                                                  !isInBookingRange && !disabled && !isSelected && !isInSelectedRange && isSlotOccupiedByExistingAppointment(time) ? 'occupied-by-appointment' : ''
                                                 }`}
-                                                onClick={() => !disabled && handleTimeSelect(time)}
-                                                disabled={disabled}
+                                                onClick={() => !disabled && !isInBookingRange && handleTimeSelect(time)}
+                                                disabled={isInBookingRange ? false : disabled}
                                                 title={
-                                                  disabled 
-                                                    ? getTimeSlotDisabledReason(time)
-                                                    : isInSelectedRange 
-                                                      ? `Part of your ${totalDuration}-minute appointment (${bookingData.time} - ${calculateEndTime(bookingData.time, totalDuration)})`
-                                                      : isSlotOccupiedByExistingAppointment(time)
-                                                        ? `This time slot is occupied by an existing appointment`
-                                                        : totalDuration > 0
-                                                          ? `Click to book ${totalDuration}-minute appointment (${time} - ${calculateEndTime(time, totalDuration)})`
-                                                          : `Available time slot`
+                                                  isInBookingRange
+                                                    ? `Thuộc lịch hẹn ${totalDuration} phút của bạn (${bookingData.time} – ${calculateEndTime(bookingData.time, totalDuration)})`
+                                                    : disabled
+                                                      ? getTimeSlotDisabledReason(time)
+                                                      : isInSelectedRange
+                                                        ? `Thuộc lịch hẹn ${totalDuration} phút của bạn (${bookingData.time} - ${calculateEndTime(bookingData.time, totalDuration)})`
+                                                        : isSlotOccupiedByExistingAppointment(time)
+                                                          ? `Khung giờ này đã được đặt`
+                                                          : totalDuration > 0
+                                                            ? `Đặt lịch ${totalDuration} phút (${time} - ${calculateEndTime(time, totalDuration)})`
+                                                            : `Khung giờ khả dụng`
                                                 }
-                                              >                                                <i className={`bi bi-${
-                                                  disabled ? 'lock-fill' : 
-                                                  isInSelectedRange ? 'check-circle-fill' : 
-                                                  isSlotOccupiedByExistingAppointment(time) ? 'calendar-x-fill' : 
+                                              >
+                                                <i className={`bi bi-${
+                                                  isInBookingRange ? 'check-circle-fill' :
+                                                  disabled ? 'lock-fill' :
+                                                  isInSelectedRange ? 'check-circle-fill' :
+                                                  isSlotOccupiedByExistingAppointment(time) ? 'calendar-x-fill' :
                                                   'clock'
                                                 } me-1 small`}></i>
                                                 {time}
-                                                
                                               </button>
                                             </div>
                                           );
