@@ -410,6 +410,64 @@
   }
 }
 
+/* ─── USER ICON IN HEADER BAR (Tablet & Mobile) ─── */
+.header-user-mobile {
+  display: flex;
+  align-items: center;
+}
+
+.header-user-mobile-btn {
+  background: none;
+  border: none;
+  padding: 0.4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  text-decoration: none;
+  line-height: 1;
+}
+
+.header-user-mobile-btn:hover {
+  background-color: rgba(139, 119, 92, 0.12);
+  color: #8B775C;
+}
+
+@media (max-width: 767px) {
+  .header-user-mobile-btn {
+    font-size: 1.35rem;
+    padding: 0.3rem;
+  }
+}
+
+/* Override dropdown-menu position when triggered from header bar (not sidebar) */
+.header-user-mobile .dropdown-menu {
+  position: absolute !important;
+  transform: none !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  background-color: #fff !important;
+  margin: 0 !important;
+  min-width: 180px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.header-user-mobile .dropdown-menu .dropdown-item {
+  padding: 0.65rem 1rem;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.header-user-mobile .dropdown-menu .dropdown-item:hover {
+  background-color: rgba(139, 119, 92, 0.1);
+  color: #8B775C;
+}
+
 /* ─── BOOK APPOINTMENT BUTTON ─── */
 .book-appointment-btn {
   border-color: #8b775c;
