@@ -228,9 +228,9 @@ const BookingPage = () => {
     // Default to 30 minutes if no duration or services selected
     const minutes = durationMinutes > 0 ? durationMinutes : 30;
     
-    // Calculate how many 30-minute slots we need (time slots are always in 30-minute intervals)
-    // We need to check all slots that the appointment duration would overlap
-    const slotsNeeded = Math.ceil(minutes / 30);
+    // Số slot cần kiểm tra = ceil(duration/30) + 1 (bao gồm boundary end slot)
+    // Ví dụ: 90 phút → kiểm tra 3 slot thông thường + 1 boundary slot = 4 slot
+    const slotsNeeded = Math.ceil(minutes / 30) + 1;
     
     // Find the index of the start time
     const startIndex = timeSlotStatuses.findIndex(slot => slot.start_time === startTime);
@@ -242,31 +242,14 @@ const BookingPage = () => {
     // Calculate the actual end time of the appointment
     const appointmentEndTime = calculateEndTime(startTime, minutes);
     
-    // Check if all time slots that the appointment would overlap are available
+    // Check all slots including the boundary end slot
     for (let i = 0; i < slotsNeeded; i++) {
       const slotIndex = startIndex + i;
       
-      // If we run out of slots, return false
-      if (slotIndex >= timeSlotStatuses.length) {
-        console.log(`Time slot ${startTime} is not available for ${durationMinutes} minutes - not enough slots remaining (need ${slotsNeeded}, only ${timeSlotStatuses.length - startIndex} available)`);
-        return false;
-      }
+      // If we run out of slots — boundary slot outside working hours, skip it
+      if (slotIndex >= timeSlotStatuses.length) break;
       
       const currentSlot = timeSlotStatuses[slotIndex];
-      
-      // For the last slot, check if the appointment would actually overlap with it
-      if (i === slotsNeeded - 1) {
-        const [slotHour, slotMinute] = currentSlot.start_time.split(':').map(Number);
-        const slotStartMinutes = slotHour * 60 + slotMinute;
-        
-        const [endHour, endMinute] = appointmentEndTime.split(':').map(Number);
-        const appointmentEndMinutes = endHour * 60 + endMinute;
-        
-        // If the appointment ends before or exactly at the start of this slot, we don't need to check it
-        if (appointmentEndMinutes <= slotStartMinutes) {
-          break;
-        }
-      }
       
       // Check if the current slot is past, unavailable, or occupied by an existing appointment
       if (currentSlot.isPast || !currentSlot.isAvailable || currentSlot.isOccupied) {
@@ -280,7 +263,7 @@ const BookingPage = () => {
       }
     }
     
-    console.log(`Time slot ${startTime}-${appointmentEndTime} (${durationMinutes} min) is available - all required time slots are available`);
+    console.log(`Time slot ${startTime}-${appointmentEndTime} (${durationMinutes} min) is available - all required time slots (incl. boundary) are available`);
     return true;
   };    // Check if a time slot should be disabled - wrapped in useCallback
   const isTimeSlotDisabled = useCallback((timeSlot) => {
