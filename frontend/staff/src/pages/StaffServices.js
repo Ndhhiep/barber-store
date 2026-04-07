@@ -1,39 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import staffService from '../services/staffService';
+import useModal from '../hooks/useModal';
+import useSuccessMessage from '../hooks/useSuccessMessage';
+import useDeleteConfirm from '../hooks/useDeleteConfirm';
+import LoadingSpinner from '../components/common/LoadingSpinner';
+import ErrorAlert from '../components/common/ErrorAlert';
+import EmptyState from '../components/common/EmptyState';
+import SuccessToast from '../components/common/SuccessToast';
+import DeleteConfirmModal from '../components/common/DeleteConfirmModal';
+import { formatCurrency } from '../utils/formatters';
+
+const INITIAL_FORM = { name: '', price: '', description: '', duration: '30', isActive: true };
 
 const StaffServices = () => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(''); // State thông báo thành công
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [serviceToDelete, setServiceToDelete] = useState(null);
-  const [serviceDisplayId, setServiceDisplayId] = useState(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  
   const [editingService, setEditingService] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);const [formData, setFormData] = useState({
-    name: '',
-    price: '',
-    description: '',
-    duration: '',
-    isActive: true
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM);
   const [formErrors, setFormErrors] = useState({});
-  useEffect(() => {
-    fetchServices();
-  }, []);
 
-  // Auto-hide success message after 3 seconds
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => {
-        setSuccessMessage('');
-      }, 3000);
-      
-      return () => clearTimeout(timer);
+  const modal = useModal();
+  const { message: successMessage, showSuccess, clearMessage } = useSuccessMessage(3000);
+  const deleteConfirm = useDeleteConfirm(
+    (id) => staffService.deleteService(id),
+    (id) => {
+      setServices(prev => prev.filter(s => s._id !== id));
+      showSuccess('Service deleted successfully!');
     }
-  }, [successMessage]);
+  );
+
+  useEffect(() => { fetchServices(); }, []);
 
   const fetchServices = async () => {
     try {
@@ -47,18 +44,15 @@ const StaffServices = () => {
     } finally {
       setLoading(false);
     }
-  };  const openAddModal = () => {
-    setEditingService(null);
-    setFormData({
-      name: '',
-      price: '',
-      description: '',
-      duration: '30', // Default duration of 30 minutes
-      isActive: true
-    });
-    setFormErrors({});
-    setIsModalOpen(true);
   };
+
+  const openAddModal = () => {
+    setEditingService(null);
+    setFormData({ ...INITIAL_FORM });
+    setFormErrors({});
+    modal.open();
+  };
+
   const openEditModal = (service) => {
     setEditingService(service);
     setFormData({
@@ -66,139 +60,79 @@ const StaffServices = () => {
       price: service.price,
       description: service.description,
       duration: service.duration || 30,
-      isActive: service.isActive !== undefined ? service.isActive : true
+      isActive: service.isActive !== undefined ? service.isActive : true,
     });
     setFormErrors({});
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditingService(null);
+    modal.open();
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-    
-    // Xóa lỗi khi user sửa
-    if (formErrors[name]) {
-      setFormErrors(prev => ({ ...prev, [name]: null }));
-    }
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: null }));
   };
+
   const validateForm = () => {
     const errors = {};
-    
-    if (!formData.name.trim()) {
-      errors.name = 'Service name is required';
-    }
-    
-    if (!formData.price) {
-      errors.price = 'Price is required';
-    } else if (isNaN(formData.price) || Number(formData.price) < 0) {
-      errors.price = 'Price must be a positive number';
-    }
-    
-    if (!formData.description.trim()) {
-      errors.description = 'Description is required';
-    }
-    
-    if (!formData.duration) {
-      errors.duration = 'Duration is required';
-    } else if (isNaN(formData.duration) || Number(formData.duration) < 15 || Number(formData.duration) > 240) {
+    if (!formData.name.trim()) errors.name = 'Service name is required';
+    if (!formData.price) errors.price = 'Price is required';
+    else if (isNaN(formData.price) || Number(formData.price) < 0) errors.price = 'Price must be a positive number';
+    if (!formData.description.trim()) errors.description = 'Description is required';
+    if (!formData.duration) errors.duration = 'Duration is required';
+    else if (isNaN(formData.duration) || Number(formData.duration) < 15 || Number(formData.duration) > 240)
       errors.duration = 'Duration must be between 15 and 240 minutes';
-    }
-    
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-      const serviceData = {
+    if (!validateForm()) return;
+
+    const serviceData = {
       name: formData.name,
       price: Number(formData.price),
       description: formData.description,
       duration: Number(formData.duration),
-      isActive: formData.isActive
+      isActive: formData.isActive,
     };
-      try {
+
+    try {
       if (editingService) {
         await staffService.updateService(editingService._id, serviceData);
-        setServices(services.map(s => 
-          s._id === editingService._id ? { ...s, ...serviceData } : s
-        ));
-        setSuccessMessage('Service updated successfully!');
+        setServices(prev => prev.map(s => s._id === editingService._id ? { ...s, ...serviceData } : s));
+        showSuccess('Service updated successfully!');
       } else {
         const response = await staffService.createService(serviceData);
-        setServices([...services, response.data]);
-        setSuccessMessage('New service added successfully!');
+        setServices(prev => [...prev, response.data]);
+        showSuccess('New service added successfully!');
       }
-      closeModal();
+      modal.close();
     } catch (err) {
       console.error('Error saving service:', err);
-      setFormErrors(prev => ({ 
-        ...prev, 
-        submit: err.message || 'Failed to save service. Please try again.' 
-      }));
-    }  };
-
-  const openDeleteModal = (service) => {
-    setServiceToDelete(service._id);
-    // Store the service name for display
-    setServiceDisplayId(service.name);
-    setDeleteModalOpen(true);
-  };
-  
-  const closeDeleteModal = () => {
-    setServiceToDelete(null);
-    setServiceDisplayId(null);
-    setDeleteModalOpen(false);
-  };
-  
-  const handleDeleteService = async () => {
-    try {
-      setDeleteLoading(true);
-      await staffService.deleteService(serviceToDelete);
-      setServices(services.filter(service => service._id !== serviceToDelete));
-      setSuccessMessage('Service deleted successfully!');
-    } catch (err) {
-      console.error('Error deleting service:', err);
-      setError('Failed to delete service. Please try again.');
-      setTimeout(() => setError(null), 3000);
-    } finally {
-      setDeleteLoading(false);
-      closeDeleteModal();
+      setFormErrors(prev => ({ ...prev, submit: err.message || 'Failed to save service. Please try again.' }));
     }
   };
 
-  
   return (
-    <div className="container mt-4">      <div className="d-flex justify-content-between align-items-center mb-4">
+    <div className="container mt-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Manage Services</h2>
         <button className="btn btn-success" onClick={openAddModal}>
           <i className="bi bi-plus-circle me-1"></i> Add New Service
         </button>
       </div>
 
-      {error && <div className="alert alert-danger">{error}</div>}
+      {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
 
       <div className="card">
         <div className="card-body">
           {loading ? (
-            <div className="text-center my-3">
-              <div className="spinner-border" role="status"></div>
-            </div>
+            <LoadingSpinner />
           ) : services.length > 0 ? (
             <div className="table-responsive">
-              <table className="table table-hover">                <thead>
+              <table className="table table-hover">
+                <thead>
                   <tr>
                     <th>Name</th>
                     <th>Price</th>
@@ -208,31 +142,30 @@ const StaffServices = () => {
                     <th>Actions</th>
                   </tr>
                 </thead>
-                <tbody>                  {services.map(service => (
+                <tbody>
+                  {services.map(service => (
                     <tr key={service._id}>
                       <td>{service.name}</td>
-                      <td>${service.price}</td>
+                      <td>{formatCurrency(service.price)}</td>
                       <td>{service.duration || 30} mins</td>
                       <td>
-                        {service.description.length > 50 
-                          ? `${service.description.substring(0, 50)}...` 
+                        {service.description.length > 50
+                          ? `${service.description.substring(0, 50)}...`
                           : service.description}
                       </td>
                       <td>
                         <span className={`badge bg-${service.isActive ? 'success' : 'danger'}`}>
                           {service.isActive ? 'Active' : 'Inactive'}
                         </span>
-                      </td><td>
+                      </td>
+                      <td>
                         <div className="btn-group" role="group">
-                          <button
-                            className="btn btn-sm btn-primary"
-                            onClick={() => openEditModal(service)}
-                            title="Edit Service"
-                          >
+                          <button className="btn btn-sm btn-primary" onClick={() => openEditModal(service)} title="Edit Service">
                             Edit
-                          </button>                          <button
+                          </button>
+                          <button
                             className="btn btn-sm btn-danger"
-                            onClick={() => openDeleteModal(service)}
+                            onClick={() => deleteConfirm.openDelete(service._id, service.name)}
                             title="Delete Service"
                           >
                             Delete
@@ -245,215 +178,122 @@ const StaffServices = () => {
               </table>
             </div>
           ) : (
-            <p className="text-center">No services found. Create your first service!</p>
+            <EmptyState message="No services found. Create your first service!" icon="bi-scissors" />
           )}
         </div>
       </div>
 
-      {/* Service Modal */}
-      {isModalOpen && (
+      {/* Add / Edit Service Modal */}
+      {modal.isOpen && (
         <>
-          <div className="modal-backdrop fade show" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1040 }}></div>          <div className="modal show d-block" tabIndex="-1" style={{ 
-            position: 'fixed', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            bottom: 0, 
-            zIndex: 2000, 
-            overflow: 'auto', 
-            display: 'flex', 
-            alignItems: 'flex-start', 
-            justifyContent: 'center',
-            paddingTop: '120px'
-          }}>            <div className="modal-dialog" style={{ 
-              margin: '0 auto', 
-              zIndex: 2010, 
-              width: '100%', 
-              maxWidth: '500px',
-              position: 'relative'
-            }}>
+          <div
+            className="modal-backdrop fade show"
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1040 }}
+          ></div>
+          <div
+            className="modal show d-block"
+            tabIndex="-1"
+            style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              zIndex: 2000, overflow: 'auto', display: 'flex',
+              alignItems: 'flex-start', justifyContent: 'center', paddingTop: '120px',
+            }}
+          >
+            <div className="modal-dialog" style={{ margin: '0 auto', zIndex: 2010, width: '100%', maxWidth: '500px', position: 'relative' }}>
               <div className="modal-content">
                 <form onSubmit={handleSubmit}>
                   <div className="modal-header">
-                    <h5 className="modal-title">
-                      {editingService ? 'Edit Service' : 'Add New Service'}
-                    </h5>
-                    <button type="button" className="btn-close" onClick={closeModal}></button>
+                    <h5 className="modal-title">{editingService ? 'Edit Service' : 'Add New Service'}</h5>
+                    <button type="button" className="btn-close" onClick={modal.close}></button>
                   </div>
-                
                   <div className="modal-body">
-                    {formErrors.submit && (
-                      <div className="alert alert-danger">{formErrors.submit}</div>
-                    )}
-                    
+                    {formErrors.submit && <div className="alert alert-danger">{formErrors.submit}</div>}
+
+                    {/* Name */}
                     <div className="mb-3">
                       <label htmlFor="name" className="form-label fw-bold">Service Name:</label>
                       <input
                         type="text"
                         className={`form-control ${formErrors.name ? 'is-invalid' : ''}`}
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
+                        id="name" name="name"
+                        value={formData.name} onChange={handleChange} required
                       />
-                      {formErrors.name && (
-                        <div className="invalid-feedback">{formErrors.name}</div>
-                      )}
-                    </div>                    <div className="mb-3">
+                      {formErrors.name && <div className="invalid-feedback">{formErrors.name}</div>}
+                    </div>
+
+                    {/* Price */}
+                    <div className="mb-3">
                       <label htmlFor="price" className="form-label fw-bold">Price (USD):</label>
                       <input
                         type="number"
                         className={`form-control ${formErrors.price ? 'is-invalid' : ''}`}
-                        id="price"
-                        name="price"
-                        value={formData.price}
-                        onChange={handleChange}
-                        min="0"
-                        required
+                        id="price" name="price" min="0"
+                        value={formData.price} onChange={handleChange} required
                       />
-                      {formErrors.price && (
-                        <div className="invalid-feedback">{formErrors.price}</div>
-                      )}
+                      {formErrors.price && <div className="invalid-feedback">{formErrors.price}</div>}
                     </div>
 
+                    {/* Duration */}
                     <div className="mb-3">
                       <label htmlFor="duration" className="form-label fw-bold">Duration (minutes):</label>
                       <input
                         type="number"
                         className={`form-control ${formErrors.duration ? 'is-invalid' : ''}`}
-                        id="duration"
-                        name="duration"
-                        value={formData.duration}
-                        onChange={handleChange}
-                        min="15"
-                        max="240"
-                        required
+                        id="duration" name="duration" min="15" max="240"
+                        value={formData.duration} onChange={handleChange} required
                       />
-                      {formErrors.duration && (
-                        <div className="invalid-feedback">{formErrors.duration}</div>
-                      )}
+                      {formErrors.duration && <div className="invalid-feedback">{formErrors.duration}</div>}
                       <div className="form-text">Duration must be between 15 and 240 minutes</div>
                     </div>
 
+                    {/* Description */}
                     <div className="mb-3">
                       <label htmlFor="description" className="form-label fw-bold">Description:</label>
                       <textarea
                         className={`form-control ${formErrors.description ? 'is-invalid' : ''}`}
-                        id="description"
-                        name="description"
-                        value={formData.description}
-                        onChange={handleChange}
-                        rows="3"
-                        required
+                        id="description" name="description" rows="3"
+                        value={formData.description} onChange={handleChange} required
                       ></textarea>
-                      {formErrors.description && (
-                        <div className="invalid-feedback">{formErrors.description}</div>
-                      )}
+                      {formErrors.description && <div className="invalid-feedback">{formErrors.description}</div>}
                     </div>
 
+                    {/* Active toggle (edit only) */}
                     {editingService && (
                       <div className="mb-3 form-check">
                         <input
-                          type="checkbox"
-                          className="form-check-input"
-                          id="isActive"
-                          name="isActive"
-                          checked={formData.isActive}
-                          onChange={handleChange}
+                          type="checkbox" className="form-check-input"
+                          id="isActive" name="isActive"
+                          checked={formData.isActive} onChange={handleChange}
                         />
                         <label className="form-check-label fw-bold" htmlFor="isActive">Active</label>
                       </div>
                     )}
                   </div>
-                  
                   <div className="modal-footer">
-                    <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                      Cancel
-                    </button>
+                    <button type="button" className="btn btn-secondary" onClick={modal.close}>Cancel</button>
                     <button type="submit" className="btn btn-primary">
                       {editingService ? 'Update Service' : 'Create Service'}
                     </button>
                   </div>
                 </form>
               </div>
-            </div>          </div>
+            </div>
+          </div>
         </>
       )}
 
       {/* Delete Confirmation Modal */}
-      {deleteModalOpen && (
-        <>
-          <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-            <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content">
-                <div className="modal-header border-0">
-                  <h5 className="modal-title fs-4">Confirmation</h5>
-                  <button type="button" className="btn-close" onClick={closeDeleteModal} aria-label="Close"></button>
-                </div>
-                <div className="modal-body pt-0">
-                  <p className="text-secondary">
-                    Are you sure you want to delete service <span className="fw-bold">{serviceDisplayId}</span>? This action cannot be undone and you will be unable to recover any data.
-                  </p>
-                </div>
-                <div className="modal-footer border-0">
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary" 
-                    style={{ backgroundColor: '#CED4DA', borderColor: '#CED4DA', color: '#212529' }}
-                    onClick={closeDeleteModal}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="button" 
-                    className="btn btn-danger" 
-                    style={{ backgroundColor: '#FA5252' }}
-                    onClick={handleDeleteService}
-                    disabled={deleteLoading}
-                  >
-                    {deleteLoading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Deleting...
-                      </>
-                    ) : (
-                      'Yes, delete it!'
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="modal-backdrop fade show"></div>
-        </>
-      )}
+      <DeleteConfirmModal
+        isOpen={deleteConfirm.isOpen}
+        entityName="service"
+        displayId={deleteConfirm.displayName}
+        isDeleting={deleteConfirm.isDeleting}
+        onConfirm={deleteConfirm.confirmDelete}
+        onCancel={deleteConfirm.closeDelete}
+      />
 
-      {/* Success Toast Notification */}
-      {successMessage && (
-        <div 
-          style={{
-            position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            zIndex: 9999,
-            maxWidth: '300px'
-          }}
-          className="toast show bg-success text-white"
-        >
-          <div className="toast-header bg-success text-white">
-            <strong className="me-auto">Success</strong>
-            <button 
-              type="button" 
-              className="btn-close btn-close-white" 
-              onClick={() => setSuccessMessage('')}
-            ></button>
-          </div>
-          <div className="toast-body">
-            {successMessage}
-          </div>
-        </div>
-      )}
+      {/* Success Toast */}
+      <SuccessToast message={successMessage} onClose={clearMessage} />
     </div>
   );
 };

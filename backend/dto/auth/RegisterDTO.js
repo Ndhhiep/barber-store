@@ -9,11 +9,11 @@ class RegisterDTO {
 
   validate() {
     const errors = [];
-    if (!this.name) errors.push('Tên là bắt buộc');
-    if (!this.email) errors.push('Email là bắt buộc');
-    if (!this.password) errors.push('Mật khẩu là bắt buộc');
+    if (!this.name) errors.push('Name is required');
+    if (!this.email) errors.push('Email is required');
+    if (!this.password) errors.push('Password is required');
     if (this.password && this.password.length < 6) {
-      errors.push('Mật khẩu phải có ít nhất 6 ký tự');
+      errors.push('Password must be at least 6 characters long');
     }
     return errors;
   }

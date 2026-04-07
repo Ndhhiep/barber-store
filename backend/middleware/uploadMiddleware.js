@@ -13,7 +13,7 @@ const fileFilter = (req, file, cb) => {
   if (mimetype && extname) {
     return cb(null, true);
   } else {
-    cb(new Error('Chỉ cho phép tải lên các file hình ảnh!'));
+    cb(new Error('Only image files are allowed!'));
   }
 };
 

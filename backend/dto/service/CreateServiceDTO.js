@@ -8,12 +8,12 @@ class CreateServiceDTO {
 
   validate() {
     const errors = [];
-    if (!this.name) errors.push('Tên dịch vụ là bắt buộc');
-    if (this.price === undefined || this.price === null) errors.push('Giá dịch vụ là bắt buộc');
-    if (!this.description) errors.push('Mô tả dịch vụ là bắt buộc');
-    if (!this.duration) errors.push('Thời gian dịch vụ là bắt buộc');
+    if (!this.name) errors.push('Name is required');
+    if (this.price === undefined || this.price === null) errors.push('Price is required');
+    if (!this.description) errors.push('Description is required');
+    if (!this.duration) errors.push('Duration is required');
     if (this.duration && (this.duration < 15 || this.duration > 240)) {
-      errors.push('Thời gian dịch vụ phải từ 15 đến 240 phút');
+      errors.push('Duration must be between 15 and 240 minutes');
     }
     return errors;
   }

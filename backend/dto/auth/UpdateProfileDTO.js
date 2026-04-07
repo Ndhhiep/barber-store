@@ -7,7 +7,7 @@ class UpdateProfileDTO {
   validate() {
     const errors = [];
     if (!this.name && !this.phone) {
-      errors.push('Vui lòng cung cấp ít nhất một trường để cập nhật (name hoặc phone)');
+      errors.push('Please provide at least one field to update (name or phone)');
     }
     return errors;
   }
