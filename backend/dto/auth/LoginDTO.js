@@ -6,8 +6,8 @@ class LoginDTO {
 
   validate() {
     const errors = [];
-    if (!this.email) errors.push('Email là bắt buộc');
-    if (!this.password) errors.push('Mật khẩu là bắt buộc');
+    if (!this.email) errors.push('Email is required');
+    if (!this.password) errors.push('Password is required');
     return errors;
   }
 }

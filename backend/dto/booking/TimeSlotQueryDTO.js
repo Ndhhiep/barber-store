@@ -11,13 +11,13 @@ class TimeSlotQueryDTO {
     const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 
     if (!this.date) {
-      errors.push('Vui lòng cung cấp ngày để kiểm tra khung giờ');
+      errors.push('Please provide date to check time slots');
     } else if (!datePattern.test(this.date)) {
-      errors.push('Định dạng ngày không hợp lệ. Vui lòng sử dụng YYYY-MM-DD');
+      errors.push('Invalid date format. Please use YYYY-MM-DD');
     }
 
     if (!this.barberId) {
-      errors.push('Vui lòng cung cấp ID barber để kiểm tra khung giờ');
+      errors.push('Please provide barber ID to check time slots');
     }
 
     return errors;

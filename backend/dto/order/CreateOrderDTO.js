@@ -14,16 +14,16 @@ class CreateOrderDTO {
   validate() {
     const errors = [];
 
-    if (!this.customerInfo) errors.push('Thông tin khách hàng là bắt buộc');
+    if (!this.customerInfo) errors.push('Customer info is required');
     if (!this.items || !Array.isArray(this.items) || this.items.length === 0) {
-      errors.push('Danh sách sản phẩm không được rỗng');
+      errors.push('Items list is required and must be non-empty');
     }
-    if (!this.totalAmount || this.totalAmount <= 0) errors.push('Tổng tiền không hợp lệ');
-    if (!this.shippingAddress) errors.push('Địa chỉ giao hàng là bắt buộc');
-    if (!this.paymentMethod) errors.push('Phương thức thanh toán là bắt buộc');
+    if (!this.totalAmount || this.totalAmount <= 0) errors.push('Total amount is invalid');
+    if (!this.shippingAddress) errors.push('Shipping address is required');
+    if (!this.paymentMethod) errors.push('Payment method is required');
 
     if (this.userId && !mongoose.Types.ObjectId.isValid(this.userId)) {
-      errors.push('Định dạng User ID không hợp lệ');
+      errors.push('Invalid User ID format');
     }
 
     return errors;

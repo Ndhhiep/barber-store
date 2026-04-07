@@ -13,9 +13,9 @@ class CreateBarberDTO {
 
   validate() {
     const errors = [];
-    if (!this.name) errors.push('Tên là bắt buộc');
-    if (!this.phone) errors.push('Số điện thoại là bắt buộc');
-    if (!this.email) errors.push('Email là bắt buộc');
+    if (!this.name) errors.push('Name is required');
+    if (!this.phone) errors.push('Phone is required');
+    if (!this.email) errors.push('Email is required');
     return errors;
   }
 }

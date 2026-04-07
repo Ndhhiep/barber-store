@@ -8,9 +8,9 @@ class CreateContactDTO {
 
   validate() {
     const errors = [];
-    if (!this.name) errors.push('Tên là bắt buộc');
-    if (!this.email) errors.push('Email là bắt buộc');
-    if (!this.message) errors.push('Nội dung tin nhắn là bắt buộc');
+    if (!this.name) errors.push('Name is required');
+    if (!this.email) errors.push('Email is required');
+    if (!this.message) errors.push('Message is required');
     return errors;
   }
 }
