@@ -1,198 +1,64 @@
-const Service = require('../models/Service');
+const serviceService = require('../services/serviceService');
 const asyncHandler = require('express-async-handler');
+const CreateServiceDTO = require('../dto/service/CreateServiceDTO');
 
-// @desc    Lấy tất cả dịch vụ
-// @route   GET /api/services
-// @access  Công khai
+const _error = (res, err) => {
+  const code = err.statusCode || 500;
+  res.status(code).json({ status: code >= 500 ? 'error' : 'fail', message: err.message });
+};
+
+// GET /api/services
 const getServices = asyncHandler(async (req, res) => {
   try {
-    const services = await Service.find({}).sort({ name: 1 });
-    res.json({
-      status: 'success',
-      count: services.length,
-      data: services
-    });
+    const services = await serviceService.getServices();
+    res.json({ status: 'success', count: services.length, data: services });
   } catch (error) {
-    console.error('Error fetching services:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to fetch services',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    _error(res, error);
   }
 });
 
-// @desc    Lấy dịch vụ theo ID
-// @route   GET /api/services/:id
-// @access  Công khai
+// GET /api/services/:id
 const getServiceById = asyncHandler(async (req, res) => {
   try {
-    const service = await Service.findById(req.params.id);
-    
-    if (!service) {
-      return res.status(404).json({
-        status: 'fail',
-        message: 'Service not found'
-      });
-    }
-    
-    res.json({
-      status: 'success',
-      data: service
-    });
+    const service = await serviceService.getServiceById(req.params.id);
+    res.json({ status: 'success', data: service });
   } catch (error) {
-    console.error('Error fetching service:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to fetch service',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    _error(res, error);
   }
 });
 
-// @desc    Tạo dịch vụ mới
-// @route   POST /api/services
-// @access  Riêng tư/Admin/Staff
+// POST /api/services
 const createService = asyncHandler(async (req, res) => {
   try {
-    const { name, price, description, duration } = req.body;
+    const dto = new CreateServiceDTO(req.body);
+    const errors = dto.validate();
+    if (errors.length > 0) return res.status(400).json({ status: 'fail', message: errors[0] });
 
-    // Validate required fields
-    if (!name || !price || !description || !duration) {
-      return res.status(400).json({
-        status: 'fail',
-        message: 'Name, price, description, and duration are required'
-      });
-    }
-
-    // Validate duration range
-    if (duration < 15 || duration > 240) {
-      return res.status(400).json({
-        status: 'fail',
-        message: 'Duration must be between 15 and 240 minutes'
-      });
-    }
-
-    // Kiểm tra dịch vụ với tên này đã tồn tại
-    const existingService = await Service.findOne({ name });
-    if (existingService) {
-      return res.status(400).json({
-        status: 'fail',
-        message: 'Service with this name already exists'
-      });
-    }
-
-    const service = await Service.create({
-      name,
-      price,
-      description,
-      duration // Use the provided duration value
-    });
-
-    res.status(201).json({
-      status: 'success',
-      data: service
-    });
+    const service = await serviceService.createService(dto);
+    res.status(201).json({ status: 'success', data: service });
   } catch (error) {
-    console.error('Error creating service:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to create service',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    _error(res, error);
   }
 });
 
-// @desc    Cập nhật dịch vụ
-// @route   PUT /api/services/:id
-// @access  Riêng tư/Admin/Staff
+// PUT /api/services/:id
 const updateService = asyncHandler(async (req, res) => {
   try {
-    const { name, price, description, duration, isActive } = req.body;
-    const service = await Service.findById(req.params.id);
-
-    if (!service) {
-      return res.status(404).json({
-        status: 'fail',
-        message: 'Service not found'
-      });
-    }
-
-    // Validate duration if provided
-    if (duration !== undefined && (duration < 15 || duration > 240)) {
-      return res.status(400).json({
-        status: 'fail',
-        message: 'Duration must be between 15 and 240 minutes'
-      });
-    }
-
-    // Kiểm tra tên duy nhất nếu có thay đổi tên
-    if (name && name !== service.name) {
-      const existingService = await Service.findOne({ name });
-      if (existingService) {
-        return res.status(400).json({
-          status: 'fail',
-          message: 'Service with this name already exists'
-        });
-      }
-    }
-
-    service.name = name || service.name;
-    service.price = price !== undefined ? price : service.price;
-    service.description = description || service.description;
-    service.duration = duration !== undefined ? duration : service.duration; // Use provided duration
-    service.isActive = isActive !== undefined ? isActive : service.isActive;
-
-    const updatedService = await service.save();
-
-    res.json({
-      status: 'success',
-      data: updatedService
-    });
+    const updated = await serviceService.updateService(req.params.id, req.body);
+    res.json({ status: 'success', data: updated });
   } catch (error) {
-    console.error('Error updating service:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to update service',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    _error(res, error);
   }
 });
 
-// @desc    Xóa dịch vụ
-// @route   DELETE /api/services/:id
-// @access  Riêng tư/Admin/Staff
+// DELETE /api/services/:id
 const deleteService = asyncHandler(async (req, res) => {
   try {
-    const service = await Service.findById(req.params.id);
-
-    if (!service) {
-      return res.status(404).json({
-        status: 'fail',
-        message: 'Service not found'
-      });
-    }
-
-    await Service.deleteOne({ _id: req.params.id });
-
-    res.json({
-      status: 'success',
-      message: 'Service deleted successfully'
-    });
+    await serviceService.deleteService(req.params.id);
+    res.json({ status: 'success', message: 'Service deleted successfully' });
   } catch (error) {
-    console.error('Error deleting service:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to delete service',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    _error(res, error);
   }
 });
 
-module.exports = {
-  getServices,
-  getServiceById,
-  createService,
-  updateService,
-  deleteService
-};
+module.exports = { getServices, getServiceById, createService, updateService, deleteService };

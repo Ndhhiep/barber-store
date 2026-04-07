@@ -21,7 +21,6 @@ const serviceSchema = new mongoose.Schema(
       required: [true, 'Service duration is required'],
       min: [15, 'Duration cannot be less than 15 minutes'],
       max: [240, 'Duration cannot be more than 240 minutes']
-      // Removed default value to ensure duration is always explicitly provided
     },
     isActive: {
       type: Boolean,

@@ -1,394 +1,98 @@
-const Barber = require('../models/Barber');
+const barberService = require('../services/barberService');
+const imageService = require('../services/imageService');
+const CreateBarberDTO = require('../dto/barber/CreateBarberDTO');
 
-/**
- * Lấy tất cả các barber đang hoạt động
- * @route GET /api/barbers
- * @access Công khai
- */
+const _error = (res, err) => {
+  const code = err.statusCode || 500;
+  res.status(code).json({ success: false, message: err.message, error: process.env.NODE_ENV === 'development' ? err.message : undefined });
+};
+
+// GET /api/barbers
 const getAllBarbers = async (req, res) => {
   try {
-    // Tìm tất cả barber đang hoạt động
-    const barbers = await Barber.find({ is_active: true });
-    
-    return res.status(200).json({
-      success: true,
-      data: {
-        barbers: barbers,
-        count: barbers.length
-      }
-    });
+    const data = await barberService.getAllBarbers(true);
+    res.status(200).json({ success: true, data });
   } catch (error) {
-    console.error('Error fetching barbers:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Error fetching barbers',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    _error(res, error);
   }
 };
 
-/**
- * Lấy tất cả barber cho nhân viên (cả đang hoạt động và không hoạt động)
- * @route GET /api/barbers/staff
- * @access Riêng tư (Chỉ nhân viên)
- */
+// GET /api/barbers/staff
 const getAllBarbersForStaff = async (req, res) => {
   try {
-    // Tìm tất cả barber bất kể trạng thái hoạt động
-    const barbers = await Barber.find();
-    
-    return res.status(200).json({
-      success: true,
-      data: {
-        barbers: barbers,
-        count: barbers.length
-      }
-    });
+    const data = await barberService.getAllBarbers(false);
+    res.status(200).json({ success: true, data });
   } catch (error) {
-    console.error('Error fetching barbers for staff:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Error fetching barbers',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    _error(res, error);
   }
 };
 
-/**
- * Lấy barber theo ID
- * @route GET /api/barbers/:id
- * @access Công khai
- */
+// GET /api/barbers/:id
 const getBarberById = async (req, res) => {
   try {
-    const barber = await Barber.findById(req.params.id);
-    
-    if (!barber) {
-      return res.status(404).json({
-        success: false,
-        message: 'Barber not found'
-      });
-    }
-    
-    return res.status(200).json({
-      success: true,
-      data: {
-        barber: barber
-      }
-    });
+    const barber = await barberService.getBarberById(req.params.id);
+    res.status(200).json({ success: true, data: { barber } });
   } catch (error) {
-    console.error('Error fetching barber:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Error fetching barber',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    _error(res, error);
   }
 };
 
-/**
- * Tạo barber mới
- * @route POST /api/barbers
- * @access Riêng tư (Chỉ nhân viên)
- */
+// POST /api/barbers
 const createBarber = async (req, res) => {
   try {
-    const {
-      name,
-      phone,
-      email,
-      description,
-      specialization,
-      image_url,
-      is_active,
-      workingDays,
-      workingHours
-    } = req.body;
+    const dto = new CreateBarberDTO(req.body);
+    const errors = dto.validate();
+    if (errors.length > 0) return res.status(400).json({ success: false, message: errors[0] });
 
-    // Xác thực các trường bắt buộc
-    if (!name || !phone || !email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide name, phone, and email'
-      });
-    }
-
-    // Tạo barber mới với URL hình ảnh từ Cloudinary
-    const barber = new Barber({
-      name,
-      phone,
-      email,
-      description,
-      specialization,
-      imgURL: image_url, // Lưu URL hình ảnh từ Cloudinary
-      is_active: is_active !== undefined ? is_active : true,
-      workingDays,
-      workingHours
-    });
-
-    // Lưu barber vào cơ sở dữ liệu
-    const savedBarber = await barber.save();
-
-    return res.status(201).json({
-      success: true,
-      data: savedBarber,
-      message: 'Barber created successfully'
-    });
+    const saved = await barberService.createBarber(dto);
+    res.status(201).json({ success: true, data: saved, message: 'Barber created successfully' });
   } catch (error) {
-    console.error('Error creating barber:', error);
-    
-    // Handle duplicate email error
-    if (error.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: 'A barber with this email already exists'
-      });
-    }
-    
-    return res.status(500).json({
-      success: false,
-      message: 'Error creating barber',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    if (error.code === 11000) return res.status(400).json({ success: false, message: 'A barber with this email already exists' });
+    _error(res, error);
   }
 };
 
-/**
- * Cập nhật barber
- * @route PUT /api/barbers/:id
- * @access Riêng tư (Chỉ nhân viên)
- */
+// PUT /api/barbers/:id
 const updateBarber = async (req, res) => {
   try {
-    const {
-      name,
-      phone,
-      email,
-      description,
-      specialization,
-      image_url,
-      is_active,
-      workingDays,
-      workingHours
-    } = req.body;
-
-    // Kiểm tra xem email đã tồn tại cho barber khác không
-    if (email) {
-      const existingBarber = await Barber.findOne({ email, _id: { $ne: req.params.id } });
-      if (existingBarber) {
-        return res.status(400).json({
-          success: false,
-          message: 'A barber with this email already exists'
-        });
-      }
-    }
-
-    // Xây dựng đối tượng cập nhật với URL hình ảnh từ Cloudinary
-    const updateData = {
-      name,
-      phone,
-      email,
-      description,
-      specialization,
-      is_active,
-      workingDays,
-      workingHours
-    };
-
-    // Chỉ cập nhật URL hình ảnh nếu có URL mới
-    if (image_url) {
-      updateData.imgURL = image_url;
-    }
-
-    // Tìm và cập nhật barber
-    const updatedBarber = await Barber.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedBarber) {
-      return res.status(404).json({
-        success: false,
-        message: 'Barber not found'
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: updatedBarber,
-      message: 'Barber updated successfully'
-    });
+    const updated = await barberService.updateBarber(req.params.id, req.body);
+    res.status(200).json({ success: true, data: updated, message: 'Barber updated successfully' });
   } catch (error) {
-    console.error('Error updating barber:', error);
-    
-    // Handle duplicate email error (this should be rare now with the pre-check above)
-    if (error.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: 'A barber with this email already exists'
-      });
-    }
-    
-    return res.status(500).json({
-      success: false,
-      message: 'Error updating barber',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    if (error.code === 11000) return res.status(400).json({ success: false, message: 'A barber with this email already exists' });
+    _error(res, error);
   }
 };
 
-/**
- * Xóa barber
- * @route DELETE /api/barbers/:id
- * @access Riêng tư (Chỉ nhân viên)
- */
+// DELETE /api/barbers/:id
 const deleteBarber = async (req, res) => {
   try {
-    const deletedBarber = await Barber.findByIdAndDelete(req.params.id);
-
-    if (!deletedBarber) {
-      return res.status(404).json({
-        success: false,
-        message: 'Barber not found'
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: 'Barber deleted successfully'
-    });
+    await barberService.deleteBarber(req.params.id);
+    res.status(200).json({ success: true, message: 'Barber deleted successfully' });
   } catch (error) {
-    console.error('Error deleting barber:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Error deleting barber',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    _error(res, error);
   }
 };
 
-/**
- * Chuyển đổi trạng thái hoạt động barber
- * @route PATCH /api/barbers/:id/toggle-status
- * @access Riêng tư (Chỉ nhân viên)
- */
+// PATCH /api/barbers/:id/toggle-status
 const toggleBarberStatus = async (req, res) => {
   try {
-    const { id } = req.params;
     const { is_active } = req.body;
-
-    // Xác thực đầu vào
-    if (is_active === undefined) {
-      return res.status(400).json({
-        success: false,
-        message: 'is_active field is required'
-      });
-    }
-
-    // Tìm và cập nhật barber với trạng thái mới
-    const updatedBarber = await Barber.findByIdAndUpdate(
-      id,
-      { is_active: is_active },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedBarber) {
-      return res.status(404).json({
-        success: false,
-        message: 'Barber not found'
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: updatedBarber,
-      message: `Barber status updated to ${is_active ? 'active' : 'inactive'}`
-    });
+    if (is_active === undefined) return res.status(400).json({ success: false, message: 'is_active field is required' });
+    const updated = await barberService.toggleBarberStatus(req.params.id, is_active);
+    res.status(200).json({ success: true, data: updated, message: `Barber status updated to ${is_active ? 'active' : 'inactive'}` });
   } catch (error) {
-    console.error('Error toggling barber status:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Error updating barber status',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    _error(res, error);
   }
 };
 
-/**
- * Tải ảnh barber lên Cloudinary
- * @route POST /api/barbers/upload-image
- * @access Riêng tư (Chỉ nhân viên)
- */
+// POST /api/barbers/upload-image
 const uploadBarberImage = async (req, res) => {
   try {
-    console.log('Upload request received');
-    
-    // Check Cloudinary configuration first
-    const { checkCloudinaryConfig } = require('../utils/cloudinaryCheck');
-    const cloudinaryStatus = await checkCloudinaryConfig();
-    
-    if (!cloudinaryStatus.success) {
-      console.error('Cloudinary configuration issue:', cloudinaryStatus.message);
-      return res.status(500).json({
-        success: false,
-        message: 'CLOUDINARY_CONFIG_ERROR: Image service is not properly configured',
-        error: cloudinaryStatus.message
-      });
-    }
-    
-    // If no file was uploaded
-    if (!req.file) {
-      console.log('No file found in request');
-      return res.status(400).json({
-        success: false,
-        message: 'Please upload an image file'
-      });
-    }
-
-    console.log('File uploaded successfully to Cloudinary:', {
-      path: req.file.path,
-      filename: req.file.filename,
-      size: req.file.size
-    });
-    
-    // File has been uploaded and processed by uploadMiddleware
-    return res.status(200).json({
-      success: true,
-      data: {
-        url: req.file.path, // Cloudinary URL
-        public_id: req.file.filename // Cloudinary public ID for future reference/deletion
-      },
-      message: 'Image uploaded successfully'
-    });
+    const { url, public_id } = await imageService.processUploadedImage(req.file);
+    res.status(200).json({ success: true, data: { url, public_id }, message: 'Image uploaded successfully' });
   } catch (error) {
-    console.error('Error uploading barber image:', error);
-    
-    // Check if it's a Cloudinary error
-    let errorMessage = 'Error uploading image';
-    if (error.message && error.message.includes('Cloudinary')) {
-      errorMessage = 'CLOUDINARY_ERROR: ' + error.message;
-    }
-    
-    // Detailed error response
-    return res.status(500).json({
-      success: false,
-      message: errorMessage,
-      error: process.env.NODE_ENV === 'development' ? {
-        message: error.message,
-        stack: error.stack
-      } : undefined
-    });
+    _error(res, error);
   }
 };
 
-module.exports = {
-  getAllBarbers,
-  getAllBarbersForStaff,
-  getBarberById,
-  createBarber,
-  updateBarber,
-  deleteBarber,
-  toggleBarberStatus,
-  uploadBarberImage
-};
+module.exports = { getAllBarbers, getAllBarbersForStaff, getBarberById, createBarber, updateBarber, deleteBarber, toggleBarberStatus, uploadBarberImage };
